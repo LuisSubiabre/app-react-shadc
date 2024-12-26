@@ -25,7 +25,7 @@ import { API_BASE_URL } from "@/config/config.ts";
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -53,8 +53,12 @@ const Usuarios: React.FC = () => {
 
       // Ahora accedemos a la propiedad `data` que contiene los usuarios
       setUsers(data.data || []); // Asegúrate de acceder a `data`
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -62,8 +66,9 @@ const Usuarios: React.FC = () => {
 
   if (loading) return <div className="spinner">Cargando...</div>;
 
-  if (error) return <div>Error: {error}</div>;
-
+  if (errorMessage) {
+    return <div>Error: {errorMessage}</div>;
+  }
   const handleSaveNewUser = async () => {
     setSaving(true);
     setErrorMessage(null);
@@ -93,8 +98,12 @@ const Usuarios: React.FC = () => {
 
       await fetchUsers();
       handleCloseNewUserModal();
-    } catch (err: any) {
-      setErrorMessage(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred");
+      }
     } finally {
       setSaving(false);
     }
@@ -167,8 +176,12 @@ const Usuarios: React.FC = () => {
       await response.json(); // No necesitas el `updatedUser` si vuelves a llamar a fetchUsers
       await fetchUsers(); // Recargar la lista de usuarios
       handleCloseEditModal(); // Cierra el modal de edición
-    } catch (err: any) {
-      setErrorMessage(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred");
+      }
     } finally {
       setSaving(false);
     }

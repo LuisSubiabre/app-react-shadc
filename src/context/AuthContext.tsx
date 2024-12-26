@@ -2,11 +2,26 @@ import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "@/config/config.ts";
 
-export const AuthContext = createContext<any>(null);
+// Definir un tipo para el usuario (ajústalo según la estructura real de tu respuesta)
+interface User {
+  id: string;
+  nombre: string;
+  email: string;
+  // Otros campos de usuario
+}
+// Definir un tipo para el contexto de autenticación
+interface AuthContextType {
+  auth: boolean;
+  user: User | null;
+  login: (token: string, user: User) => void;
+  logout: () => void;
+}
+
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [auth, setAuth] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
   // Verificación del token al cargar la app
@@ -52,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = (token: string, user: any) => {
+  const login = (token: string, user: User) => {
     localStorage.setItem("token", token);
     setAuth(true);
     setUser(user);
