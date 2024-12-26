@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/config/config.ts";
 
 export const AuthContext = createContext<any>(null);
 
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const verifyToken = async (token: string) => {
     console.log(token);
     try {
-      const response = await fetch("http://localhost:3100/login/verify", {
+      const response = await fetch(`${API_BASE_URL}/login/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

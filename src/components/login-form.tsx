@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext"; // Importamos el hook useAuth
+import { API_BASE_URL } from "@/config/config.ts";
 
 export function LoginForm({
   className,
@@ -29,7 +30,7 @@ export function LoginForm({
     setError(null); // Limpiar posibles errores previos
 
     try {
-      const response = await fetch("http://localhost:3100/login/", {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

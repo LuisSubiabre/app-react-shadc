@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { API_BASE_URL } from "@/config/config.ts";
 
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,7 +45,7 @@ const Usuarios: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3100/usuarios");
+      const response = await fetch(`${API_BASE_URL}/usuarios`);
       if (!response.ok) {
         throw new Error("Error al obtener los usuarios");
       }
@@ -76,7 +77,7 @@ const Usuarios: React.FC = () => {
 
     console.log(newUser);
     try {
-      const response = await fetch("http://localhost:3100/usuarios", {
+      const response = await fetch(`${API_BASE_URL}/usuarios`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +148,7 @@ const Usuarios: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3100/usuarios/${currentUser.id}`,
+        `${API_BASE_URL}/usuarios/${currentUser.id}`,
         {
           method: "PATCH",
           headers: {
