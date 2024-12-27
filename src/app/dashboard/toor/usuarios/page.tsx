@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import {
   Table,
@@ -66,9 +66,6 @@ const Usuarios: React.FC = () => {
 
   if (loading) return <div className="spinner">Cargando...</div>;
 
-  if (errorMessage) {
-    return <div>Error: {errorMessage}</div>;
-  }
   const handleSaveNewUser = async () => {
     setSaving(true);
     setErrorMessage(null);
@@ -80,7 +77,6 @@ const Usuarios: React.FC = () => {
       return;
     }
 
-    console.log(newUser);
     try {
       const response = await fetch(`${API_BASE_URL}/usuarios`, {
         method: "POST",
@@ -93,16 +89,16 @@ const Usuarios: React.FC = () => {
       if (!response.ok) {
         const errorData = await response.json();
         setErrorMessage(errorData.error || "Error al guardar el usuario");
-        throw new Error(errorData.error || "Error al guardar el usuario");
+        return; // Salir sin cerrar el modal
       }
 
       await fetchUsers();
-      handleCloseNewUserModal();
+      handleCloseNewUserModal(); // Solo se ejecuta si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage("Unknown error occurred");
+        setErrorMessage("Error desconocido");
       }
     } finally {
       setSaving(false);
@@ -146,12 +142,11 @@ const Usuarios: React.FC = () => {
 
   const handleSaveEdit = async () => {
     if (!currentUser) return;
-    // Validación básica
     if (!currentUser.nombre || !currentUser.email || !currentUser.rut) {
       setErrorMessage("Todos los campos son obligatorios.");
       setSaving(false);
-      return;
     }
+
     setSaving(true);
     setErrorMessage(null);
 
@@ -172,10 +167,11 @@ const Usuarios: React.FC = () => {
         setErrorMessage(errorData.error || "Error al guardar el usuario");
         throw new Error(errorData.error || "Error al guardar el usuario");
       }
-
-      await response.json(); // No necesitas el `updatedUser` si vuelves a llamar a fetchUsers
-      await fetchUsers(); // Recargar la lista de usuarios
-      handleCloseEditModal(); // Cierra el modal de edición
+      if (!errorMessage) {
+        handleCloseEditModal(); // Solo se cierra si no hay error
+      }
+      await fetchUsers();
+      handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -186,7 +182,6 @@ const Usuarios: React.FC = () => {
       setSaving(false);
     }
   };
-
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -199,7 +194,6 @@ const Usuarios: React.FC = () => {
         <div>
           <Button onClick={handleAddUserClick}>Nuevo Usuario</Button>
         </div>
-
         <Table>
           <TableCaption>Lista de usuarios</TableCaption>
           <TableHeader>
