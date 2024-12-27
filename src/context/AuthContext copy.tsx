@@ -15,7 +15,6 @@ interface AuthContextType {
   user: User | null;
   login: (token: string, user: User) => void;
   logout: () => void;
-  loading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -23,46 +22,51 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [auth, setAuth] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Verificación del token al cargar la app
+  // En AuthProvider.tsx
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      verifyToken(token);
+      verifyToken(token); // Verifica el token si existe
     } else {
-      setAuth(false);
-      setLoading(false); // Marcamos como cargado incluso si no hay token
+      navigate("/login");
     }
   }, []);
 
   const verifyToken = async (token: string) => {
+    console.log(token);
     try {
       const response = await fetch(`${API_BASE_URL}/login/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // Usa el encabezado Authorization
         },
         body: JSON.stringify({ token }),
       });
       const data = await response.json();
+      console.log(data);
 
       if (response.ok) {
         setAuth(true);
-        setUser(data.user);
+        setUser(data.user); // Asegúrate de que 'data.user' esté bien estructurado
       } else {
         setAuth(false);
+        setUser(null);
         localStorage.removeItem("token");
+        navigate("/login");
       }
     } catch (error) {
       console.error("Error al verificar el token:", error);
       setAuth(false);
+      setUser(null);
       localStorage.removeItem("token");
-    } finally {
-      setLoading(false); // Finaliza la carga después de verificar
+      navigate("/login");
     }
   };
+
   const login = (token: string, user: User) => {
     localStorage.setItem("token", token);
     setAuth(true);
@@ -78,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ auth, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ auth, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
