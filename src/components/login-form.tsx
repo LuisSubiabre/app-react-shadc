@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useAuth } from "@/context/AuthContext"; // Importamos el hook useAuth
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { API_BASE_URL } from "@/config/config.ts";
 
 export function LoginForm({
@@ -21,11 +21,18 @@ export function LoginForm({
   const [clave, setClave] = useState(""); // Cambié el nombre de `password` a `clave`
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const authContext = useAuth(); // Obtenemos el contexto de autenticación
-  if (!authContext) {
-    throw new Error("AuthContext is null");
-  }
-  const { login } = authContext; // Obtenemos la función login del contexto
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  const { login } = useAuth(); // Usamos directamente el hook useAuth
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setAuthToken(token);
+    }
+  }, []);
+
+  console.log(authToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +57,7 @@ export function LoginForm({
       if (response.ok) {
         // Al recibir respuesta exitosa, guardamos el token y los datos del usuario
         const { token, usuario } = data;
+
         localStorage.setItem("token", token); // Guardar token en localStorage
         login(token, {
           id: usuario.id,

@@ -1,91 +1,22 @@
-import { createContext, useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config.ts";
+// src/context/AuthContext.tsx
+import { createContext } from "react";
 
-// Definir un tipo para el usuario (ajústalo según la estructura real de tu respuesta)
+// Definir la interfaz de Usuario
 interface User {
   id: string;
   nombre: string;
   email: string;
-  // Otros campos de usuario
 }
-// Definir un tipo para el contexto de autenticación
-interface AuthContextType {
+
+// Definir la interfaz para el contexto de autenticación
+export interface AuthContextType {
   auth: boolean;
   user: User | null;
   login: (token: string, user: User) => void;
   logout: () => void;
   loading: boolean;
+  authToken: string | null;
 }
 
+// Crear el contexto con un valor inicial de null
 export const AuthContext = createContext<AuthContextType | null>(null);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [auth, setAuth] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      verifyToken(token);
-    } else {
-      setAuth(false);
-      setLoading(false); // Marcamos como cargado incluso si no hay token
-    }
-  }, []);
-
-  const verifyToken = async (token: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/login/verify`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ token }),
-      });
-      const data = await response.json();
-
-      if (response.ok) {
-        setAuth(true);
-        setUser(data.user);
-        console.log("Token verificado:", data.user);
-      } else {
-        setAuth(false);
-        localStorage.removeItem("token");
-      }
-    } catch (error) {
-      console.error("Error al verificar el token:", error);
-      setAuth(false);
-      localStorage.removeItem("token");
-    } finally {
-      setLoading(false); // Finaliza la carga después de verificar
-    }
-  };
-  const login = (token: string, user: User) => {
-    localStorage.setItem("token", token);
-    setAuth(true);
-    setUser(user);
-    navigate("/dashboard"); // Redirigir al dashboard después de login
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setAuth(false);
-    setUser(null);
-    navigate("/login");
-  };
-
-  return (
-    <AuthContext.Provider value={{ auth, user, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// Hook para acceder al contexto de autenticación
-export const useAuth = () => {
-  return useContext(AuthContext);
-};

@@ -1,12 +1,27 @@
+import { useContext } from "react";
 import { Navigate } from "react-router-dom";
+import { AuthContext } from "@/context/AuthContext";
 
-// Componente de ruta protegida
-export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    // Si no hay token, redirigimos al login
-    return <Navigate to="/login" replace />;
+// Aseguramos que children esté correctamente tipado como React.ReactNode
+interface ProtectedRouteProps {
+  children: React.ReactNode; // Propiedad 'children' correctamente definida
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { auth, loading } = useContext(AuthContext) || {
+    auth: false,
+    loading: true,
+  };
+
+  if (loading) {
+    return <div>Loading...</div>; // Indicador de carga mientras se verifica la autenticación
   }
 
-  return children; // Si hay token, mostramos el contenido
+  if (!auth) {
+    return <Navigate to="/login" />; // Si no está autenticado, redirige al login
+  }
+
+  return <>{children}</>; // Si está autenticado, muestra el contenido de la ruta
 };
+
+export default ProtectedRoute;

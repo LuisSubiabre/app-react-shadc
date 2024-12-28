@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext"; // Asegúrate de que esta ruta sea correcta
+import { AuthProvider } from "./context/AuthProvider"; // Asegúrate de que esta ruta sea correcta
 
 import "./index.css";
 import App from "./App.tsx";

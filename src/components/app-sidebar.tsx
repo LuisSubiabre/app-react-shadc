@@ -11,7 +11,7 @@ import {
   Settings2,
   SquareTerminal,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext"; // Importa tu contexto
+import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
@@ -150,7 +150,12 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
+  const { user, loading } = useAuth() || {}; // Si es null, devuelve un objeto vacío
+  console.log("usuario:" + user?.nombre);
+
+  if (loading) {
+    return <div>Loading...</div>; // O el componente de carga que prefieras
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -162,7 +167,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        {/* Pasa los datos del usuario desde AuthContext */}
         <NavUser
           user={{
             name: user?.nombre || "Invitado",

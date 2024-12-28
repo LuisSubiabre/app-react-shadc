@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { API_BASE_URL } from "@/config/config.ts";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
 //const authContext = useAuth(); // Obtenemos el contexto de autenticación
 
@@ -38,23 +38,33 @@ const Roles: React.FC = () => {
   });
   const [currentUser, setCurrentUser] = useState<Rol | null>(null);
 
-  //console.log("user", authContext.user);
-
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  /* token para enviar al backend */
+  const getTokenFromContext = useAuth();
+  if (!getTokenFromContext || !getTokenFromContext.authToken) {
+    throw new Error("authToken is null");
+  }
+  const token = getTokenFromContext.authToken;
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/roles`);
+      const response = await fetch(`${API_BASE_URL}/roles`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error("Error al obtener información");
       }
       const data = await response.json();
 
-      // Ahora accedemos a la propiedad `data` que contiene los usuarios
-      setUsers(data.data || []); // Asegúrate de acceder a `data`
+      setUsers(data.data || []);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -84,6 +94,7 @@ const Roles: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(newRol),
       });
