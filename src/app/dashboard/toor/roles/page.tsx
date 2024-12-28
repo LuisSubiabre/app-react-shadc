@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { User } from "./types"; // Importa la interfaz desde el archivo types.ts
+import { Rol } from "./types"; // Importa la interfaz desde el archivo types.ts
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,22 +21,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { API_BASE_URL } from "@/config/config.ts";
+import { useAuth } from "@/context/AuthContext";
+
+//const authContext = useAuth(); // Obtenemos el contexto de autenticación
 
 const Roles: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Rol[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  // const [error, setError] = useState<string | null>(null);
-  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
+  const [isNewRolModalOpen, setisNewRolModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [newUser, setNewUser] = useState<Partial<User>>({
+  const [newRol, setNewRol] = useState<Partial<Rol>>({
     nombre: "",
-    email: "",
-    rut: "",
-    clave: "",
+    descripcion: "",
   });
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<Rol | null>(null);
+
+  //console.log("user", authContext.user);
 
   useEffect(() => {
     fetchUsers();
@@ -45,9 +47,9 @@ const Roles: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`);
+      const response = await fetch(`${API_BASE_URL}/roles`);
       if (!response.ok) {
-        throw new Error("Error al obtener los usuarios");
+        throw new Error("Error al obtener información");
       }
       const data = await response.json();
 
@@ -66,34 +68,35 @@ const Roles: React.FC = () => {
 
   if (loading) return <div className="spinner">Cargando...</div>;
 
-  const handleSaveNewUser = async () => {
+  const handleSaveNewRol = async () => {
     setSaving(true);
     setErrorMessage(null);
 
     // Validación básica
-    if (!newUser.nombre || !newUser.email || !newUser.clave) {
+    if (!newRol.nombre || !newRol.descripcion) {
       setErrorMessage("Todos los campos son obligatorios.");
       setSaving(false);
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`, {
+      const response = await fetch(`${API_BASE_URL}/roles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify(newRol),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al guardar el usuario");
+        console.log(errorData);
+        setErrorMessage(errorData.error || "Error al guardar el rol");
         return; // Salir sin cerrar el modal
       }
 
       await fetchUsers();
-      handleCloseNewUserModal(); // Solo se ejecuta si no hay error
+      handleCloseNewRolModal(); // Solo se ejecuta si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -106,19 +109,19 @@ const Roles: React.FC = () => {
   };
 
   const handleAddUserClick = () => {
-    setIsNewUserModalOpen(true);
+    setisNewRolModalOpen(true);
   };
 
   const handleNewUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewUser({
-      ...newUser,
+    setNewRol({
+      ...newRol,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleCloseNewUserModal = () => {
-    setIsNewUserModalOpen(false);
-    setNewUser({ nombre: "", email: "", rut: "", clave: "" });
+  const handleCloseNewRolModal = () => {
+    setisNewRolModalOpen(false);
+    setNewRol({ nombre: "", descripcion: "" });
     setErrorMessage(null); // Limpiar mensaje de error
   };
 
@@ -195,31 +198,21 @@ const Roles: React.FC = () => {
           <Button onClick={handleAddUserClick}>Nuevo Rol</Button>
         </div>
         <Table>
-          <TableCaption>Lista de usuarios</TableCaption>
+          <TableCaption>Lista de roles</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Estado</TableHead>
               <TableHead className="w-[100px]">ID</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead className="text-right">Roles</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="w-[100px]">Nombre</TableHead>
+              <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                {user.activo ? (
-                  <TableCell className="text-green-500">Activo</TableCell>
-                ) : (
-                  <TableCell className="text-red-500">Inactivo</TableCell>
-                )}
                 <TableCell className="font-medium">{user.id}</TableCell>
                 <TableCell>{user.nombre}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell className="text-right">
-                  {user.activo ? "Activo" : "Inactivo"}
-                </TableCell>
+                <TableCell>{user.descripcion}</TableCell>
+
                 <TableCell className="text-right">
                   <Button
                     className="mr-2"
@@ -248,12 +241,12 @@ const Roles: React.FC = () => {
         </Table>
       </div>
 
-      {/* Nuevo usuario */}
-      {isNewUserModalOpen && (
-        <Dialog open={isNewUserModalOpen} onOpenChange={setIsNewUserModalOpen}>
+      {/* Nuevo rol */}
+      {isNewRolModalOpen && (
+        <Dialog open={isNewRolModalOpen} onOpenChange={setisNewRolModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Agregar Nuevo Usuario</DialogTitle>
+              <DialogTitle>Agregar Nuevo Rol</DialogTitle>
             </DialogHeader>
 
             <form>
@@ -263,41 +256,18 @@ const Roles: React.FC = () => {
                   <Input
                     id="name"
                     name="nombre"
-                    value={newUser.nombre}
                     onChange={handleNewUserInputChange}
-                    placeholder="Nombre del usuario"
+                    placeholder="Nombre del rol"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="descripcion">Descripción</Label>
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={newUser.email}
+                    id="descripcion"
+                    name="descripcion"
+                    type="text"
                     onChange={handleNewUserInputChange}
-                    placeholder="Correo electrónico"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rut">RUT</Label>
-                  <Input
-                    id="rut"
-                    name="rut"
-                    value={newUser.rut || ""}
-                    onChange={handleNewUserInputChange}
-                    placeholder="RUT del usuario"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Input
-                    id="password"
-                    name="clave"
-                    type="password"
-                    value={newUser.clave || ""}
-                    onChange={handleNewUserInputChange}
-                    placeholder="Contraseña"
+                    placeholder="Ingresa descripción"
                   />
                 </div>
               </div>
@@ -306,10 +276,10 @@ const Roles: React.FC = () => {
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
             <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseNewUserModal}>
+              <Button variant="secondary" onClick={handleCloseNewRolModal}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveNewUser} disabled={saving}>
+              <Button onClick={handleSaveNewRol} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar"}
               </Button>
             </DialogFooter>

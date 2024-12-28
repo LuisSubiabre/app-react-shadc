@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import {
   AudioWaveform,
   BookOpen,
@@ -11,6 +11,7 @@ import {
   Settings2,
   SquareTerminal,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext"; // Importa tu contexto
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
@@ -24,13 +25,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
       name: "Acme Inc",
@@ -155,6 +150,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -165,7 +162,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {/* Pasa los datos del usuario desde AuthContext */}
+        <NavUser
+          user={{
+            name: user?.nombre || "Invitado",
+            email: user?.email || "N/A",
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

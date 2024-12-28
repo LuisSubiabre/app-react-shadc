@@ -21,7 +21,11 @@ export function LoginForm({
   const [clave, setClave] = useState(""); // Cambié el nombre de `password` a `clave`
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth(); // Obtenemos la función login del contexto
+  const authContext = useAuth(); // Obtenemos el contexto de autenticación
+  if (!authContext) {
+    throw new Error("AuthContext is null");
+  }
+  const { login } = authContext; // Obtenemos la función login del contexto
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +51,11 @@ export function LoginForm({
         // Al recibir respuesta exitosa, guardamos el token y los datos del usuario
         const { token, usuario } = data;
         localStorage.setItem("token", token); // Guardar token en localStorage
-        login(token, { email: usuario }); // Usamos el login del contexto para actualizar el estado
+        login(token, {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+        }); // Usamos el login del contexto para actualizar el estado
         // Redirigir a la página de dashboard
       } else {
         setError(data.message || "Error de autenticación"); // Mostrar mensaje de error

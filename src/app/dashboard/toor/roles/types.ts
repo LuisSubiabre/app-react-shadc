@@ -1,10 +1,6 @@
 // types.ts
-export interface User {
+export interface Rol {
   id: number;
   nombre: string;
-  email: string;
-  rut?: string;
-  activo: boolean;
-  fecha_actualizacion: string;
-  clave?: string; // Agregamos password como opcional
+  descripcion?: string;
 }
