@@ -190,7 +190,7 @@ const Roles: React.FC = () => {
       if (err instanceof Error) {
         setErrorMessage(err.message);
       } else {
-        setErrorMessage("Unknown error occurred");
+        setErrorMessage("Unknown error occurred.");
       }
     } finally {
       setSaving(false);
