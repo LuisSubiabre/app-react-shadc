@@ -18,6 +18,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { API_BASE_URL } from "@/config/config.ts";
@@ -26,9 +37,9 @@ import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hoo
 //const authContext = useAuth(); // Obtenemos el contexto de autenticación
 
 const Roles: React.FC = () => {
-  const [users, setUsers] = useState<Rol[]>([]);
+  const [roles, setRoles] = useState<Rol[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isNewRolModalOpen, setisNewRolModalOpen] = useState<boolean>(false);
+  const [isNewRolModalOpen, setisNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -36,10 +47,12 @@ const Roles: React.FC = () => {
     nombre: "",
     descripcion: "",
   });
-  const [currentUser, setCurrentUser] = useState<Rol | null>(null);
+  const [currentRol, setcurrentRol] = useState<Rol | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+  const [rolToDelete, setRolToDelete] = useState<Rol | null>(null);
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
   /* token para enviar al backend */
@@ -49,7 +62,7 @@ const Roles: React.FC = () => {
   }
   const token = getTokenFromContext.authToken;
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/roles`, {
@@ -64,7 +77,7 @@ const Roles: React.FC = () => {
       }
       const data = await response.json();
 
-      setUsers(data.data || []);
+      setRoles(data.data || []);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -78,13 +91,13 @@ const Roles: React.FC = () => {
 
   if (loading) return <div className="spinner">Cargando...</div>;
 
-  const handleSaveNewRol = async () => {
+  const handleSaveNew = async () => {
     setSaving(true);
     setErrorMessage(null);
 
     // Validación básica
-    if (!newRol.nombre || !newRol.descripcion) {
-      setErrorMessage("Todos los campos son obligatorios.");
+    if (!newRol.nombre) {
+      setErrorMessage("El nombre es obligatorio");
       setSaving(false);
       return;
     }
@@ -106,8 +119,8 @@ const Roles: React.FC = () => {
         return; // Salir sin cerrar el modal
       }
 
-      await fetchUsers();
-      handleCloseNewRolModal(); // Solo se ejecuta si no hay error
+      await fetchData();
+      handleCloseNewModal(); // Solo se ejecuta si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -119,45 +132,45 @@ const Roles: React.FC = () => {
     }
   };
 
-  const handleAddUserClick = () => {
-    setisNewRolModalOpen(true);
+  const handleAddClick = () => {
+    setisNewModalOpen(true);
   };
 
-  const handleNewUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewRol({
       ...newRol,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleCloseNewRolModal = () => {
-    setisNewRolModalOpen(false);
+  const handleCloseNewModal = () => {
+    setisNewModalOpen(false);
     setNewRol({ nombre: "", descripcion: "" });
     setErrorMessage(null); // Limpiar mensaje de error
   };
 
-  /* Logica Editar usuario */
-  const handleEditClick = (user: User) => {
-    setCurrentUser(user);
+  /* Logica Editar */
+  const handleEditClick = (user: Rol) => {
+    setcurrentRol(user);
     setIsModalEditOpen(true);
   };
   const handleCloseEditModal = () => {
-    setCurrentUser(null);
+    setcurrentRol(null);
     setErrorMessage(null);
   };
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (currentUser) {
-      setCurrentUser({
-        ...currentUser,
+    if (currentRol) {
+      setcurrentRol({
+        ...currentRol,
         [e.target.name]: e.target.value,
       });
     }
   };
 
   const handleSaveEdit = async () => {
-    if (!currentUser) return;
-    if (!currentUser.nombre || !currentUser.email || !currentUser.rut) {
-      setErrorMessage("Todos los campos son obligatorios.");
+    if (!currentRol) return;
+    if (!currentRol.nombre) {
+      setErrorMessage("El nombre es obligatorio");
       setSaving(false);
     }
 
@@ -165,26 +178,24 @@ const Roles: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/usuarios/${currentUser.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(currentUser),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/roles/${currentRol.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(currentRol),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al guardar el usuario");
-        throw new Error(errorData.error || "Error al guardar el usuario");
+        setErrorMessage(errorData.error || "Error al guardar el rol");
+        throw new Error(errorData.error || "Error al guardar el rol");
       }
       if (!errorMessage) {
         handleCloseEditModal(); // Solo se cierra si no hay error
       }
-      await fetchUsers();
+      await fetchData();
       handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -196,6 +207,44 @@ const Roles: React.FC = () => {
       setSaving(false);
     }
   };
+
+  if (loading) return <div className="spinner">Cargando...</div>;
+
+  const handleDeleteClick = (rol: Rol) => {
+    setRolToDelete(rol); // Guardar el rol a eliminar
+    setIsDeleteDialogOpen(true); // Abrir el diálogo de confirmación
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!rolToDelete) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/roles/${rolToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || "Error al eliminar el rol");
+        return;
+      }
+
+      // Actualizar la lista después de eliminar
+      await fetchData();
+      setIsDeleteDialogOpen(false); // Cerrar el diálogo de confirmación
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Error desconocido");
+      }
+    }
+  };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -206,7 +255,7 @@ const Roles: React.FC = () => {
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div>
-          <Button onClick={handleAddUserClick}>Nuevo Rol</Button>
+          <Button onClick={handleAddClick}>Nuevo Rol</Button>
         </div>
         <Table>
           <TableCaption>Lista de roles</TableCaption>
@@ -218,17 +267,14 @@ const Roles: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.id}</TableCell>
-                <TableCell>{user.nombre}</TableCell>
-                <TableCell>{user.descripcion}</TableCell>
+            {roles.map((rol) => (
+              <TableRow key={rol.id}>
+                <TableCell className="font-medium">{rol.id}</TableCell>
+                <TableCell>{rol.nombre}</TableCell>
+                <TableCell>{rol.descripcion}</TableCell>
 
                 <TableCell className="text-right">
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleEditClick(user)}
-                  >
+                  <Button className="mr-2" onClick={() => handleEditClick(rol)}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -244,7 +290,22 @@ const Roles: React.FC = () => {
                       />
                     </svg>
                   </Button>
-                  <Button>Delete</Button>
+                  <Button onClick={() => handleDeleteClick(rol)}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                      />
+                    </svg>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -254,7 +315,7 @@ const Roles: React.FC = () => {
 
       {/* Nuevo rol */}
       {isNewRolModalOpen && (
-        <Dialog open={isNewRolModalOpen} onOpenChange={setisNewRolModalOpen}>
+        <Dialog open={isNewRolModalOpen} onOpenChange={setisNewModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Rol</DialogTitle>
@@ -267,7 +328,7 @@ const Roles: React.FC = () => {
                   <Input
                     id="name"
                     name="nombre"
-                    onChange={handleNewUserInputChange}
+                    onChange={handleNewInputChange}
                     placeholder="Nombre del rol"
                   />
                 </div>
@@ -277,7 +338,7 @@ const Roles: React.FC = () => {
                     id="descripcion"
                     name="descripcion"
                     type="text"
-                    onChange={handleNewUserInputChange}
+                    onChange={handleNewInputChange}
                     placeholder="Ingresa descripción"
                   />
                 </div>
@@ -287,10 +348,10 @@ const Roles: React.FC = () => {
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
             <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseNewRolModal}>
+              <Button variant="secondary" onClick={handleCloseNewModal}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveNewRol} disabled={saving}>
+              <Button onClick={handleSaveNew} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar"}
               </Button>
             </DialogFooter>
@@ -299,11 +360,11 @@ const Roles: React.FC = () => {
       )}
 
       {/* Editar usuario */}
-      {isModalEditOpen && currentUser && (
+      {isModalEditOpen && currentRol && (
         <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Editar Usuario</DialogTitle>
+              <DialogTitle>Editar Rol</DialogTitle>
             </DialogHeader>
 
             <form>
@@ -313,45 +374,20 @@ const Roles: React.FC = () => {
                   <Input
                     id="name"
                     name="nombre"
-                    value={currentUser.nombre}
+                    value={currentRol.nombre}
                     onChange={handleInputChange}
                     placeholder="Nombre del usuario"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Descripción</Label>
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={currentUser.email}
+                    id="descripcion"
+                    name="descripcion"
+                    type="text"
+                    value={currentRol.descripcion}
                     onChange={handleInputChange}
                     placeholder="Correo electrónico"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rut">RUT</Label>
-                  <Input
-                    id="rut"
-                    name="rut"
-                    value={currentUser.rut || ""}
-                    onChange={handleInputChange}
-                    placeholder="RUT del usuario"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="activo">Activo </Label>
-                  <input
-                    id="activo"
-                    name="activo"
-                    type="checkbox"
-                    checked={currentUser.activo}
-                    onChange={(e) =>
-                      setCurrentUser({
-                        ...currentUser,
-                        activo: e.target.checked,
-                      })
-                    }
                   />
                 </div>
               </div>
@@ -372,6 +408,32 @@ const Roles: React.FC = () => {
       )}
 
       {/* Editar usuario */}
+
+      {/* Eliminar usuario */}
+      {/* Confirmación de eliminación */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El rol se eliminará
+              permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Confirmación de eliminación */}
     </>
   );
 };
