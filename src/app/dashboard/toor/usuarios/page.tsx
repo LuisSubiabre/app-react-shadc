@@ -25,7 +25,6 @@ import { API_BASE_URL } from "@/config/config.ts";
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  // const [error, setError] = useState<string | null>(null);
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -182,6 +181,13 @@ const Usuarios: React.FC = () => {
       setSaving(false);
     }
   };
+
+  /* Logica Roles */
+  // const handleRolesClick = (rol: Rol) => {
+  //   setCurrentUser(user);
+  //   setIsModalRolesOpen(true);
+  // };
+  /* Logica Roles */
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -198,11 +204,9 @@ const Usuarios: React.FC = () => {
           <TableCaption>Lista de usuarios</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Estado</TableHead>
               <TableHead className="w-[100px]">ID</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead className="text-right">Roles</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -210,16 +214,12 @@ const Usuarios: React.FC = () => {
             {users.map((user) => (
               <TableRow key={user.id}>
                 {user.activo ? (
-                  <TableCell className="text-green-500">Activo</TableCell>
+                  <TableCell className="text-green-500">{user.id}</TableCell>
                 ) : (
-                  <TableCell className="text-red-500">Inactivo</TableCell>
+                  <TableCell className="text-red-500">{user.id}</TableCell>
                 )}
-                <TableCell className="font-medium">{user.id}</TableCell>
                 <TableCell>{user.nombre}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell className="text-right">
-                  {user.activo ? "Activo" : "Inactivo"}
-                </TableCell>
                 <TableCell className="text-right">
                   <Button
                     className="mr-2"
@@ -240,7 +240,22 @@ const Usuarios: React.FC = () => {
                       />
                     </svg>
                   </Button>
-                  <Button>Delete</Button>
+                  <Button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 0 1-1.125-1.125v-3.75ZM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-8.25ZM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-2.25Z"
+                      />
+                    </svg>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

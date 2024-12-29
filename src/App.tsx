@@ -6,7 +6,7 @@ import Usuarios from "@/app/dashboard/toor/usuarios/page";
 import Layout from "@/app/dashboard/layout";
 import Estudiantes from "@/app/dashboard/toor/estudiantes/page";
 import { AuthProvider } from "@/context/AuthProvider";
-import Roles from "@/app/dashboard/toor/roles/page";
+import Roles from "@/app/dashboard/toor/roles/pageRoles";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
 
 function App() {
