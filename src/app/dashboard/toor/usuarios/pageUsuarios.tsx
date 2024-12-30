@@ -18,9 +18,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { API_BASE_URL } from "@/config/config.ts";
+
+import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
+import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
+import { Rol } from "@/app/dashboard/toor/roles/types"; // Importa la interfaz desde el archivo types.ts
 
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -36,6 +42,15 @@ const Usuarios: React.FC = () => {
     clave: "",
   });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userRoles, setUserRoles] = useState<number[]>([]); // Estado para roles del usuario actual
+
+  /* token para enviar al backend */
+  const getTokenFromContext = useAuth();
+  if (!getTokenFromContext || !getTokenFromContext.authToken) {
+    throw new Error("authToken is null");
+  }
+  const token = getTokenFromContext.authToken;
+  const { data } = useFetch<Rol[]>("roles", token); // Trae los datos de la API
 
   useEffect(() => {
     fetchUsers();
@@ -124,6 +139,7 @@ const Usuarios: React.FC = () => {
   /* Logica Editar usuario */
   const handleEditClick = (user: User) => {
     setCurrentUser(user);
+    fetchUserRoles(user.id); // Carga los roles asignados
     setIsModalEditOpen(true);
   };
   const handleCloseEditModal = () => {
@@ -183,10 +199,79 @@ const Usuarios: React.FC = () => {
   };
 
   /* Logica Roles */
-  // const handleRolesClick = (rol: Rol) => {
-  //   setCurrentUser(user);
-  //   setIsModalRolesOpen(true);
-  // };
+  // Función para cargar los roles del usuario
+  const fetchUserRoles = async (id: number): Promise<void> => {
+    setUserRoles([]); // Limpiar roles
+    try {
+      const response = await fetch(
+        `http://localhost:3100/usuariosroles/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al obtener los roles del usuario");
+      }
+
+      const roles: { rol_id: number }[] | null = await response.json(); // Puede ser un array o null
+      if (!roles || roles.length === 0) {
+        console.warn("No se encontraron roles para este usuario");
+        setUserRoles([]); // Dejar la lista vacía
+        return;
+      }
+
+      const userRoles = roles.map((rol) => rol.rol_id); // Almacena los IDs de los roles
+      setUserRoles(userRoles);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Error:", err.message);
+      } else {
+        console.error("Error desconocido:", err);
+      }
+    }
+  };
+
+  const handleAsignarRol = async (id: number, isChecked: boolean) => {
+    try {
+      let url: string;
+      let method: string;
+
+      if (isChecked) {
+        url = `${API_BASE_URL}/usuariosroles/${currentUser?.id}/${id}`;
+        method = "DELETE";
+      } else {
+        url = `${API_BASE_URL}/usuariosroles/`;
+        method = "POST";
+      }
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rol_id: id, usuario_id: currentUser?.id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || "Error al guardar el usuario");
+        throw new Error(errorData.error || "Error al guardar el usuario");
+      }
+
+      await fetchUsers();
+      handleCloseEditModal(); // Solo se cierra si no hay error
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred");
+      }
+    }
+  };
   /* Logica Roles */
   return (
     <>
@@ -387,6 +472,31 @@ const Usuarios: React.FC = () => {
                       })
                     }
                   />
+                </div>
+                <div>
+                  {data &&
+                    data.length > 0 &&
+                    data.map((rol) => (
+                      <div key={rol.id}>
+                        <Checkbox
+                          id={`terms2-${rol.id}`}
+                          checked={userRoles.includes(rol.id) ? true : false}
+                          onClick={() =>
+                            handleAsignarRol(
+                              rol.id,
+                              userRoles.includes(rol.id) ? true : false
+                            )
+                          }
+                        />
+
+                        <label
+                          htmlFor={`terms2-${rol.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {rol.nombre}
+                        </label>
+                      </div>
+                    ))}
                 </div>
               </div>
             </form>
