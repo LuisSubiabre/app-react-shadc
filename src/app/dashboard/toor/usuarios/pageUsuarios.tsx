@@ -54,7 +54,7 @@ const Usuarios: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [userRoles]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -235,6 +235,11 @@ const Usuarios: React.FC = () => {
   };
 
   const handleAsignarRol = async (id: number, isChecked: boolean) => {
+    if (!isChecked) {
+      setUserRoles((prevRoles) => [...prevRoles, id]);
+    } else {
+      setUserRoles((prevRoles) => prevRoles.filter((roleId) => roleId !== id));
+    }
     try {
       let url: string;
       let method: string;
@@ -262,8 +267,8 @@ const Usuarios: React.FC = () => {
         throw new Error(errorData.error || "Error al guardar el usuario");
       }
 
-      await fetchUsers();
-      handleCloseEditModal(); // Solo se cierra si no hay error
+      // await fetchUsers();
+      //handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
