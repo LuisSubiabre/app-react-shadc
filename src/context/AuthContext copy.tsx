@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (token) {
       verifyToken(token);
       setAuthToken(token);
-      // console.log("Token cargado:", token);
     } else {
       setAuth(false);
       setLoading(false); // Marcamos como cargado incluso si no hay token

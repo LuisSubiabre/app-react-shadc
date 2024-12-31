@@ -151,6 +151,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, loading } = useAuth() || {}; // Si es null, devuelve un objeto vacío
+  console.log("usuario:" + user?.nombre);
 
   if (loading) {
     return <div>Loading...</div>; // O el componente de carga que prefieras
