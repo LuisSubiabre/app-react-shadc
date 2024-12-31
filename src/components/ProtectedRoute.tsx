@@ -1,27 +1,37 @@
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext";
 
-// Aseguramos que children esté correctamente tipado como React.ReactNode
 interface ProtectedRouteProps {
-  children: React.ReactNode; // Propiedad 'children' correctamente definida
+  children: JSX.Element;
+  requiredRoles?: number[]; // Roles necesarios para acceder a la ruta
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { auth, loading } = useContext(AuthContext) || {
+const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
+  const { auth, user, loading } = useContext(AuthContext) || {
     auth: false,
     loading: true,
   };
+  const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>; // Indicador de carga mientras se verifica la autenticación
+    return <div>Loading...</div>; // Mostrar un loader mientras se verifica la autenticación
   }
 
-  if (!auth) {
-    return <Navigate to="/login" />; // Si no está autenticado, redirige al login
+  if (!auth || !user) {
+    // Si no está autenticado, redirigir al login
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>; // Si está autenticado, muestra el contenido de la ruta
+  if (
+    requiredRoles &&
+    !requiredRoles.some((role) => user.roles.includes(role))
+  ) {
+    // Si no tiene los roles requeridos, redirigir a una página de "No autorizado"
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children; // Si cumple con todo, renderizar la ruta protegida
 };
 
 export default ProtectedRoute;

@@ -9,6 +9,7 @@ interface User {
   id: string;
   nombre: string;
   email: string;
+  roles: number[];
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -61,7 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("token", token); // Guardar el token en localStorage
     setAuth(true);
     setUser(user); // Establecer el usuario en el estado
-
     setAuthToken(token); // Guardar el token en el estado
     verifyToken(token); // Verificar el token
     navigate("/dashboard"); // Redirigir a la página de dashboard

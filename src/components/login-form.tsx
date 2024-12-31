@@ -63,6 +63,7 @@ export function LoginForm({
           id: usuario.id,
           nombre: usuario.nombre,
           email: usuario.email,
+          roles: usuario.roles,
         }); // Usamos el login del contexto para actualizar el estado
         // Redirigir a la página de dashboard
       } else {
