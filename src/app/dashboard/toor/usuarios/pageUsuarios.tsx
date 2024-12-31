@@ -18,6 +18,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { Input } from "@/components/ui/input";
@@ -27,6 +30,7 @@ import { API_BASE_URL } from "@/config/config.ts";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
 import { Rol } from "@/app/dashboard/toor/roles/types"; // Importa la interfaz desde el archivo types.ts
+import { Toaster } from "@/components/ui/toaster";
 
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -43,6 +47,7 @@ const Usuarios: React.FC = () => {
   });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<number[]>([]); // Estado para roles del usuario actual
+  const { toast } = useToast();
 
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
@@ -251,6 +256,10 @@ const Usuarios: React.FC = () => {
         url = `${API_BASE_URL}/usuariosroles/`;
         method = "POST";
       }
+      toast({
+        title: "Rol actualizado",
+        description: "Friday, February 10, 2023 at 5:57 PM",
+      });
 
       const response = await fetch(url, {
         method: method,
@@ -266,7 +275,10 @@ const Usuarios: React.FC = () => {
         setErrorMessage(errorData.error || "Error al guardar el usuario");
         throw new Error(errorData.error || "Error al guardar el usuario");
       }
-
+      toast({
+        title: "Rol actualizado",
+        description: isChecked ? "Rol eliminado" : "Rol asignado",
+      });
       // await fetchUsers();
       //handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
@@ -277,6 +289,7 @@ const Usuarios: React.FC = () => {
       }
     }
   };
+
   /* Logica Roles */
   return (
     <>
@@ -290,6 +303,22 @@ const Usuarios: React.FC = () => {
         <div>
           <Button onClick={handleAddUserClick}>Nuevo Usuario</Button>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            toast({
+              title: "Scheduled: Catch up ",
+              description: "Friday, February 10, 2023 at 5:57 PM",
+              action: (
+                <ToastAction altText="Goto schedule to undo">Undo</ToastAction>
+              ),
+            });
+          }}
+        >
+          Add to calendar
+        </Button>
+        <Toaster />
+
         <Table>
           <TableCaption>Lista de usuarios</TableCaption>
           <TableHeader>

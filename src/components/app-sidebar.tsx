@@ -25,6 +25,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
+// Definición de datos
 const data = {
   teams: [
     {
@@ -45,7 +46,7 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Administrador",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
@@ -151,7 +152,21 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, loading } = useAuth() || {}; // Si es null, devuelve un objeto vacío
-  console.log("usuario:" + user?.nombre);
+
+  // Filtrar elementos del menú basados en los roles del usuario
+  const filteredNavMain = React.useMemo(() => {
+    return data.navMain.filter((menu) => {
+      if (menu.title === "Administrador") {
+        return user?.roles?.includes(1); // Mostrar "Administrador" solo si el usuario tiene el rol 1
+      }
+      if (menu.title === "Models") {
+        return user?.roles?.includes(2); // Mostrar "Models" solo si el usuario tiene el rol 2
+      }
+      return true; // Mostrar otros menús sin restricciones
+    });
+  }, [user?.roles]);
+
+  console.log("Usuario:", user?.nombre);
 
   if (loading) {
     return <div>Loading...</div>; // O el componente de carga que prefieras
@@ -163,7 +178,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} /> {/* Usar el menú filtrado */}
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
