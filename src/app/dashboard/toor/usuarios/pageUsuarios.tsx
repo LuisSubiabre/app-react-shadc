@@ -19,8 +19,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
-
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { Input } from "@/components/ui/input";
@@ -37,8 +35,13 @@ const Usuarios: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
+  const [isModalClave, setIsModalClave] = useState<boolean>(false);
+
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessageClave, setErrorMessageClave] = useState<string | null>(
+    null
+  );
   const [newUser, setNewUser] = useState<Partial<User>>({
     nombre: "",
     email: "",
@@ -143,14 +146,19 @@ const Usuarios: React.FC = () => {
 
   /* Logica Editar usuario */
   const handleEditClick = (user: User) => {
+    setErrorMessage(null); // Limpiar error previo
     setCurrentUser(user);
     fetchUserRoles(user.id); // Carga los roles asignados
     setIsModalEditOpen(true);
   };
   const handleCloseEditModal = () => {
+    setIsModalEditOpen(false);
     setCurrentUser(null);
-    setErrorMessage(null);
+    setErrorMessage(null); // Limpiar mensaje de error
   };
+
+  // Si tienes un modal para cambiar contraseña
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (currentUser) {
       setCurrentUser({
@@ -162,9 +170,11 @@ const Usuarios: React.FC = () => {
 
   const handleSaveEdit = async () => {
     if (!currentUser) return;
-    if (!currentUser.nombre || !currentUser.email || !currentUser.rut) {
+    console.log(currentUser);
+    if (currentUser.nombre === "" || currentUser.email === "") {
       setErrorMessage("Todos los campos son obligatorios.");
       setSaving(false);
+      return;
     }
 
     setSaving(true);
@@ -289,8 +299,15 @@ const Usuarios: React.FC = () => {
       }
     }
   };
-
   /* Logica Roles */
+
+  /* Logica Cambiar Contraseña */
+  const handleChangePasswordClick = (user: User) => {
+    setCurrentUser(user);
+    setErrorMessageClave(null);
+    setIsModalClave(true);
+  };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -303,20 +320,7 @@ const Usuarios: React.FC = () => {
         <div>
           <Button onClick={handleAddUserClick}>Nuevo Usuario</Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => {
-            toast({
-              title: "Scheduled: Catch up ",
-              description: "Friday, February 10, 2023 at 5:57 PM",
-              action: (
-                <ToastAction altText="Goto schedule to undo">Undo</ToastAction>
-              ),
-            });
-          }}
-        >
-          Add to calendar
-        </Button>
+
         <Toaster />
 
         <Table>
@@ -359,7 +363,7 @@ const Usuarios: React.FC = () => {
                       />
                     </svg>
                   </Button>
-                  <Button>
+                  <Button onClick={() => handleChangePasswordClick(user)}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -371,7 +375,7 @@ const Usuarios: React.FC = () => {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 0 1-1.125-1.125v-3.75ZM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-8.25ZM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-2.25Z"
+                        d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                       />
                     </svg>
                   </Button>
@@ -389,7 +393,6 @@ const Usuarios: React.FC = () => {
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Usuario</DialogTitle>
             </DialogHeader>
-
             <form>
               <div className="space-y-4">
                 <div>
@@ -550,6 +553,100 @@ const Usuarios: React.FC = () => {
       )}
 
       {/* Editar usuario */}
+      {isModalClave && currentUser && (
+        <Dialog open={isModalClave} onOpenChange={setIsModalClave}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cambiar Contraseña</DialogTitle>
+            </DialogHeader>
+
+            <form>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="newPassword">
+                    usuario: {currentUser.nombre}
+                  </Label>
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    type="password"
+                    value={newUser.clave || ""}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, clave: e.target.value })
+                    }
+                    placeholder="Nueva Contraseña"
+                  />
+                </div>
+              </div>
+            </form>
+
+            {errorMessageClave && (
+              <p className="text-red-500">{errorMessageClave}</p>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => setIsModalClave(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  setSaving(true);
+                  setErrorMessageClave(null);
+
+                  if (!newUser.clave) {
+                    setErrorMessageClave("La contraseña es obligatoria.");
+                    setSaving(false);
+                    return;
+                  }
+
+                  try {
+                    const response = await fetch(
+                      `${API_BASE_URL}/usuarios/password/${currentUser.id}`,
+                      {
+                        method: "PATCH",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ clave: newUser.clave }),
+                      }
+                    );
+
+                    if (!response.ok) {
+                      const errorData = await response.json();
+                      setErrorMessageClave(
+                        errorData.error || "Error al cambiar la contraseña"
+                      );
+                      return;
+                    }
+                    setIsModalClave(false);
+                    setNewUser({ ...newUser, clave: "" });
+                    toast({
+                      title: "Contraseña actualizada",
+                      description:
+                        "La contraseña ha sido actualizada correctamente",
+                    });
+                  } catch (err: unknown) {
+                    if (err instanceof Error) {
+                      setErrorMessageClave(err.message);
+                    } else {
+                      setErrorMessageClave("Error desconocido");
+                    }
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+              >
+                {saving ? "Guardando..." : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
