@@ -37,6 +37,8 @@ const Usuarios: React.FC = () => {
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalClave, setIsModalClave] = useState<boolean>(false);
 
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorMessageClave, setErrorMessageClave] = useState<string | null>(
@@ -50,6 +52,9 @@ const Usuarios: React.FC = () => {
   });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<number[]>([]); // Estado para roles del usuario actual
+
+  //paginacion
+
   const { toast } = useToast();
 
   /* token para enviar al backend */
@@ -64,17 +69,29 @@ const Usuarios: React.FC = () => {
     fetchUsers();
   }, [userRoles]);
 
-  const fetchUsers = async () => {
+  // Filtrar usuarios según el término de búsqueda
+  const filteredUsers = users.filter((user) =>
+    user.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const fetchUsers = async (limit = 10, page = 2) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`);
+      // Construimos dinámicamente la URL con los parámetros
+      const url = new URL(`${API_BASE_URL}/usuarios`);
+      url.searchParams.append("limit", limit.toString());
+      url.searchParams.append("page", page.toString());
+      console.log(url);
+
+      // Realizamos la solicitud
+      const response = await fetch(url.toString());
       if (!response.ok) {
         throw new Error("Error al obtener los usuarios");
       }
       const data = await response.json();
 
-      // Ahora accedemos a la propiedad `data` que contiene los usuarios
-      setUsers(data.data || []); // Asegúrate de acceder a `data`
+      // Accedemos a la propiedad `data` para los usuarios
+      setUsers(data.data || []);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -319,6 +336,14 @@ const Usuarios: React.FC = () => {
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div>
           <Button onClick={handleAddUserClick}>Nuevo Usuario</Button>
+          <div className="m-4">
+            <Input
+              type="text"
+              placeholder="Buscar usuario por nombre"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         <Toaster />
@@ -334,7 +359,7 @@ const Usuarios: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 {user.activo ? (
                   <TableCell className="text-green-500">{user.id}</TableCell>
