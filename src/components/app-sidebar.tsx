@@ -60,6 +60,10 @@ const data = {
           url: "/dashboard/toor/roles",
         },
         {
+          title: "Cursos",
+          url: "/dashboard/toor/cursos",
+        },
+        {
           title: "Estudiantes",
           url: "/dashboard/toor/estudiantes",
         },
