@@ -31,7 +31,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
@@ -302,7 +310,36 @@ const Cursos: React.FC = () => {
                 </div>
                 <div>
                   <Label htmlFor="descripcion">Jefatura</Label>
-                  <select
+                  <Select
+                    onValueChange={(value) => {
+                      const selected = JSON.parse(value); // De
+                      setNewCurso({
+                        ...newCurso,
+                        profesor_jefe_id: selected.id,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Selecciona Jefatura" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Funcionarios</SelectLabel>
+                        {dataUsuarios?.map((user) => (
+                          <SelectItem
+                            key={user.id}
+                            value={JSON.stringify({
+                              id: user.id,
+                              nombre: user.nombre,
+                            })}
+                          >
+                            {user.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {/* <select
                     id="profesor_jefe_id"
                     name="profesor_jefe_id"
                     value={newCurso.profesor_jefe_id || ""}
@@ -316,7 +353,7 @@ const Cursos: React.FC = () => {
                         {user.nombre}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
                 </div>
                 <div>
                   <Label htmlFor="descripcion">Indice</Label>
@@ -383,6 +420,62 @@ const Cursos: React.FC = () => {
                   value={currentCurso.descripcion}
                   onChange={handleInputChange}
                 />
+              </div>
+              <div>
+                <Label htmlFor="descripcion">Jefatura</Label>
+                <Select
+                  value={JSON.stringify({
+                    id: currentCurso.profesor_jefe_id,
+                    nombre:
+                      dataUsuarios?.find(
+                        (user) => user.id === currentCurso.profesor_jefe_id
+                      )?.nombre || "",
+                  })}
+                  onValueChange={(value) => {
+                    const selected = JSON.parse(value);
+                    setCurrentCurso({
+                      ...currentCurso,
+                      profesor_jefe_id: selected.id,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Selecciona Jefatura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Funcionarios</SelectLabel>
+                      {dataUsuarios?.map((user) => (
+                        <SelectItem
+                          key={user.id}
+                          value={JSON.stringify({
+                            id: user.id,
+                            nombre: user.nombre,
+                          })}
+                        >
+                          {user.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+
+                {/* <select
+                  id="profesor_jefe_id"
+                  name="profesor_jefe_id"
+                  value={currentCurso.profesor_jefe_id}
+                  onChange={handleSelectChange}
+                  className="form-select"
+                >
+                  <option value="" disabled>
+                    Seleccionar profesor jefe
+                  </option>
+                  {dataUsuarios?.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.nombre}
+                    </option>
+                  ))}
+                </select> */}
               </div>
               <div className="mb-4">
                 <Label htmlFor="indice">Índice</Label>
