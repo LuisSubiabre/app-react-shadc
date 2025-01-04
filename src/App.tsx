@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/AuthProvider";
 import Roles from "@/app/dashboard/toor/roles/pageRoles";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
 import Logout from "./app/logout/pageLogout";
+import Cursos from "./app/dashboard/toor/cursos/pageCursos";
 
 function App() {
   return (
@@ -47,6 +48,16 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Roles />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/toor/cursos"
+          element={
+            <ProtectedRoute requiredRoles={[1]}>
+              <Layout>
+                <Cursos />
               </Layout>
             </ProtectedRoute>
           }
