@@ -74,7 +74,7 @@ const Usuarios: React.FC = () => {
     user.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const fetchUsers = async (limit = 10, page = 2) => {
+  const fetchUsers = async (limit = 180, page = 1) => {
     setLoading(true);
     try {
       // Construimos dinámicamente la URL con los parámetros
