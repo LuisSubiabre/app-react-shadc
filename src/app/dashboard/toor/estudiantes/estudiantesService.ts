@@ -4,6 +4,7 @@ import { API_BASE_URL } from "@/config/config.ts";
 import { Estudiante } from "./types"; // Importa la interfaz desde el archivo types.ts
 
 export const saveNew = async (estudiante: Estudiante, token: string) => {
+  console.log(estudiante);
   try {
     const response = await fetch(`${API_BASE_URL}/estudiantes`, {
       method: "POST",
@@ -23,6 +24,40 @@ export const saveNew = async (estudiante: Estudiante, token: string) => {
     throw new Error(
       error instanceof Error ? error.message : "Error desconocido"
     );
+  }
+};
+
+export const savaEdit = async (
+  token: string,
+  currentEstudiante: { id: string; nombre: string; descripcion?: string }
+): Promise<void> => {
+  if (!currentEstudiante.nombre) {
+    throw new Error("El nombre es obligatorio");
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/estudiantes/${currentEstudiante.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(currentEstudiante),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Error al guardar el rol");
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw new Error(err.message);
+    } else {
+      throw new Error("Unknown error occurred.");
+    }
   }
 };
 
