@@ -43,6 +43,7 @@ const Estudiantes: React.FC = () => {
     clave_email: "",
     clave: "",
     rut: "",
+    numlista: 0,
     curso_id: 1,
     activo: true,
   });
@@ -81,6 +82,7 @@ const Estudiantes: React.FC = () => {
       clave_email: "",
       clave: "",
       rut: "",
+      numlista: 0,
       curso_id: 99,
       activo: true,
     });
@@ -114,13 +116,7 @@ const Estudiantes: React.FC = () => {
       return;
     }
     try {
-      const response = await saveNew(newEstudiante as Estudiante, token);
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al guardar el estudiante");
-        return; // Salir sin cerrar el modal
-      }
-
+      await saveNew(newEstudiante as Estudiante, token);
       refetch(); // Recargar la lista de roles
       handleCloseNewModal(); // Solo se ejecuta si no hay error
     } catch (error) {

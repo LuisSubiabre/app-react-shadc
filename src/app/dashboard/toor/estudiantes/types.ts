@@ -6,7 +6,7 @@ export interface Estudiante {
   clave_email: string;
   rut?: string;
   curso_id: number;
-  //numlista: number;
+  numlista: number;
   activo: boolean;
   fecha_actualizacion: string;
   clave?: string; // Agregamos password como opcional

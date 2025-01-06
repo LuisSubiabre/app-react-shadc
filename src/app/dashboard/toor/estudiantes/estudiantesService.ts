@@ -52,7 +52,7 @@ export const deleteEstudiante = async (
     }
   } catch (err: unknown) {
     if (err instanceof Error) {
-      throw new Error(err.message);
+      throw new Error("-" + err.message);
     } else {
       throw new Error("Error desconocido");
     }
