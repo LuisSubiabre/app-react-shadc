@@ -1,5 +1,9 @@
 import * as Imports from "@/app/dashboard/toor/estudiantes/importEstudiantes.ts";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
+import {
+  saveNew,
+  deleteEstudiante,
+} from "@/app/dashboard/toor/estudiantes/estudiantesService.ts";
 
 const Estudiantes: React.FC = () => {
   const {
@@ -23,6 +27,14 @@ const Estudiantes: React.FC = () => {
     Label,
     Input,
     Checkbox,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
   } = Imports;
   const [isNewModalOpen, setisNewModalOpen] = useState<boolean>(false);
   const [newEstudiante, setNewEstudiante] = useState<Partial<Estudiante>>({
@@ -31,11 +43,16 @@ const Estudiantes: React.FC = () => {
     clave_email: "",
     clave: "",
     rut: "",
-    curso_id: 99,
+    curso_id: 1,
     activo: true,
   });
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+  const [estudianteDelete, setEstudianteDelete] = useState<Estudiante | null>(
+    null
+  );
 
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
@@ -83,13 +100,60 @@ const Estudiantes: React.FC = () => {
     setSaving(true);
     setErrorMessage(null);
     console.log("newEstudiante", newEstudiante);
-    // try {
-    //   await saveNew(newEstudiante, token);
-    //   setisNewModalOpen(false);
-    //   refetch();
-    // } catch (error: unknown) {
-    //   console.error(error);
-    // }
+    if (
+      !newEstudiante.nombre ||
+      !newEstudiante.email ||
+      !newEstudiante.clave_email ||
+      !newEstudiante.rut ||
+      !newEstudiante.clave ||
+      !newEstudiante.rut ||
+      !newEstudiante.rut
+    ) {
+      setErrorMessage("Faltan datos obligatorios!");
+      setSaving(false);
+      return;
+    }
+    try {
+      const response = await saveNew(newEstudiante as Estudiante, token);
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || "Error al guardar el estudiante");
+        return; // Salir sin cerrar el modal
+      }
+
+      refetch(); // Recargar la lista de roles
+      handleCloseNewModal(); // Solo se ejecuta si no hay error
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Error desconocido"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handleDeleteClick = (estudiante: Estudiante) => {
+    setEstudianteDelete(estudiante);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!estudianteDelete) return;
+
+    try {
+      await deleteEstudiante(token, {
+        ...estudianteDelete,
+        id: estudianteDelete.id.toString(),
+      }); // Usamos el servicio para eliminar el rol
+      // Actualizar la lista después de eliminar
+      refetch(); // Recargar la lista de roles
+      setIsDeleteDialogOpen(false); // Cerrar el diálogo de confirmación
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Error desconocido");
+      }
+    }
   };
 
   return (
@@ -239,6 +303,7 @@ const Estudiantes: React.FC = () => {
                 </div> */}
               </div>
             </form>
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
             <DialogFooter>
               <Button variant="secondary" onClick={handleCloseNewModal}>
@@ -249,6 +314,31 @@ const Estudiantes: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Confirmación de eliminación */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El estudiante se eliminará
+              permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Confirmación de eliminación */}
     </>
   );
 };

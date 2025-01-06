@@ -79,7 +79,7 @@ const Cursos: React.FC = () => {
   const handleSaveNew = async () => {
     setSaving(true);
     setErrorMessage(null);
-    console.log(newCurso);
+    //console.log(newCurso);
     if (!newCurso.nombre) {
       setErrorMessage("El nombre es obligatorio");
       setSaving(false);
