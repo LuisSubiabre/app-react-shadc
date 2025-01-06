@@ -2,6 +2,7 @@ import * as Imports from "@/app/dashboard/toor/estudiantes/importEstudiantes.ts"
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 import {
   saveNew,
+  savaEdit,
   deleteEstudiante,
 } from "@/app/dashboard/toor/estudiantes/estudiantesService.ts";
 
@@ -26,7 +27,6 @@ const Estudiantes: React.FC = () => {
     DialogTitle,
     Label,
     Input,
-    Checkbox,
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -49,6 +49,10 @@ const Estudiantes: React.FC = () => {
   });
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(
+    null
+  );
+  const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [estudianteDelete, setEstudianteDelete] = useState<Estudiante | null>(
@@ -83,7 +87,7 @@ const Estudiantes: React.FC = () => {
       clave: "",
       rut: "",
       numlista: 0,
-      curso_id: 99,
+      curso_id: 1,
       activo: true,
     });
     setErrorMessage(null); // Limpiar mensaje de error
@@ -127,6 +131,53 @@ const Estudiantes: React.FC = () => {
       setSaving(false);
     }
   };
+
+  /* Editar */
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (currentEstudiante) {
+      setCurrentEstudiante({
+        ...currentEstudiante,
+        [e.target.name]: e.target.value,
+      });
+    }
+  };
+
+  const handleEditClick = (estudiante: Estudiante) => {
+    console.log("estudiante", estudiante);
+    setCurrentEstudiante(estudiante);
+    setIsModalEditOpen(true);
+  };
+  const handleCloseEditModal = () => {
+    setCurrentEstudiante(null);
+    setErrorMessage(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!currentEstudiante) return;
+
+    setSaving(true);
+    setErrorMessage(null);
+
+    try {
+      await savaEdit(token, {
+        ...currentEstudiante,
+        id: currentEstudiante.id.toString(),
+      }); // Usamos el servicio
+      refetch(); // Recargar la lista de roles
+      handleCloseEditModal(); // Cerrar el modal solo si no hubo error
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* delete */
   const handleDeleteClick = (estudiante: Estudiante) => {
     setEstudianteDelete(estudiante);
     setIsDeleteDialogOpen(true);
@@ -178,7 +229,11 @@ const Estudiantes: React.FC = () => {
             {data && data.length > 0 ? (
               data.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.id}</TableCell>
+                  {c.activo ? (
+                    <TableCell className="text-green-500">{c.id}</TableCell>
+                  ) : (
+                    <TableCell className="text-red-500">{c.id}</TableCell>
+                  )}
                   <TableCell>
                     {c.nombre} <br />
                     <small>{c.email}</small>
@@ -266,7 +321,7 @@ const Estudiantes: React.FC = () => {
                   <Input
                     id="clave_email"
                     name="clave_email"
-                    type="email"
+                    type="text"
                     onChange={handleNewInputChange}
                     placeholder="Ingresa clave email"
                   />
@@ -284,13 +339,24 @@ const Estudiantes: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="descripcion">Número de lista</Label>
+                  <Input
+                    id="numlista"
+                    name="numlista"
+                    type="number"
+                    //value={newCurso.indice}
+                    onChange={handleNewInputChange}
+                    placeholder="Ingrese el número de lista"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="password">Contraseña sesión</Label>
                   <Input
                     id="clave"
                     name="clave"
                     type="password"
                     onChange={handleNewInputChange}
-                    placeholder="Contraseña"
+                    placeholder="Ingresa clave email"
                   />
                 </div>
                 {/* <div>
@@ -306,6 +372,112 @@ const Estudiantes: React.FC = () => {
                 Cancelar
               </Button>
               <Button onClick={handleSaveNew}>Guardar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Editar */}
+      {isModalEditOpen && currentEstudiante && (
+        <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Estudiante</DialogTitle>
+            </DialogHeader>
+
+            <form>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Nombre</Label>
+                  <Input
+                    id="name"
+                    name="nombre"
+                    value={currentEstudiante.nombre}
+                    onChange={handleInputChange}
+                    placeholder="Nombre del estudiante (apellidos nombres)"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={currentEstudiante.email}
+                    onChange={handleInputChange}
+                    placeholder="Ingresa email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Clave Email</Label>
+                  <Input
+                    id="clave_email"
+                    name="clave_email"
+                    type="text"
+                    value={currentEstudiante.clave_email}
+                    onChange={handleInputChange}
+                    placeholder="Ingresa email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rut">RUT</Label>
+                  <Input
+                    id="rut"
+                    name="rut"
+                    value={currentEstudiante.rut || ""}
+                    onChange={handleInputChange}
+                    placeholder="RUT del usuario"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rut">CURSO</Label>
+                  <Input
+                    id="curso_id"
+                    name="curso_id"
+                    value={currentEstudiante.curso_id || ""}
+                    onChange={handleInputChange}
+                    placeholder="curso id"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="descripcion">Número de lista</Label>
+                  <Input
+                    id="numlista"
+                    name="numlista"
+                    type="number"
+                    value={currentEstudiante.numlista}
+                    onChange={handleInputChange}
+                    placeholder="Ingrese el número de lista"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="activo">Activo </Label>
+                  <input
+                    id="activo"
+                    name="activo"
+                    type="checkbox"
+                    checked={currentEstudiante.activo}
+                    onChange={(e) =>
+                      setCurrentEstudiante({
+                        ...currentEstudiante,
+                        activo: e.target.checked,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </form>
+
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+
+            <DialogFooter>
+              <Button variant="secondary" onClick={handleCloseEditModal}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={saving}>
+                {saving ? "Guardando..." : "Guardar"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
