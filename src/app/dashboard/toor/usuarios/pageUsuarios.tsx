@@ -74,14 +74,13 @@ const Usuarios: React.FC = () => {
     user.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const fetchUsers = async (limit = 10, page = 2) => {
+  const fetchUsers = async (limit = 180, page = 1) => {
     setLoading(true);
     try {
       // Construimos dinámicamente la URL con los parámetros
       const url = new URL(`${API_BASE_URL}/usuarios`);
       url.searchParams.append("limit", limit.toString());
       url.searchParams.append("page", page.toString());
-      console.log(url);
 
       // Realizamos la solicitud
       const response = await fetch(url.toString());
@@ -187,7 +186,6 @@ const Usuarios: React.FC = () => {
 
   const handleSaveEdit = async () => {
     if (!currentUser) return;
-    console.log(currentUser);
     if (currentUser.nombre === "" || currentUser.email === "") {
       setErrorMessage("Todos los campos son obligatorios.");
       setSaving(false);

@@ -170,8 +170,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }, [user?.roles]);
 
-  console.log("Usuario:", user?.nombre);
-
   if (loading) {
     return <div>Loading...</div>; // O el componente de carga que prefieras
   }

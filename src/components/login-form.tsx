@@ -24,15 +24,13 @@ export function LoginForm({
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   const { login } = useAuth(); // Usamos directamente el hook useAuth
-
+  console.log(authToken);
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       setAuthToken(token);
     }
   }, []);
-
-  console.log(authToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

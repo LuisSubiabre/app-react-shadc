@@ -54,7 +54,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (response.ok) {
         setAuth(true);
         setUser(data.user);
-        //console.log("Token verificado:", data.user);
       } else {
         setAuth(false);
         localStorage.removeItem("token");
