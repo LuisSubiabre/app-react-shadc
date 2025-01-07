@@ -4,7 +4,6 @@ import { API_BASE_URL } from "@/config/config.ts";
 import { Curso } from "./types"; // Importa la interfaz desde el archivo types.ts
 
 export const saveNew = async (newCurso: Partial<Curso>, token: string) => {
-  console.log("newCurso", newCurso);
   try {
     const response = await fetch(`${API_BASE_URL}/cursos`, {
       method: "POST",

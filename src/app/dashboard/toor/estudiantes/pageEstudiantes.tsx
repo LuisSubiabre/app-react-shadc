@@ -1,5 +1,6 @@
 import * as Imports from "@/app/dashboard/toor/estudiantes/importEstudiantes.ts";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
+import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
 import {
   saveNew,
   savaEdit,
@@ -7,7 +8,7 @@ import {
   updatePassword,
 } from "@/app/dashboard/toor/estudiantes/estudiantesService.ts";
 import { Toaster } from "@/components/ui/toaster";
-import { toast, useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Estudiantes: React.FC = () => {
   const {
@@ -38,6 +39,13 @@ const Estudiantes: React.FC = () => {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
   } = Imports;
   const [isNewModalOpen, setisNewModalOpen] = useState<boolean>(false);
   const [newEstudiante, setNewEstudiante] = useState<Partial<Estudiante>>({
@@ -79,6 +87,7 @@ const Estudiantes: React.FC = () => {
     "estudiantes",
     token
   ); // Trae los datos de la API
+  const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
 
   if (loading) return <div className="spinner">Cargando...</div>;
   if (error) return <div className="error">{error}</div>; // Mensaje de error al cargar los datos de la API
@@ -114,7 +123,6 @@ const Estudiantes: React.FC = () => {
   const handleSaveNew = async () => {
     setSaving(true);
     setErrorMessage(null);
-    console.log("newEstudiante", newEstudiante);
     if (
       !newEstudiante.nombre ||
       !newEstudiante.email ||
@@ -157,6 +165,8 @@ const Estudiantes: React.FC = () => {
     setIsModalEditOpen(true);
   };
   const handleCloseEditModal = () => {
+    setIsModalEditOpen(false);
+    setisNewModalOpen(false);
     setCurrentEstudiante(null);
     setErrorMessage(null);
   };
@@ -374,6 +384,38 @@ const Estudiantes: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="descripcion">Curso</Label>
+                  <Select
+                    onValueChange={(value) => {
+                      const selected = JSON.parse(value); // De
+                      setNewEstudiante({
+                        ...newEstudiante,
+                        curso_id: selected.id,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Seleccione Curso..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Funcionarios</SelectLabel>
+                        {dataCursos?.map((c) => (
+                          <SelectItem
+                            key={c.id}
+                            value={JSON.stringify({
+                              id: c.id,
+                              nombre: c.nombre,
+                            })}
+                          >
+                            {c.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="descripcion">Número de lista</Label>
                   <Input
                     id="numlista"
@@ -465,14 +507,43 @@ const Estudiantes: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="rut">CURSO</Label>
-                  <Input
-                    id="curso_id"
-                    name="curso_id"
-                    value={currentEstudiante.curso_id || ""}
-                    onChange={handleInputChange}
-                    placeholder="curso id"
-                  />
+                  <Label htmlFor="descripcion">Jefatura</Label>
+                  <Select
+                    value={JSON.stringify({
+                      id: currentEstudiante.curso_id,
+                      nombre:
+                        dataCursos?.find(
+                          (c) => c.id === currentEstudiante.curso_id
+                        )?.nombre || "",
+                    })}
+                    onValueChange={(value) => {
+                      const selected = JSON.parse(value);
+                      setCurrentEstudiante({
+                        ...currentEstudiante,
+                        curso_id: selected.id,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Selecciona Jefatura" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Funcionarios</SelectLabel>
+                        {dataCursos?.map((c) => (
+                          <SelectItem
+                            key={c.id}
+                            value={JSON.stringify({
+                              id: c.id,
+                              nombre: c.nombre,
+                            })}
+                          >
+                            {c.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="descripcion">Número de lista</Label>
