@@ -93,3 +93,36 @@ export const deleteEstudiante = async (
     }
   }
 };
+
+export const updatePassword = async (
+  token: string,
+  userId: number,
+  newPassword: string
+): Promise<void> => {
+  console.log(userId);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/estudiantes/password/${userId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ clave: newPassword }),
+      }
+    );
+    console.log(response);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Error al cambiar la contraseña.");
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw new Error(err.message);
+    } else {
+      throw new Error("Error desconocido.");
+    }
+  }
+};
