@@ -165,6 +165,8 @@ const Estudiantes: React.FC = () => {
     setIsModalEditOpen(true);
   };
   const handleCloseEditModal = () => {
+    setIsModalEditOpen(false);
+    setisNewModalOpen(false);
     setCurrentEstudiante(null);
     setErrorMessage(null);
   };
