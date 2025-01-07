@@ -4,7 +4,6 @@ import { API_BASE_URL } from "@/config/config.ts";
 import { Estudiante } from "./types"; // Importa la interfaz desde el archivo types.ts
 
 export const saveNew = async (estudiante: Estudiante, token: string) => {
-  console.log(estudiante);
   try {
     const response = await fetch(`${API_BASE_URL}/estudiantes`, {
       method: "POST",
@@ -99,7 +98,6 @@ export const updatePassword = async (
   userId: number,
   newPassword: string
 ): Promise<void> => {
-  console.log(userId);
   try {
     const response = await fetch(
       `${API_BASE_URL}/estudiantes/password/${userId}`,
@@ -112,7 +110,6 @@ export const updatePassword = async (
         body: JSON.stringify({ clave: newPassword }),
       }
     );
-    console.log(response);
 
     if (!response.ok) {
       const errorData = await response.json();
