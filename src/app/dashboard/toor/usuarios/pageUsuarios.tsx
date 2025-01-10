@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,8 @@ import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hoo
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
 import { Rol } from "@/app/dashboard/toor/roles/types"; // Importa la interfaz desde el archivo types.ts
 import { Toaster } from "@/components/ui/toaster";
+import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -36,7 +39,8 @@ const Usuarios: React.FC = () => {
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalClave, setIsModalClave] = useState<boolean>(false);
-
+  const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
+  const [userCursos, setUserCursos] = useState<number[]>([]); // Estado para cursos del usuario actual
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const [saving, setSaving] = useState<boolean>(false);
@@ -64,6 +68,7 @@ const Usuarios: React.FC = () => {
   }
   const token = getTokenFromContext.authToken;
   const { data } = useFetch<Rol[]>("roles", token); // Trae los datos de la API
+  const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
 
   useEffect(() => {
     fetchUsers();
@@ -233,14 +238,11 @@ const Usuarios: React.FC = () => {
   const fetchUserRoles = async (id: number): Promise<void> => {
     setUserRoles([]); // Limpiar roles
     try {
-      const response = await fetch(
-        `http://localhost:3100/usuariosroles/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/usuariosroles/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Error al obtener los roles del usuario");
@@ -323,6 +325,87 @@ const Usuarios: React.FC = () => {
     setIsModalClave(true);
   };
 
+  /* Logica Cursos */
+  const handleCursosClick = (user: User) => {
+    setCurrentUser(user);
+    setIsModalCursosOpen(true);
+    fetchUsuarioCursos(user.id);
+  };
+
+  const handleCloseCursosModal = () => {
+    setIsModalCursosOpen(false);
+    //setNewUser({ nombre: "", email: "", rut: "", clave: "" });
+    setErrorMessage(null); // Limpiar mensaje de error
+  };
+
+  const asignarCurso = async (idCurso: number, isChecked: boolean) => {
+    const verbo = isChecked ? "POST" : "DELETE";
+    try {
+      const response = await fetch(`${API_BASE_URL}/usuarioscursos`, {
+        method: verbo,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          curso_id: idCurso,
+          usuario_id: currentUser?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || "Error al asignar el curso");
+        throw new Error(errorData.error || "Error al asignar el curso");
+      }
+      toast({
+        title: isChecked ? "Curso asignado" : "Curso eliminado",
+        description: isChecked
+          ? "El curso ha sido asignado correctamente"
+          : "El curso ha sido eliminado correctamente",
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred");
+      }
+    }
+  };
+
+  const fetchUsuarioCursos = async (id: number): Promise<void> => {
+    try {
+      const response = await fetch(
+        `http://localhost:3100/usuarioscursos/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al obtener los cursos del usuario");
+      }
+
+      const cursos: { curso_id: number }[] | null = await response.json(); // Puede ser un array o null
+      if (!cursos || cursos.length === 0) {
+        console.warn("No se encontraron cursos para este usuario");
+        setUserCursos([]); // Dejar la lista vacía
+        return;
+      }
+
+      const userCursos = cursos.map((curso) => curso.curso_id); // Almacena los IDs de los cursos
+      setUserCursos(userCursos);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Error:", err.message);
+      } else {
+        console.error("Error desconocido:", err);
+      }
+    }
+  };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -383,6 +466,25 @@ const Usuarios: React.FC = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                      />
+                    </svg>
+                  </Button>
+                  <Button
+                    className="mr-2"
+                    onClick={() => handleCursosClick(user)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
                       />
                     </svg>
                   </Button>
@@ -575,7 +677,7 @@ const Usuarios: React.FC = () => {
         </Dialog>
       )}
 
-      {/* Editar usuario */}
+      {/* Editar clave */}
       {isModalClave && currentUser && (
         <Dialog open={isModalClave} onOpenChange={setIsModalClave}>
           <DialogContent>
@@ -666,6 +768,78 @@ const Usuarios: React.FC = () => {
               >
                 {saving ? "Guardando..." : "Guardar"}
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Cursos */}
+      {/* Nuevo usuario */}
+      {isModalCursosOpen && (
+        <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Asignar Cursos</DialogTitle>
+            </DialogHeader>
+            <Alert>
+              <AlertTitle>Atención</AlertTitle>
+              <AlertDescription>
+                La información de los cursos se actualiza automáticamente al dar
+                click.
+              </AlertDescription>
+            </Alert>
+
+            <form>
+              <div className="space-y-4">
+                {currentUser?.nombre}
+                <Separator />
+
+                <div>
+                  {dataCursos?.map((curso) => (
+                    <div key={curso.id}>
+                      <Checkbox
+                        id={`curso-${curso.id}`}
+                        value={JSON.stringify({
+                          id: curso.id,
+                          nombre: curso.nombre,
+                        })}
+                        checked={userCursos.includes(curso.id)}
+                        onClick={() => {
+                          if (userCursos.includes(curso.id)) {
+                            setUserCursos((prevCursos) =>
+                              prevCursos.filter((id) => id !== curso.id)
+                            );
+                            asignarCurso(curso.id, false);
+                          } else {
+                            setUserCursos((prevCursos) => [
+                              ...prevCursos,
+                              curso.id,
+                            ]);
+                            asignarCurso(curso.id, true);
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`curso-${curso.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {curso.nombre}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </form>
+
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+
+            <DialogFooter>
+              <Button variant="secondary" onClick={handleCloseCursosModal}>
+                Cerrar
+              </Button>
+              {/* <Button onClick={handleSaveNewUser} disabled={saving}>
+                {saving ? "Guardando..." : "Guardar"}
+              </Button> */}
             </DialogFooter>
           </DialogContent>
         </Dialog>
