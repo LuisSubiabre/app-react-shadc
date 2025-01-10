@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Asignatura } from "./types";
+import { Asignatura, AsignaturaCursoResponse } from "./types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,8 +44,6 @@ import {
   saveNew,
   saveEdit,
   deleteAsignatura,
-  fetchAsignaturaCursos,
-  guardarAsignaciones,
   eliminarAsignacion,
   asignarCurso,
   actualizarAsignacion,
@@ -54,7 +52,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Curso } from "@/app/dashboard/toor/cursos/types";
 import { User } from "@/app/dashboard/toor/usuarios/types";
-import { AsignacionPendiente } from "./types";
+//import { AsignacionPendiente } from "./types";
 
 const Asignaturas: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -77,10 +75,9 @@ const Asignaturas: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [asignaturaToDelete, setAsignaturaToDelete] =
     useState<Asignatura | null>(null);
-  const [asignaturaCursos, setAsignaturaCursos] = useState<number[]>([]);
-  const [asignacionesPendientes, setAsignacionesPendientes] = useState<
-    AsignacionPendiente[]
-  >([]);
+  // const [asignacionesPendientes, setAsignacionesPendientes] = useState<
+  //   AsignacionPendiente[]
+  // >([]);
   const [asignacionesActuales, setAsignacionesActuales] = useState<
     Map<number, number[]>
   >(new Map());
@@ -103,7 +100,15 @@ const Asignaturas: React.FC = () => {
   if (loading) return <div className="spinner">Cargando...</div>;
   if (error) return <div className="error">{error}</div>;
 
-  const handleSaveNew = async () => {
+  const handleSaveNewFromButton = async (
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.preventDefault();
+    await handleSaveNew(e as unknown as React.FormEvent<HTMLFormElement>);
+  };
+
+  const handleSaveNew = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setSaving(true);
     setErrorMessage(null);
 
@@ -114,6 +119,8 @@ const Asignaturas: React.FC = () => {
     }
 
     try {
+      //const newAsignaturaData: Partial<Asignatura> = { ...newAsignatura };
+
       await saveNew(newAsignatura, token);
       refetch();
       handleCloseNewModal();
@@ -201,7 +208,15 @@ const Asignaturas: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEditFromButton = async (
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    e.preventDefault();
+    await handleSaveEdit(e as unknown as React.FormEvent<HTMLFormElement>);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!currentAsignatura) return;
     setSaving(true);
     setErrorMessage(null);
@@ -256,7 +271,7 @@ const Asignaturas: React.FC = () => {
       );
       const asignacionesMap = new Map();
 
-      response.data.forEach((asignacion) => {
+      response.data.forEach((asignacion: AsignaturaCursoResponse) => {
         asignacionesMap.set(asignacion.curso_id, [asignacion.profesor_id]);
       });
 
@@ -276,7 +291,7 @@ const Asignaturas: React.FC = () => {
   const handleCloseCursosModal = () => {
     setIsModalCursosOpen(false);
     setCurrentAsignatura(null);
-    setAsignacionesPendientes([]);
+    //setAsignacionesPendientes([]);
     setAsignacionesActuales(new Map());
   };
 
@@ -513,7 +528,7 @@ const Asignaturas: React.FC = () => {
             <Button variant="outline" onClick={handleCloseNewModal}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveNew} disabled={saving}>
+            <Button onClick={handleSaveNewFromButton} disabled={saving}>
               {saving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
@@ -605,7 +620,7 @@ const Asignaturas: React.FC = () => {
             <Button variant="outline" onClick={handleCloseEditModal}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
+            <Button onClick={handleSaveEditFromButton} disabled={saving}>
               {saving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>

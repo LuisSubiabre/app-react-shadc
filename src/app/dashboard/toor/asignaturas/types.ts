@@ -21,7 +21,7 @@ export interface Asignatura {
 export interface AsignaturaCursoUsuario {
   asignatura_id: number;
   curso_id: number;
-  usuario_id: number;
+  profesor_id: number;
 }
 
 export interface AsignacionPendiente {
@@ -42,18 +42,13 @@ export interface AsignaturaCursoResponse {
 
 export interface ApiResponse<T> {
   data: T[];
-  links: {
-    rel: string;
-    href: string;
-    method: string;
-  }[];
+  links: Link[];
 }
 
 export interface AsignaturasResponse {
   info: {
     count: number;
     pages: number;
-    currentPage: number;
     next: string | null;
     prev: string | null;
   };

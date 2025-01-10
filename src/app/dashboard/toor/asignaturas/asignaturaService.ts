@@ -1,5 +1,10 @@
 import { API_BASE_URL } from "@/config/config.ts";
-import { Asignatura, AsignaturaCurso, AsignaturaCursoUsuario } from "./types";
+import {
+  Asignatura,
+  ApiResponse,
+  AsignaturaCursoResponse,
+  AsignaturaCursoUsuario,
+} from "./types";
 
 export const saveNew = async (
   newAsignatura: Partial<Asignatura>,
