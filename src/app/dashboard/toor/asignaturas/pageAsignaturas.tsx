@@ -31,13 +31,35 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useFetch } from "@/hooks/useFetch";
-import { saveNew, saveEdit, deleteAsignatura } from "./asignaturaService";
+import {
+  saveNew,
+  saveEdit,
+  deleteAsignatura,
+  fetchAsignaturaCursos,
+  guardarAsignaciones,
+  eliminarAsignacion,
+  asignarCurso,
+  actualizarAsignacion,
+  obtenerAsignacionesPorAsignatura,
+} from "./asignaturaService";
+import { useToast } from "@/hooks/use-toast";
+import { Curso } from "@/app/dashboard/toor/cursos/types";
+import { User } from "@/app/dashboard/toor/usuarios/types";
+import { AsignacionPendiente } from "./types";
 
 const Asignaturas: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
+  const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newAsignatura, setNewAsignatura] = useState<Partial<Asignatura>>({
@@ -55,6 +77,14 @@ const Asignaturas: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [asignaturaToDelete, setAsignaturaToDelete] =
     useState<Asignatura | null>(null);
+  const [asignaturaCursos, setAsignaturaCursos] = useState<number[]>([]);
+  const [asignacionesPendientes, setAsignacionesPendientes] = useState<
+    AsignacionPendiente[]
+  >([]);
+  const [asignacionesActuales, setAsignacionesActuales] = useState<
+    Map<number, number[]>
+  >(new Map());
+  const { toast } = useToast();
 
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -66,6 +96,9 @@ const Asignaturas: React.FC = () => {
     "asignaturas",
     token
   );
+
+  const { data: dataCursos } = useFetch<Curso[]>("cursos", token);
+  const { data: dataUsuarios } = useFetch<User[]>("usuarios", token);
 
   if (loading) return <div className="spinner">Cargando...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -209,6 +242,110 @@ const Asignaturas: React.FC = () => {
     }
   };
 
+  const handleOpenCursosModal = (asignatura: Asignatura) => {
+    setCurrentAsignatura(asignatura);
+    setIsModalCursosOpen(true);
+    cargarAsignaciones(asignatura.asignatura_id);
+  };
+
+  const cargarAsignaciones = async (asignaturaId: number) => {
+    try {
+      const response = await obtenerAsignacionesPorAsignatura(asignaturaId, token);
+      const asignacionesMap = new Map();
+      
+      response.data.forEach(asignacion => {
+        asignacionesMap.set(asignacion.curso_id, [asignacion.profesor_id]);
+      });
+      
+      setAsignacionesActuales(asignacionesMap);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al cargar las asignaciones",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCloseCursosModal = () => {
+    setIsModalCursosOpen(false);
+    setCurrentAsignatura(null);
+    setAsignacionesPendientes([]);
+    setAsignacionesActuales(new Map());
+  };
+
+  const handleCursoChange = async (cursoId: number, checked: boolean) => {
+    if (!currentAsignatura) return;
+
+    try {
+      if (checked) {
+        await asignarCurso(currentAsignatura.asignatura_id, cursoId, 1, token);
+        // Actualizar estado local
+        const newAsignaciones = new Map(asignacionesActuales);
+        newAsignaciones.set(cursoId, [1]); // usuario_id 1 por defecto
+        setAsignacionesActuales(newAsignaciones);
+      } else {
+        await eliminarAsignacion(
+          currentAsignatura.asignatura_id,
+          cursoId,
+          1,
+          token
+        );
+        // Actualizar estado local
+        const newAsignaciones = new Map(asignacionesActuales);
+        newAsignaciones.delete(cursoId);
+        setAsignacionesActuales(newAsignaciones);
+      }
+
+      toast({
+        title: "Éxito",
+        description: checked
+          ? "Curso asignado correctamente"
+          : "Curso desasignado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al gestionar el curso",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUsuariosChange = async (cursoId: number, usuarioId: string) => {
+    if (!currentAsignatura) return;
+
+    try {
+      const numericUsuarioId = Number(usuarioId);
+      await actualizarAsignacion(
+        currentAsignatura.asignatura_id,
+        cursoId,
+        numericUsuarioId,
+        token
+      );
+
+      // Actualizar estado local
+      const newAsignaciones = new Map(asignacionesActuales);
+      newAsignaciones.set(cursoId, [numericUsuarioId]);
+      setAsignacionesActuales(newAsignaciones);
+
+      toast({
+        title: "Éxito",
+        description: "Usuario asignado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al asignar usuario",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -269,6 +406,13 @@ const Asignaturas: React.FC = () => {
                       onClick={() => handleDeleteClick(asignatura)}
                     >
                       Eliminar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenCursosModal(asignatura)}
+                    >
+                      Cursos
                     </Button>
                   </div>
                 </TableCell>
@@ -457,6 +601,100 @@ const Asignaturas: React.FC = () => {
             </Button>
             <Button onClick={handleSaveEdit} disabled={saving}>
               {saving ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para asignar cursos */}
+      <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Asignar Cursos - {currentAsignatura?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {dataCursos?.map((curso) => {
+              const usuariosAsignados =
+                asignacionesActuales.get(curso.id) || [];
+              const isSelected = usuariosAsignados.length > 0;
+              const currentUserId = usuariosAsignados[0]?.toString();
+
+              return (
+                <div
+                  key={curso.id}
+                  className="space-y-3 border-b pb-3 last:border-0"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`curso-${curso.id}`}
+                        checked={isSelected}
+                        onCheckedChange={(checked) =>
+                          handleCursoChange(curso.id, checked as boolean)
+                        }
+                      />
+                      <Label
+                        htmlFor={`curso-${curso.id}`}
+                        className="font-medium"
+                      >
+                        {curso.nombre}
+                      </Label>
+                    </div>
+
+                    {isSelected && (
+                      <Select
+                        value={currentUserId}
+                        onValueChange={(value) =>
+                          handleUsuariosChange(curso.id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Seleccionar usuario" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dataUsuarios?.map((usuario) => (
+                            <SelectItem
+                              key={usuario.id}
+                              value={usuario.id.toString()}
+                            >
+                              {usuario.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+
+                  {isSelected && (
+                    <div className="ml-6">
+                      <div className="flex flex-wrap gap-2">
+                        {usuariosAsignados.map((userId) => {
+                          const usuario = dataUsuarios?.find(
+                            (u) => u.id === userId
+                          );
+                          return (
+                            usuario && (
+                              <div
+                                key={usuario.id}
+                                className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded text-sm"
+                              >
+                                <span>{usuario.nombre}</span>
+                              </div>
+                            )
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseCursosModal}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

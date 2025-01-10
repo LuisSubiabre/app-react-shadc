@@ -18,6 +18,37 @@ export interface Asignatura {
   links: Link[];
 }
 
+export interface AsignaturaCursoUsuario {
+  asignatura_id: number;
+  curso_id: number;
+  usuario_id: number;
+}
+
+export interface AsignacionPendiente {
+  curso_id: number;
+  usuarios: number[];
+}
+
+export interface AsignaturaCursoResponse {
+  asignatura_id: number;
+  curso_id: number;
+  profesor_id: number;
+  asignatura_nombre: string;
+  curso_nombre: string;
+  curso_descripcion: string;
+  profesor_nombre: string;
+  profesor_email: string;
+}
+
+export interface ApiResponse<T> {
+  data: T[];
+  links: {
+    rel: string;
+    href: string;
+    method: string;
+  }[];
+}
+
 export interface AsignaturasResponse {
   info: {
     count: number;
