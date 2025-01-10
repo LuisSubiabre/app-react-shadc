@@ -250,18 +250,24 @@ const Asignaturas: React.FC = () => {
 
   const cargarAsignaciones = async (asignaturaId: number) => {
     try {
-      const response = await obtenerAsignacionesPorAsignatura(asignaturaId, token);
+      const response = await obtenerAsignacionesPorAsignatura(
+        asignaturaId,
+        token
+      );
       const asignacionesMap = new Map();
-      
-      response.data.forEach(asignacion => {
+
+      response.data.forEach((asignacion) => {
         asignacionesMap.set(asignacion.curso_id, [asignacion.profesor_id]);
       });
-      
+
       setAsignacionesActuales(asignacionesMap);
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al cargar las asignaciones",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al cargar las asignaciones",
         variant: "destructive",
       });
     }
