@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde h
 import { Rol } from "@/app/dashboard/toor/roles/types"; // Importa la interfaz desde el archivo types.ts
 import { Toaster } from "@/components/ui/toaster";
 import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Usuarios: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -236,14 +238,11 @@ const Usuarios: React.FC = () => {
   const fetchUserRoles = async (id: number): Promise<void> => {
     setUserRoles([]); // Limpiar roles
     try {
-      const response = await fetch(
-        `http://localhost:3100/usuariosroles/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/usuariosroles/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Error al obtener los roles del usuario");
@@ -331,6 +330,47 @@ const Usuarios: React.FC = () => {
     setCurrentUser(user);
     setIsModalCursosOpen(true);
     fetchUsuarioCursos(user.id);
+  };
+
+  const handleCloseCursosModal = () => {
+    setIsModalCursosOpen(false);
+    //setNewUser({ nombre: "", email: "", rut: "", clave: "" });
+    setErrorMessage(null); // Limpiar mensaje de error
+  };
+
+  const asignarCurso = async (idCurso: number, isChecked: boolean) => {
+    const verbo = isChecked ? "POST" : "DELETE";
+    try {
+      const response = await fetch(`${API_BASE_URL}/usuarioscursos`, {
+        method: verbo,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          curso_id: idCurso,
+          usuario_id: currentUser?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.error || "Error al asignar el curso");
+        throw new Error(errorData.error || "Error al asignar el curso");
+      }
+      toast({
+        title: isChecked ? "Curso asignado" : "Curso eliminado",
+        description: isChecked
+          ? "El curso ha sido asignado correctamente"
+          : "El curso ha sido eliminado correctamente",
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Unknown error occurred");
+      }
+    }
   };
 
   const fetchUsuarioCursos = async (id: number): Promise<void> => {
@@ -741,11 +781,20 @@ const Usuarios: React.FC = () => {
             <DialogHeader>
               <DialogTitle>Asignar Cursos</DialogTitle>
             </DialogHeader>
+            <Alert>
+              <AlertTitle>Atención</AlertTitle>
+              <AlertDescription>
+                La información de los cursos se actualiza automáticamente al dar
+                click.
+              </AlertDescription>
+            </Alert>
+
             <form>
               <div className="space-y-4">
                 {currentUser?.nombre}
+                <Separator />
+
                 <div>
-                  Listado de cursos
                   {dataCursos?.map((curso) => (
                     <div key={curso.id}>
                       <Checkbox
@@ -760,13 +809,13 @@ const Usuarios: React.FC = () => {
                             setUserCursos((prevCursos) =>
                               prevCursos.filter((id) => id !== curso.id)
                             );
-                            alert("Curso eliminado");
+                            asignarCurso(curso.id, false);
                           } else {
                             setUserCursos((prevCursos) => [
                               ...prevCursos,
                               curso.id,
                             ]);
-                            alert("Curso asignado");
+                            asignarCurso(curso.id, true);
                           }
                         }}
                       />
@@ -785,12 +834,12 @@ const Usuarios: React.FC = () => {
             {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
             <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseNewUserModal}>
-                Cancelar
+              <Button variant="secondary" onClick={handleCloseCursosModal}>
+                Cerrar
               </Button>
-              <Button onClick={handleSaveNewUser} disabled={saving}>
+              {/* <Button onClick={handleSaveNewUser} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar"}
-              </Button>
+              </Button> */}
             </DialogFooter>
           </DialogContent>
         </Dialog>
