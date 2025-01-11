@@ -10,6 +10,7 @@ import Roles from "@/app/dashboard/toor/roles/pageRoles";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
 import Logout from "./app/logout/pageLogout";
 import Cursos from "./app/dashboard/toor/cursos/pageCursos";
+import Asignaturas from "./app/dashboard/toor/asignaturas/pageAsignaturas";
 
 function App() {
   return (
@@ -68,6 +69,16 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Estudiantes />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/toor/asignaturas"
+          element={
+            <ProtectedRoute requiredRoles={[1]}>
+              <Layout>
+                <Asignaturas />
               </Layout>
             </ProtectedRoute>
           }

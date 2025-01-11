@@ -67,6 +67,10 @@ const data = {
           title: "Estudiantes",
           url: "/dashboard/toor/estudiantes",
         },
+        {
+          title: "Asignaturas",
+          url: "/dashboard/toor/asignaturas",
+        },
       ],
     },
     {
