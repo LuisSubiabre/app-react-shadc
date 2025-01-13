@@ -7,6 +7,7 @@ interface User {
   nombre: string;
   email: string;
   roles: number[];
+  cursos: number[];
 }
 
 // Definir la interfaz para el contexto de autenticación

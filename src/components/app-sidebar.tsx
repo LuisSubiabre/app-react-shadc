@@ -1,4 +1,6 @@
 import React from "react";
+import { useLocation } from "react-router-dom"; // Importar useLocation para obtener la ruta actual
+
 import {
   AudioWaveform,
   BookOpen,
@@ -49,7 +51,7 @@ const data = {
       title: "Administrador",
       url: "#",
       icon: SquareTerminal,
-      isActive: true,
+      isActive: false,
       items: [
         {
           title: "Usuarios",
@@ -74,20 +76,30 @@ const data = {
       ],
     },
     {
-      title: "Models",
+      title: "Académico",
       url: "#",
       icon: Bot,
+      isActive: false,
+
       items: [
         {
-          title: "Genesis",
+          title: "Inicio",
+          url: "/dashboard/academico/inicio",
+        },
+        {
+          title: "Jefaturas",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "Asignaturas",
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "Calificaciones",
+          url: "#",
+        },
+        {
+          title: "Libretas",
           url: "#",
         },
       ],
@@ -160,10 +172,20 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, loading } = useAuth() || {}; // Si es null, devuelve un objeto vacío
+  const location = useLocation(); // Obtener la ruta actual
 
   // Filtrar elementos del menú basados en los roles del usuario
+  console.log(user);
   const filteredNavMain = React.useMemo(() => {
     return data.navMain.filter((menu) => {
+      if (menu.items) {
+        menu.items = menu.items.filter((item) => {
+          if (item.url === location.pathname) {
+            menu.isActive = true;
+          }
+          return true;
+        });
+      }
       if (menu.title === "Administrador") {
         return user?.roles?.includes(1); // Mostrar "Administrador" solo si el usuario tiene el rol 1
       }
@@ -172,7 +194,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       return true; // Mostrar otros menús sin restricciones
     });
-  }, [user?.roles]);
+  }, [location.pathname, user?.roles]);
 
   if (loading) {
     return <div>Loading...</div>; // O el componente de carga que prefieras
