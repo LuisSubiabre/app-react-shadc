@@ -43,6 +43,7 @@ import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hoo
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
 import { savaEdit } from "./cursoService";
 import { API_BASE_URL } from "@/config/config";
+import { NavLink } from "react-router-dom";
 
 const AcademicoInicio: React.FC = () => {
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
@@ -299,7 +300,11 @@ const AcademicoInicio: React.FC = () => {
     }
   };
 
-  const handleCheckboxChange = (estudiante_id: number, asignatura_id: number, isChecked: boolean) => {
+  const handleCheckboxChange = (
+    estudiante_id: number,
+    asignatura_id: number,
+    isChecked: boolean
+  ) => {
     if (isChecked) {
       // Si está marcando el checkbox, proceder normalmente
       handleStudentEnrollment(estudiante_id, asignatura_id, true);
@@ -308,7 +313,7 @@ const AcademicoInicio: React.FC = () => {
       setConfirmationData({
         show: true,
         estudiante_id,
-        asignatura_id
+        asignatura_id,
       });
     }
   };
@@ -353,9 +358,13 @@ const AcademicoInicio: React.FC = () => {
                       >
                         Asignaturas
                       </Button>
-                      <Button variant="secondary" className="mr-2">
-                        Notas
-                      </Button>
+                      <NavLink
+                        to={`/dashboard/academico/calificaciones/${c.id}`}
+                      >
+                        <Button variant="secondary" className="mr-2">
+                          Notas
+                        </Button>
+                      </NavLink>
                       <Button variant="secondary" className="mr-2">
                         <Printer />
                       </Button>
@@ -570,7 +579,8 @@ const AcademicoInicio: React.FC = () => {
                           }
                         );
 
-                        if (!response.ok) throw new Error("Error al actualizar profesor");
+                        if (!response.ok)
+                          throw new Error("Error al actualizar profesor");
 
                         setSelectedSubject({
                           ...selectedSubject,
@@ -670,8 +680,8 @@ const AcademicoInicio: React.FC = () => {
       </Dialog>
 
       {/* Modal de confirmación para desinscribir */}
-      <Dialog 
-        open={confirmationData.show} 
+      <Dialog
+        open={confirmationData.show}
         onOpenChange={(open) => setConfirmationData({ show: open })}
       >
         <DialogContent>
@@ -680,7 +690,9 @@ const AcademicoInicio: React.FC = () => {
           </DialogHeader>
           <div className="py-4">
             <p>¿Está seguro de realizar esta acción?</p>
-            <p className="text-red-500">Las calificaciones se eliminarán para el estudiante.</p>
+            <p className="text-red-500">
+              Las calificaciones se eliminarán para el estudiante.
+            </p>
           </div>
           <DialogFooter>
             <Button
@@ -692,7 +704,10 @@ const AcademicoInicio: React.FC = () => {
             <Button
               variant="destructive"
               onClick={() => {
-                if (confirmationData.estudiante_id && confirmationData.asignatura_id) {
+                if (
+                  confirmationData.estudiante_id &&
+                  confirmationData.asignatura_id
+                ) {
                   handleStudentEnrollment(
                     confirmationData.estudiante_id,
                     confirmationData.asignatura_id,

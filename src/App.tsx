@@ -8,10 +8,11 @@ import Estudiantes from "@/app/dashboard/toor/estudiantes/pageEstudiantes";
 import { AuthProvider } from "@/context/AuthProvider";
 import Roles from "@/app/dashboard/toor/roles/pageRoles";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
-import Logout from "./app/logout/pageLogout";
-import Cursos from "./app/dashboard/toor/cursos/pageCursos";
-import Asignaturas from "./app/dashboard/toor/asignaturas/pageAsignaturas";
-import AcademicoInicio from "./app/dashboard/academico/inicio/pageInicio";
+import Logout from "@/app/logout/pageLogout";
+import Cursos from "@/app/dashboard/toor/cursos/pageCursos";
+import Asignaturas from "@/app/dashboard/toor/asignaturas/pageAsignaturas";
+import AcademicoInicio from "@/app/dashboard/academico/inicio/pageInicio";
+import Calificaciones from "@/app/dashboard/academico/calificaciones/pageCalificaciones";
 import UnauthorizedComponent from "./components/unauthorizedComponent";
 
 function App() {
@@ -92,6 +93,16 @@ function App() {
             <ProtectedRoute requiredRoles={[2]}>
               <Layout>
                 <AcademicoInicio />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/academico/calificaciones/:id"
+          element={
+            <ProtectedRoute requiredRoles={[2]}>
+              <Layout>
+                <Calificaciones />
               </Layout>
             </ProtectedRoute>
           }

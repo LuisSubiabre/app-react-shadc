@@ -46,7 +46,7 @@ const Breadcrumbs = () => {
                     </BreadcrumbLink>
                   ) : (
                     <BreadcrumbPage>
-                      {getBreadcrumbName(segment)}
+                      {isNaN(Number(segment)) ? getBreadcrumbName(segment) : ""}
                     </BreadcrumbPage>
                   )}
                 </BreadcrumbItem>
