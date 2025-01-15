@@ -216,44 +216,6 @@ const AcademicoInicio: React.FC = () => {
     setSelectedSubject(asignatura);
   };
 
-  const handleUpdateHeadTeacher = async () => {
-    console.log("Actualizar profesor Asignatura");
-
-    if (!selectedSubject || !currentCurso) return;
-
-    setSaving(true);
-    setErrorMessage(null);
-    console.log(selectedSubject.profesor_jefe_id);
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/asignaturascursos/${selectedSubject.id}/${selectedSubject.curso_id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            profesor_id: selectedSubject.profesor_jefe_id,
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Error al actualizar profesor jefe");
-
-      toast({
-        title: "Éxito",
-        description: "Profesor jefe actualizado correctamente",
-      });
-
-      setIsModalSubjectsOpen(false);
-    } catch (error) {
-      setErrorMessage("Error al actualizar profesor jefe : " + error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const checkStudentEnrollment = async (
     estudiante_id: number,
     asignatura_id: number
@@ -520,7 +482,18 @@ const AcademicoInicio: React.FC = () => {
       </Dialog>
 
       {/* Modal para gestión de asignaturas */}
-      <Dialog open={isModalSubjectsOpen} onOpenChange={setIsModalSubjectsOpen}>
+      <Dialog
+        open={isModalSubjectsOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            // Limpiar estados cuando se cierra el modal
+            setSelectedSubject(null);
+            setDataEstudiantes([]);
+            setEnrolledStudents({});
+          }
+          setIsModalSubjectsOpen(open);
+        }}
+      >
         <DialogContent className="max-w-4xl w-full">
           <DialogHeader>
             <DialogTitle>
@@ -562,11 +535,41 @@ const AcademicoInicio: React.FC = () => {
                   <Label>Profesor Asignatura</Label>
                   <Select
                     value={selectedSubject.profesor_jefe_id?.toString()}
-                    onValueChange={(value) => {
-                      setSelectedSubject({
-                        ...selectedSubject,
-                        profesor_jefe_id: parseInt(value),
-                      });
+                    onValueChange={async (value) => {
+                      try {
+                        const response = await fetch(
+                          `${API_BASE_URL}/asignaturascursos/${selectedSubject.id}/${selectedSubject.curso_id}`,
+                          {
+                            method: "PUT",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              profesor_id: parseInt(value),
+                            }),
+                          }
+                        );
+
+                        if (!response.ok) throw new Error("Error al actualizar profesor");
+
+                        setSelectedSubject({
+                          ...selectedSubject,
+                          profesor_jefe_id: parseInt(value),
+                        });
+
+                        toast({
+                          title: "Éxito",
+                          description: "Profesor actualizado correctamente",
+                        });
+                      } catch (error) {
+                        console.error("Error:", error);
+                        toast({
+                          title: "Error",
+                          description: "Error al actualizar profesor",
+                          variant: "destructive",
+                        });
+                      }
                     }}
                   >
                     <SelectTrigger>
@@ -634,15 +637,14 @@ const AcademicoInicio: React.FC = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsModalSubjectsOpen(false)}
+              onClick={() => {
+                setIsModalSubjectsOpen(false);
+                setSelectedSubject(null);
+                setDataEstudiantes([]);
+                setEnrolledStudents({});
+              }}
             >
               Cancelar
-            </Button>
-            <Button
-              onClick={handleUpdateHeadTeacher}
-              disabled={saving || !selectedSubject}
-            >
-              {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>
         </DialogContent>
