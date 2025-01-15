@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Pencil, Printer } from "lucide-react";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
@@ -56,9 +56,10 @@ const AcademicoInicio: React.FC = () => {
   const [subjectsForCourse, setSubjectsForCourse] = useState<AsignaturaCurso[]>(
     []
   );
-  const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante | null>(
-    null
-  );
+  const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
+  const [enrolledStudents, setEnrolledStudents] = useState<{
+    [key: string]: boolean;
+  }>({});
   const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
 
   /* token para enviar al backend */
@@ -71,6 +72,26 @@ const AcademicoInicio: React.FC = () => {
 
   const { data, loading, error, refetch } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API
   const { data: dataUsuarios } = useFetch<User[]>("usuarios", token); // Trae los datos de la API (usuarios)
+
+  useEffect(() => {
+    const loadEnrollments = async () => {
+      if (selectedSubject && Array.isArray(dataEstudiantes)) {
+        const enrollments: { [key: string]: boolean } = {};
+
+        for (const estudiante of dataEstudiantes) {
+          const isEnrolled = await checkStudentEnrollment(
+            estudiante.id,
+            selectedSubject.id
+          );
+          enrollments[`${estudiante.id}-${selectedSubject.id}`] = isEnrolled;
+        }
+
+        setEnrolledStudents(enrollments);
+      }
+    };
+
+    loadEnrollments();
+  }, [selectedSubject, dataEstudiantes]);
 
   if (loading) return <div className="spinner">Cargando...</div>; // Spinner de carga
 
@@ -87,11 +108,19 @@ const AcademicoInicio: React.FC = () => {
           },
         }
       );
-      const data = await response.json();
-      setDataEstudiantes(data);
-      console.log(data);
+      const responseData = await response.json();
+      // Mapear los datos para adaptar estudiante_id a id
+      const mappedData = Array.isArray(responseData)
+        ? responseData.map((estudiante) => ({
+            ...estudiante,
+            id: estudiante.estudiante_id, // Mantener estudiante_id como id para compatibilidad
+          }))
+        : [];
+      setDataEstudiantes(mappedData);
+      console.log(mappedData);
     } catch (error) {
       console.error("Error fetching students:", error);
+      setDataEstudiantes([]);
     }
   };
   /* Logica Editar */
@@ -225,7 +254,83 @@ const AcademicoInicio: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="spinner">Cargando...</div>;
+  const checkStudentEnrollment = async (
+    estudiante_id: number,
+    asignatura_id: number
+  ) => {
+    console.log(estudiante_id, asignatura_id);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.ok;
+    } catch (error) {
+      console.error("Error checking enrollment:", error);
+      return false;
+    }
+  };
+
+  const handleStudentEnrollment = async (
+    estudiante_id: number,
+    asignatura_id: number,
+    isChecked: boolean
+  ) => {
+    try {
+      if (isChecked) {
+        // Enroll student
+        const response = await fetch(
+          `${API_BASE_URL}/estudiantes-asignaturas`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ estudiante_id, asignatura_id }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Error al inscribir estudiante");
+      } else {
+        // Unenroll student
+        const response = await fetch(
+          `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Error al desinscribir estudiante");
+      }
+
+      setEnrolledStudents((prev) => ({
+        ...prev,
+        [`${estudiante_id}-${asignatura_id}`]: isChecked,
+      }));
+
+      toast({
+        title: isChecked ? "Estudiante inscrito" : "Estudiante desinscrito",
+        description: isChecked
+          ? "El estudiante ha sido inscrito exitosamente"
+          : "El estudiante ha sido desinscrito exitosamente",
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al procesar la inscripción",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <>
@@ -496,12 +601,26 @@ const AcademicoInicio: React.FC = () => {
                             <input
                               type="checkbox"
                               id={`estudiante-${estudiante.id}`}
+                              checked={
+                                enrolledStudents[
+                                  `${estudiante.id}-${selectedSubject?.id}`
+                                ] || false
+                              }
+                              onChange={(e) => {
+                                if (selectedSubject) {
+                                  handleStudentEnrollment(
+                                    estudiante.id,
+                                    selectedSubject.id,
+                                    e.target.checked
+                                  );
+                                }
+                              }}
                             />
                             <label
                               htmlFor={`estudiante-${estudiante.id}`}
                               className="text-sm"
                             >
-                              {estudiante.nombre} {estudiante.apellido}
+                              {estudiante.nombre} {estudiante.nombre}
                             </label>
                           </li>
                         ))}
