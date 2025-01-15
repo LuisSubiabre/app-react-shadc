@@ -11,6 +11,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que P
 import Logout from "./app/logout/pageLogout";
 import Cursos from "./app/dashboard/toor/cursos/pageCursos";
 import Asignaturas from "./app/dashboard/toor/asignaturas/pageAsignaturas";
+import AcademicoInicio from "./app/dashboard/academico/inicio/pageInicio";
 
 function App() {
   return (
@@ -79,6 +80,17 @@ function App() {
             <ProtectedRoute requiredRoles={[1]}>
               <Layout>
                 <Asignaturas />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/academico/inicio"
+          element={
+            <ProtectedRoute requiredRoles={[2]}>
+              <Layout>
+                <AcademicoInicio />
               </Layout>
             </ProtectedRoute>
           }
