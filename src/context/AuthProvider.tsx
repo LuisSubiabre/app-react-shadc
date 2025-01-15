@@ -10,6 +10,7 @@ interface User {
   nombre: string;
   email: string;
   roles: number[];
+  cursos: number[];
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
