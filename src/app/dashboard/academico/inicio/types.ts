@@ -8,3 +8,11 @@ export interface Curso {
   codigo_ensenanza: number;
   jefatura?: string;
 }
+
+export interface AsignaturaCurso {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  profesor_jefe_id?: number;
+  curso_id: number;
+}
