@@ -12,6 +12,7 @@ import Logout from "./app/logout/pageLogout";
 import Cursos from "./app/dashboard/toor/cursos/pageCursos";
 import Asignaturas from "./app/dashboard/toor/asignaturas/pageAsignaturas";
 import AcademicoInicio from "./app/dashboard/academico/inicio/pageInicio";
+import UnauthorizedComponent from "./components/unauthorizedComponent";
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
         <Route path="/" element={<div>Home</div>} />
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
-        <Route path="/unauthorized" element={<div>No autorizado</div>} />
+        <Route path="/unauthorized" element={<UnauthorizedComponent />} />
 
         {/* Protected Routes */}
         <Route
