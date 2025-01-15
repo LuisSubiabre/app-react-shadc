@@ -60,6 +60,11 @@ const AcademicoInicio: React.FC = () => {
   const [enrolledStudents, setEnrolledStudents] = useState<{
     [key: string]: boolean;
   }>({});
+  const [confirmationData, setConfirmationData] = useState<{
+    show: boolean;
+    estudiante_id?: number;
+    asignatura_id?: number;
+  }>({ show: false });
   const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
 
   /* token para enviar al backend */
@@ -290,6 +295,20 @@ const AcademicoInicio: React.FC = () => {
         title: "Error",
         description: "Hubo un error al procesar la inscripción",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleCheckboxChange = (estudiante_id: number, asignatura_id: number, isChecked: boolean) => {
+    if (isChecked) {
+      // Si está marcando el checkbox, proceder normalmente
+      handleStudentEnrollment(estudiante_id, asignatura_id, true);
+    } else {
+      // Si está desmarcando, mostrar diálogo de confirmación
+      setConfirmationData({
+        show: true,
+        estudiante_id,
+        asignatura_id
       });
     }
   };
@@ -611,7 +630,7 @@ const AcademicoInicio: React.FC = () => {
                               }
                               onChange={(e) => {
                                 if (selectedSubject) {
-                                  handleStudentEnrollment(
+                                  handleCheckboxChange(
                                     estudiante.id,
                                     selectedSubject.id,
                                     e.target.checked
@@ -645,6 +664,45 @@ const AcademicoInicio: React.FC = () => {
               }}
             >
               Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de confirmación para desinscribir */}
+      <Dialog 
+        open={confirmationData.show} 
+        onOpenChange={(open) => setConfirmationData({ show: open })}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar desinscripción</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>¿Está seguro de realizar esta acción?</p>
+            <p className="text-red-500">Las calificaciones se eliminarán para el estudiante.</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmationData({ show: false })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (confirmationData.estudiante_id && confirmationData.asignatura_id) {
+                  handleStudentEnrollment(
+                    confirmationData.estudiante_id,
+                    confirmationData.asignatura_id,
+                    false
+                  );
+                }
+                setConfirmationData({ show: false });
+              }}
+            >
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>
