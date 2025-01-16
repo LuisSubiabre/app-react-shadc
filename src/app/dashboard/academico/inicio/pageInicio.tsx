@@ -123,7 +123,7 @@ const AcademicoInicio: React.FC = () => {
           }))
         : [];
       setDataEstudiantes(mappedData);
-      console.log(mappedData);
+      // console.log(mappedData);
     } catch (error) {
       console.error("Error fetching students:", error);
       setDataEstudiantes([]);
@@ -209,7 +209,7 @@ const AcademicoInicio: React.FC = () => {
         })
       );
       setSubjectsForCourse(mappedSubjects || []);
-      console.log(subjectsForCourse);
+      // console.log(subjectsForCourse);
       setCurrentCurso(curso);
       setIsModalSubjectsOpen(true);
     } catch (error) {
@@ -226,7 +226,7 @@ const AcademicoInicio: React.FC = () => {
     estudiante_id: number,
     asignatura_id: number
   ) => {
-    console.log(estudiante_id, asignatura_id);
+    // console.log(estudiante_id, asignatura_id);
     try {
       const response = await fetch(
         `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,

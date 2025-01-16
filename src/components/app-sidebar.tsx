@@ -175,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation(); // Obtener la ruta actual
 
   // Filtrar elementos del menú basados en los roles del usuario
-  console.log(user);
+  //console.log(user);
   const filteredNavMain = React.useMemo(() => {
     return data.navMain.filter((menu) => {
       if (menu.items) {
