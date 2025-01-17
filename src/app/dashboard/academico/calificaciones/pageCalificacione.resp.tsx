@@ -23,17 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 
 const Calificaciones = () => {
   const { user } = useAuth() || {};
@@ -48,11 +39,9 @@ const Calificaciones = () => {
   const [enrolledStudents, setEnrolledStudents] = useState<{
     [key: string]: boolean;
   }>({});
-  const [studentGrades, setStudentGrades] = useState<{
-    [key: string]: { [key: string]: number | string };
-  }>({});
-
-  const [alertOpen, setAlertOpen] = useState(false);
+  const [studentGrades, setStudentGrades] = useState<{ [key: string]: any }>(
+    {}
+  );
 
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
@@ -141,6 +130,10 @@ const Calificaciones = () => {
       const curso_id = parseInt(id, 10);
       estudiantesCurso(curso_id);
       loadSubjects(curso_id);
+
+      for (const estudiante of dataEstudiantes) {
+        console.log("-" + estudiante.nombre);
+      }
     }
   }, [id, token]);
 
@@ -196,13 +189,6 @@ const Calificaciones = () => {
     }
   };
 
-  const enrolledStudentsList = selectedSubject
-    ? dataEstudiantes.filter(
-        (estudiante) =>
-          enrolledStudents[`${estudiante.id}-${selectedSubject.id}`]
-      )
-    : [];
-
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -257,59 +243,31 @@ const Calificaciones = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {enrolledStudentsList.map((estudiante) => (
+                {dataEstudiantes.map((estudiante) => (
                   <TableRow key={estudiante.id}>
                     <TableCell>
                       {estudiante.nombre} {estudiante.id}
                     </TableCell>
-                    {[...Array(10)].map((_, index) => (
-                      <TableCell key={index}>
-                        <Input
-                          type="number"
-                          value={
-                            studentGrades[
+                    {selectedSubject &&
+                    enrolledStudents[
+                      `${estudiante.id}-${selectedSubject.id}`
+                    ] ? (
+                      <>
+                        {[...Array(10)].map((_, index) => (
+                          <TableCell key={index}>
+                            {studentGrades[
                               `${estudiante.id}-${selectedSubject.id}`
-                            ]?.[`calificacion${index + 1}`] || ""
-                          }
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-
-                            // Permitir vacío sin validación inmediata
-                            setStudentGrades((prev) => ({
-                              ...prev,
-                              [`${estudiante.id}-${selectedSubject.id}`]: {
-                                ...prev[
-                                  `${estudiante.id}-${selectedSubject.id}`
-                                ],
-                                [`calificacion${index + 1}`]: newValue,
-                              },
-                            }));
-                          }}
-                          onBlur={(e) => {
-                            const newValue = e.target.value;
-
-                            // Validar solo si no está vacío
-                            if (newValue !== "") {
-                              const numericValue = Number(newValue);
-                              if (numericValue < 10 || numericValue > 70) {
-                                setAlertOpen(true);
-                                // Limpiar valor
-                                e.target.value = "";
-                                setStudentGrades((prev) => ({
-                                  ...prev,
-                                  [`${estudiante.id}-${selectedSubject.id}`]: {
-                                    ...prev[
-                                      `${estudiante.id}-${selectedSubject.id}`
-                                    ],
-                                    [`calificacion${index + 1}`]: "",
-                                  },
-                                }));
-                              }
-                            }
-                          }}
-                        />
-                      </TableCell>
-                    ))}
+                            ]?.[`calificacion${index + 1}`] || "-"}
+                          </TableCell>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {[...Array(10)].map((_, index) => (
+                          <TableCell key={index}>-</TableCell>
+                        ))}
+                      </>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -317,20 +275,6 @@ const Calificaciones = () => {
           </div>
         )}
       </div>
-
-      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Atención</AlertDialogTitle>
-            <AlertDialogDescription>
-              El valor ingresado debe estar entre 10 y 70.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>Aceptar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
