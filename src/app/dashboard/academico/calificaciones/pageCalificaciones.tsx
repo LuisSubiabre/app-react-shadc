@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Check } from "lucide-react";
 
 const Calificaciones = () => {
   const { user } = useAuth() || {};
@@ -203,6 +204,20 @@ const Calificaciones = () => {
       )
     : [];
 
+  const saveCalificaciones = async (
+    estudiante_id: number,
+    asignatura_id: number,
+    posicionCalificacion: number
+  ) => {
+    console.log(
+      "Guardando calificaciones..." +
+        estudiante_id +
+        "-" +
+        asignatura_id +
+        " en calificacion" +
+        posicionCalificacion
+    );
+  };
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -287,6 +302,16 @@ const Calificaciones = () => {
 
                             // Cambiar color a verde cuando el valor cambia
                             e.target.style.color = "green";
+                            const numericValue = Number(newValue);
+                            if (numericValue >= 10 && numericValue <= 70) {
+                              let posicionCalificacion = index + 1;
+
+                              saveCalificaciones(
+                                estudiante.id,
+                                selectedSubject.id,
+                                posicionCalificacion
+                              );
+                            }
                           }}
                           onBlur={(e) => {
                             const newValue = e.target.value;
