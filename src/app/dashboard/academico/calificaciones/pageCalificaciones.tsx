@@ -284,6 +284,9 @@ const Calificaciones = () => {
                                 [`calificacion${index + 1}`]: newValue,
                               },
                             }));
+
+                            // Cambiar color a verde cuando el valor cambia
+                            e.target.style.color = "green";
                           }}
                           onBlur={(e) => {
                             const newValue = e.target.value;
@@ -304,6 +307,8 @@ const Calificaciones = () => {
                                     [`calificacion${index + 1}`]: "",
                                   },
                                 }));
+                                // Resetear color si el valor es inválido
+                                e.target.style.color = "";
                               }
                             }
                           }}
