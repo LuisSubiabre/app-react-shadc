@@ -86,22 +86,22 @@ const data = {
           title: "Inicio",
           url: "/dashboard/academico/inicio",
         },
-        {
-          title: "Jefaturas",
-          url: "#",
-        },
-        {
-          title: "Asignaturas",
-          url: "#",
-        },
-        {
-          title: "Calificaciones",
-          url: "#",
-        },
-        {
-          title: "Libretas",
-          url: "#",
-        },
+        // {
+        //   title: "Jefaturas",
+        //   url: "#",
+        // },
+        // {
+        //   title: "Asignaturas",
+        //   url: "#",
+        // },
+        // {
+        //   title: "Calificaciones",
+        //   url: "#",
+        // },
+        // {
+        //   title: "Libretas",
+        //   url: "#",
+        // },
       ],
     },
     {
