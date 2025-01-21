@@ -53,7 +53,7 @@ const Calificaciones = () => {
   }>({});
 
   const [alertOpen, setAlertOpen] = useState(false);
-
+  const [alertNotaOpen, setAlertNotaOpen] = useState(false);
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -206,16 +206,30 @@ const Calificaciones = () => {
   const saveCalificaciones = async (
     estudiante_id: number,
     asignatura_id: number,
-    posicionCalificacion: number
+    posicionCalificacion: number,
+    numericValue: number
   ) => {
-    console.log(
-      "Guardando calificaciones..." +
-        estudiante_id +
-        "-" +
-        asignatura_id +
-        " en calificacion" +
-        posicionCalificacion
-    );
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}/${posicionCalificacion}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            nota: numericValue,
+          }),
+        }
+      );
+      // if (!response.ok) throw new Error("Error al guardar calificación");
+      if (!response.ok) {
+        setAlertNotaOpen(true);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
   return (
     <>
@@ -303,12 +317,12 @@ const Calificaciones = () => {
                             e.target.style.color = "green";
                             const numericValue = Number(newValue);
                             if (numericValue >= 10 && numericValue <= 70) {
-                              let posicionCalificacion = index + 1;
-
+                              const posicionCalificacion = index + 1;
                               saveCalificaciones(
                                 estudiante.id,
                                 selectedSubject.id,
-                                posicionCalificacion
+                                posicionCalificacion,
+                                numericValue
                               );
                             }
                           }}
@@ -320,7 +334,7 @@ const Calificaciones = () => {
                               const numericValue = Number(newValue);
                               if (numericValue < 10 || numericValue > 70) {
                                 setAlertOpen(true);
-                                // Limpiar valor
+
                                 e.target.value = "";
                                 setStudentGrades((prev) => ({
                                   ...prev,
@@ -353,6 +367,20 @@ const Calificaciones = () => {
             <AlertDialogTitle>Atención</AlertDialogTitle>
             <AlertDialogDescription>
               El valor ingresado debe estar entre 10 y 70.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Aceptar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={alertNotaOpen} onOpenChange={setAlertNotaOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Atención</AlertDialogTitle>
+            <AlertDialogDescription>
+              Error al guardar la calificación
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
