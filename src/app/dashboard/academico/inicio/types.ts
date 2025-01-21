@@ -15,4 +15,5 @@ export interface AsignaturaCurso {
   descripcion?: string;
   profesor_jefe_id?: number;
   curso_id: number;
+  asignatura_concepto: boolean;
 }
