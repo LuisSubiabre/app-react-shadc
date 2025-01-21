@@ -299,6 +299,10 @@ const Calificaciones = () => {
                               `${estudiante.id}-${selectedSubject.id}`
                             ]?.[`calificacion${index + 1}`] || ""
                           }
+                          style={{
+                            WebkitAppearance: "none",
+                            MozAppearance: "textfield",
+                          }}
                           onChange={(e) => {
                             const newValue = e.target.value;
 
