@@ -39,6 +39,7 @@ const Calificaciones = () => {
   const { user } = useAuth() || {};
   const { id } = useParams();
   const navigate = useNavigate();
+  const [selectedSemester, setSelectedSemester] = useState(1); // 1 = 1er semestre, 2 = 2do semestre
   const [selectedSubject, setSelectedSubject] =
     useState<AsignaturaCurso | null>(null);
   const [subjectsForCourse, setSubjectsForCourse] = useState<AsignaturaCurso[]>(
@@ -231,6 +232,23 @@ const Calificaciones = () => {
       console.error("Error:", error);
     }
   };
+
+  const handleSemesterChange = (semester: number) => {
+    setSelectedSemester(semester);
+  };
+
+  const getColumnsForSemester = () => {
+    // Define las columnas según el semestre seleccionado
+    return selectedSemester === 1 ? [...Array(10)] : [...Array(10)];
+  };
+
+  const getColumnRange = () => {
+    // Define el rango de columnas por semestre
+    return selectedSemester === 1
+      ? [...Array(10).keys()].map((n) => n + 1) // C1 - C10
+      : [...Array(10).keys()].map((n) => n + 13); // C13 - C22
+  };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -264,6 +282,29 @@ const Calificaciones = () => {
             </SelectContent>
           </Select>
         </div>
+        {/* Semestre Checkboxes */}
+        <div className="flex gap-4 mt-4">
+          <Label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="semester"
+              value="1"
+              checked={selectedSemester === 1}
+              onChange={() => handleSemesterChange(1)}
+            />
+            1er Semestre
+          </Label>
+          <Label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="semester"
+              value="2"
+              checked={selectedSemester === 2}
+              onChange={() => handleSemesterChange(2)}
+            />
+            2do Semestre
+          </Label>
+        </div>
 
         {selectedSubject && (
           <div className="mt-4">
@@ -272,16 +313,9 @@ const Calificaciones = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>C1</TableHead>
-                  <TableHead>C2</TableHead>
-                  <TableHead>C3</TableHead>
-                  <TableHead>C4</TableHead>
-                  <TableHead>C5</TableHead>
-                  <TableHead>C6</TableHead>
-                  <TableHead>C7</TableHead>
-                  <TableHead>C8</TableHead>
-                  <TableHead>C9</TableHead>
-                  <TableHead>C10</TableHead>
+                  {getColumnRange().map((col) => (
+                    <TableHead key={col}>C{col}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -290,7 +324,7 @@ const Calificaciones = () => {
                     <TableCell>
                       {estudiante.nombre} {estudiante.id}
                     </TableCell>
-                    {[...Array(10)].map((_, index) => (
+                    {getColumnRange().map((index) => (
                       <TableCell key={index}>
                         <Input
                           type="number"
@@ -306,14 +340,14 @@ const Calificaciones = () => {
                           onChange={(e) => {
                             const newValue = e.target.value;
 
-                            // Permitir vacío sin validación inmediata
+                            // Actualizar el estado inmediatamente
                             setStudentGrades((prev) => ({
                               ...prev,
                               [`${estudiante.id}-${selectedSubject.id}`]: {
                                 ...prev[
                                   `${estudiante.id}-${selectedSubject.id}`
                                 ],
-                                [`calificacion${index + 1}`]: newValue,
+                                [`calificacion${index + 1}`]: newValue, // Permite cualquier valor temporalmente
                               },
                             }));
 
