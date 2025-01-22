@@ -168,6 +168,7 @@ const AcademicoInicio: React.FC = () => {
   const handleCloseEditModal = () => {
     setCurrentCurso(null);
     setErrorMessage(null);
+    setIsModalEditOpen(false);
   };
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (currentCurso) {
@@ -621,43 +622,76 @@ const AcademicoInicio: React.FC = () => {
 
                 <div className="grid gap-2">
                   <Label>Inscripción de Estudiantes</Label>
+                  <div className="flex justify-end mb-2">
+                  <Button
+      variant="outline"
+      onClick={() => {
+        if (selectedSubject) {
+          // Verificar si ya están todos seleccionados
+          const allSelected = dataEstudiantes.every((estudiante) =>
+            enrolledStudents[`${estudiante.id}-${selectedSubject.id}`]
+          );
 
-                  <div className="p-4 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
-                    <ul>
-                      {Array.isArray(dataEstudiantes) &&
-                        dataEstudiantes.map((estudiante) => (
-                          <li
-                            key={estudiante.id}
-                            className="flex items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`estudiante-${estudiante.id}`}
-                              checked={
-                                enrolledStudents[
-                                  `${estudiante.id}-${selectedSubject?.id}`
-                                ] || false
-                              }
-                              onChange={(e) => {
-                                if (selectedSubject) {
-                                  handleCheckboxChange(
-                                    estudiante.id,
-                                    selectedSubject.id,
-                                    e.target.checked
-                                  );
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`estudiante-${estudiante.id}`}
-                              className="text-sm"
-                            >
-                              {estudiante.nombre} {estudiante.nombre}
-                            </label>
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
+          if (!allSelected) {
+            const updatedEnrolledStudents = { ...enrolledStudents };
+
+            // Marcar todos los checkboxes
+            dataEstudiantes.forEach((estudiante) => {
+              updatedEnrolledStudents[
+                `${estudiante.id}-${selectedSubject.id}`
+              ] = true; // Marcar todos
+            });
+
+            setEnrolledStudents(updatedEnrolledStudents);
+
+            // Ejecutar handleCheckboxChange solo para los seleccionados
+            dataEstudiantes.forEach((estudiante) => {
+              handleCheckboxChange(
+                estudiante.id,
+                selectedSubject.id,
+                true
+              );
+            });
+          }
+        }
+      }}
+    >
+      Seleccionar Todos
+    </Button>
+  </div>
+  <div className="p-4 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
+    <ul>
+      {Array.isArray(dataEstudiantes) &&
+        dataEstudiantes.map((estudiante) => (
+          <li key={estudiante.id} className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`estudiante-${estudiante.id}`}
+              checked={
+                enrolledStudents[
+                  `${estudiante.id}-${selectedSubject?.id}`
+                ] || false
+              }
+              onChange={(e) => {
+                if (selectedSubject) {
+                  handleCheckboxChange(
+                    estudiante.id,
+                    selectedSubject.id,
+                    e.target.checked
+                  );
+                }
+              }}
+            />
+            <label
+              htmlFor={`estudiante-${estudiante.id}`}
+              className="text-sm"
+            >
+              {estudiante.nombre}
+            </label>
+          </li>
+        ))}
+    </ul>
+  </div>
                 </div>
               </>
             )}
@@ -673,7 +707,7 @@ const AcademicoInicio: React.FC = () => {
                 setEnrolledStudents({});
               }}
             >
-              Cancelar
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
