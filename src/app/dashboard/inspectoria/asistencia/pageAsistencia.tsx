@@ -4,7 +4,7 @@ import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { useFetch } from "@/hooks/useFetch";
-
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -36,6 +36,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { AlertCircle } from "lucide-react";
 
 const InspectoriaAsistencia = () => {
   const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
@@ -48,9 +49,7 @@ const InspectoriaAsistencia = () => {
   const [cargaDiasTrabajados, setCargaDiasTrabajados] = useState<{
     [key: number]: string;
   }>({});
-  // const [diasTrabajadosEstudiantes, setDiasTrabajadosEstudiantes] = useState<{
-  //   [key: number]: string;
-  // }>({});
+
   const [diasTrabajados, setDiasTrabajados] = useState<string | null>(null);
   const [mesSeleccionado, setMesSeleccionado] = useState<number>(3); // Estado para el mes seleccionado
 
@@ -191,6 +190,7 @@ const InspectoriaAsistencia = () => {
           <Breadcrumbs />
         </div>
       </header>
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="mt-4"></div>
         <label
@@ -239,58 +239,83 @@ const InspectoriaAsistencia = () => {
         </Select>
 
         {/* Tabla de asistencia */}
-        <Table>
-          <TableCaption>Tabla de asistencia</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Estudiante</TableHead>
-              <TableHead className="w-[100px]">Asistencia</TableHead>
-              <TableHead className="w-[100px]">
-                {/* Dialog de días trabajados */}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary" size="sm">
-                      Establecer días trabajados
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Días trabajados</DialogTitle>
-                      <DialogDescription>
-                        Establecer días trabajados para todos los estudiantes
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="diasTrabajados" className="text-right">
-                          Total días trabajados:
-                        </Label>
-                        <Input
-                          id="diasTrabajados"
-                          className="col-span-3"
-                          value={diasTrabajados || ""}
-                          onChange={(e) => setDiasTrabajados(e.target.value)}
-                        />
+        {dataEstudiantes.length > 0 ? (
+          <Table>
+            <TableCaption>Tabla de asistencia</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Estudiante</TableHead>
+                <TableHead className="w-[100px]">Asistencia</TableHead>
+                <TableHead className="w-[100px]">
+                  {/* Dialog de días trabajados */}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="secondary" size="sm">
+                        Establecer días trabajados
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Días trabajados</DialogTitle>
+                        <DialogDescription>
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Atención</AlertTitle>
+                            <AlertDescription>
+                              Al Establecer los días trabajados de forma masiva,
+                              se actualizará la cantidad de asistencias de todos
+                              los estudiantes del curso.
+                            </AlertDescription>
+                          </Alert>
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label
+                            htmlFor="diasTrabajados"
+                            className="text-right"
+                          >
+                            Total días trabajados:
+                          </Label>
+                          <Input
+                            id="diasTrabajados"
+                            className="col-span-3"
+                            value={diasTrabajados || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              // Validación para que solo acepte valores entre 1 y 31
+                              if (
+                                newValue &&
+                                (Number(newValue) < 1 || Number(newValue) > 31)
+                              ) {
+                                return; // Si el valor está fuera del rango, no se actualiza el estado
+                              }
+                              setDiasTrabajados(newValue);
+                            }}
+                            type="number"
+                            min="1"
+                            max="31"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button
-                          type="button"
-                          onClick={handleGuardarDiasTrabajados}
-                        >
-                          Guardar
-                        </Button>
-                      </DialogClose>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {dataEstudiantes.length > 0 ? (
-              dataEstudiantes.map((estudiante) => (
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button
+                            type="button"
+                            onClick={handleGuardarDiasTrabajados}
+                            disabled={!diasTrabajados}
+                          >
+                            Guardar
+                          </Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dataEstudiantes.map((estudiante) => (
                 <TableRow key={estudiante.id}>
                   <TableCell>{estudiante.nombre}</TableCell>
                   <TableCell>
@@ -299,6 +324,17 @@ const InspectoriaAsistencia = () => {
                       className="w-8/12"
                       onChange={(e) => {
                         const newValue = e.target.value;
+                        const diasTrabajados =
+                          cargaDiasTrabajados[estudiante.id] || "0";
+                        // Validación para que solo acepte valores entre 1 y 31 y no supere los días trabajados
+                        if (
+                          newValue &&
+                          (Number(newValue) < 1 ||
+                            Number(newValue) > 31 ||
+                            Number(newValue) > Number(diasTrabajados))
+                        ) {
+                          return; // Si el valor está fuera del rango o supera los días trabajados, no se actualiza el estado
+                        }
                         setCargaAsistencias({
                           ...cargaAsistencias,
                           [estudiante.id]: newValue, // Actualiza el valor local
@@ -314,18 +350,29 @@ const InspectoriaAsistencia = () => {
                           Number(totalDiasTrabajados)
                         );
                       }}
+                      type="number"
+                      min="1"
+                      max="31"
                     />
                   </TableCell>
                   <TableCell>
                     <Input
                       value={cargaDiasTrabajados[estudiante.id] || ""} // Vinculado al estado
                       className="w-8/12"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        // Validación para que solo acepte valores entre 1 y 31
+                        if (
+                          newValue &&
+                          (Number(newValue) < 1 || Number(newValue) > 31)
+                        ) {
+                          return; // Si el valor está fuera del rango, no se actualiza el estado
+                        }
                         setCargaDiasTrabajados({
                           ...cargaDiasTrabajados,
-                          [estudiante.id]: e.target.value,
-                        })
-                      }
+                          [estudiante.id]: newValue,
+                        });
+                      }}
                       onBlur={() => {
                         const totalDiasAsistidos =
                           cargaAsistencias[estudiante.id] || "0";
@@ -336,19 +383,18 @@ const InspectoriaAsistencia = () => {
                           Number(cargaDiasTrabajados[estudiante.id] || "0")
                         );
                       }}
+                      type="number"
+                      min="1"
+                      max="31"
                     />
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3}>
-                  No hay estudiantes disponibles
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div>No hay estudiantes disponibles</div>
+        )}
         {/* Tabla de asistencia */}
       </div>
     </>
