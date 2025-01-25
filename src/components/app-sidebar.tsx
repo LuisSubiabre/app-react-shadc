@@ -105,25 +105,17 @@ const data = {
       ],
     },
     {
-      title: "Documentation",
+      title: "Inspectoria",
       url: "#",
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "Asistencia",
+          url: "/dashboard/inspectoria/asistencia",
         },
         {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
+          title: "Atrasos",
+          url: "/dashboard/inspectoria/atrasos",
         },
       ],
     },
@@ -189,8 +181,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       if (menu.title === "Administrador") {
         return user?.roles?.includes(1); // Mostrar "Administrador" solo si el usuario tiene el rol 1
       }
-      if (menu.title === "Models") {
+      if (menu.title === "Académico") {
         return user?.roles?.includes(2); // Mostrar "Models" solo si el usuario tiene el rol 2
+      }
+      if (menu.title === "Inspectoria") {
+        return user?.roles?.includes(3); // Mostrar "Models" solo si el usuario tiene el rol 2
       }
       return true; // Mostrar otros menús sin restricciones
     });

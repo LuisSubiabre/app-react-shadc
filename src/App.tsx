@@ -14,6 +14,7 @@ import Asignaturas from "@/app/dashboard/toor/asignaturas/pageAsignaturas";
 import AcademicoInicio from "@/app/dashboard/academico/inicio/pageInicio";
 import Calificaciones from "@/app/dashboard/academico/calificaciones/pageCalificaciones";
 import UnauthorizedComponent from "./components/unauthorizedComponent";
+import InspectoriaAsistencia from "./app/dashboard/inspectoria/asistencia/pageAsistencia";
 
 function App() {
   return (
@@ -103,6 +104,26 @@ function App() {
             <ProtectedRoute requiredRoles={[2]}>
               <Layout>
                 <Calificaciones />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/inspectoria/asistencia"
+          element={
+            <ProtectedRoute requiredRoles={[3]}>
+              <Layout>
+                <InspectoriaAsistencia />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/inspectoria/atrasos"
+          element={
+            <ProtectedRoute requiredRoles={[3]}>
+              <Layout>
+                <h1>Inspectoria Atrasos</h1>
               </Layout>
             </ProtectedRoute>
           }
