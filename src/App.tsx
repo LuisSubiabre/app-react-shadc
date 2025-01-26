@@ -15,6 +15,7 @@ import AcademicoInicio from "@/app/dashboard/academico/inicio/pageInicio";
 import Calificaciones from "@/app/dashboard/academico/calificaciones/pageCalificaciones";
 import UnauthorizedComponent from "./components/unauthorizedComponent";
 import InspectoriaAsistencia from "./app/dashboard/inspectoria/asistencia/pageAsistencia";
+import AcleTalleres from "./app/dashboard/acles/talleres/pageTalleres";
 
 function App() {
   return (
@@ -124,6 +125,17 @@ function App() {
             <ProtectedRoute requiredRoles={[3]}>
               <Layout>
                 <h1>Inspectoria Atrasos</h1>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/acles/talleres"
+          element={
+            <ProtectedRoute requiredRoles={[1]}>
+              <Layout>
+                <AcleTalleres />
               </Layout>
             </ProtectedRoute>
           }
