@@ -48,13 +48,12 @@ import {
   deleteTaller,
   eliminarAsignacion,
   asignarCurso,
-  actualizarAsignacion,
-  obtenerAsignacionesPorAsignatura,
+  obtenerAsignaciones,
 } from "./tallerService.ts";
 import { useToast } from "@/hooks/use-toast";
 import { Curso } from "@/app/dashboard/toor/cursos/types";
 import { User } from "@/app/dashboard/toor/usuarios/types";
-//import { AsignacionPendiente } from "./types";
+import { Toaster } from "@/components/ui/toaster.tsx";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -65,7 +64,7 @@ const AcleTalleres: React.FC = () => {
   const [newTaller, setNewTaller] = useState<Partial<Taller>>({
     taller_nombre: "",
     taller_descripcion: "",
-    taller_horario: "xx",
+    taller_horario: "",
     taller_nivel: "pre-basica",
     taller_cantidad_cupos: 10,
     taller_profesor_id: 1,
@@ -236,24 +235,20 @@ const AcleTalleres: React.FC = () => {
     }
   };
 
-  const handleOpenCursosModal = (asignatura: Asignatura) => {
-    setCurrentTaller(asignatura);
+  const handleOpenCursosModal = (taller: Taller) => {
+    setCurrentTaller(taller);
     setIsModalCursosOpen(true);
-    cargarAsignaciones(asignatura.asignatura_id);
+    cargarAsignaciones(taller.taller_id);
   };
 
-  const cargarAsignaciones = async (asignaturaId: number) => {
+  const cargarAsignaciones = async (taller_id: number) => {
     try {
-      const response = await obtenerAsignacionesPorAsignatura(
-        asignaturaId,
-        token
-      );
-      const asignacionesMap = new Map();
-
-      response.data.forEach((asignacion: AsignaturaCursoResponse) => {
-        asignacionesMap.set(asignacion.curso_id, [asignacion.profesor_id]);
+      const response = await obtenerAsignaciones(taller_id, token);
+      const asignacionesMap = new Map(); // Mapa de asignaciones por curso_id
+      response.data.forEach((asignacion) => {
+        // Usamos curso_id como clave para el mapa
+        asignacionesMap.set(asignacion.curso_id, asignacion);
       });
-
       setAsignacionesActuales(asignacionesMap);
     } catch (error) {
       toast({
@@ -279,19 +274,13 @@ const AcleTalleres: React.FC = () => {
 
     try {
       if (checked) {
-        await asignarCurso(currentTaller.asignatura_id, cursoId, 1, token);
-        // Actualizar estado local
+        await asignarCurso(currentTaller.taller_id, cursoId, token);
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.set(cursoId, [1]); // usuario_id 1 por defecto
         setAsignacionesActuales(newAsignaciones);
       } else {
-        await eliminarAsignacion(
-          currentTaller.asignatura_id,
-          cursoId,
-          1,
-          token
-        );
-        // Actualizar estado local
+        await eliminarAsignacion(currentTaller.taller_id, cursoId, token);
+
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.delete(cursoId);
         setAsignacionesActuales(newAsignaciones);
@@ -304,43 +293,17 @@ const AcleTalleres: React.FC = () => {
           : "Curso desasignado correctamente",
       });
     } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Error al eliminar la asignatura"
+      );
       toast({
         title: "Error",
         description:
           error instanceof Error
             ? error.message
             : "Error al gestionar el curso",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUsuariosChange = async (cursoId: number, usuarioId: string) => {
-    if (!currentTaller) return;
-
-    try {
-      const numericUsuarioId = Number(usuarioId);
-      await actualizarAsignacion(
-        currentTaller.asignatura_id,
-        cursoId,
-        numericUsuarioId,
-        token
-      );
-
-      // Actualizar estado local
-      const newAsignaciones = new Map(asignacionesActuales);
-      newAsignaciones.set(cursoId, [numericUsuarioId]);
-      setAsignacionesActuales(newAsignaciones);
-
-      toast({
-        title: "Éxito",
-        description: "Usuario asignado correctamente",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Error al asignar usuario",
         variant: "destructive",
       });
     }
@@ -353,6 +316,8 @@ const AcleTalleres: React.FC = () => {
           <Breadcrumbs />
         </div>
       </header>
+      <Toaster />
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <h1 className="text-2xl font-bold">Talleres ACLE</h1>
         <div>
@@ -691,87 +656,51 @@ const AcleTalleres: React.FC = () => {
       <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Asignar Cursos - {currentTaller?.nombre}</DialogTitle>
+            <DialogTitle>Asignar Cursos</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {dataCursos?.map((curso) => {
-              const usuariosAsignados =
-                asignacionesActuales.get(curso.id) || [];
-              const isSelected = usuariosAsignados.length > 0;
-              const currentUserId = usuariosAsignados[0]?.toString();
+          <div className="font-semibold leading-none tracking-tight">
+            Taller: {currentTaller?.taller_nombre}
+          </div>
+          <div className="grid gap-2">
+            <div className="p-4 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
+              {dataCursos?.map((curso) => {
+                const cursosAsignados = asignacionesActuales.get(curso.id);
 
-              return (
-                <div
-                  key={curso.id}
-                  className="space-y-3 border-b pb-3 last:border-0"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`curso-${curso.id}`}
-                        checked={isSelected}
-                        onCheckedChange={(checked) =>
-                          handleCursoChange(curso.id, checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor={`curso-${curso.id}`}
-                        className="font-medium"
-                      >
-                        {curso.nombre}
-                      </Label>
-                    </div>
+                const isSelected = cursosAsignados ? true : false;
+                console.log("curso", curso.id, " ", isSelected);
+                console.log("cursosAsignados", cursosAsignados);
 
-                    {isSelected && (
-                      <Select
-                        value={currentUserId}
-                        onValueChange={(value) =>
-                          handleUsuariosChange(curso.id, value)
-                        }
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Seleccionar usuario" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dataUsuarios?.map((usuario) => (
-                            <SelectItem
-                              key={usuario.id}
-                              value={usuario.id.toString()}
-                            >
-                              {usuario.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-
-                  {isSelected && (
-                    <div className="ml-6">
-                      <div className="flex flex-wrap gap-2">
-                        {usuariosAsignados.map((userId) => {
-                          const usuario = dataUsuarios?.find(
-                            (u) => u.id === userId
-                          );
-                          return (
-                            usuario && (
-                              <div
-                                key={usuario.id}
-                                className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded text-sm"
-                              >
-                                <span>{usuario.nombre}</span>
-                              </div>
-                            )
-                          );
-                        })}
+                return (
+                  <div
+                    key={curso.id}
+                    className="space-y-3 border-b pb-3 last:border-0"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`curso-${curso.id}`}
+                          checked={isSelected}
+                          onCheckedChange={(checked) =>
+                            handleCursoChange(curso.id, checked as boolean)
+                          }
+                        />
+                        <Label
+                          htmlFor={`curso-${curso.id}`}
+                          className="font-medium"
+                        >
+                          {curso.nombre}
+                        </Label>
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <DialogFooter>
+            {errorMessage && (
+              <div className="text-red-500 text-sm">{errorMessage}</div>
+            )}
             <Button variant="outline" onClick={handleCloseCursosModal}>
               Cerrar
             </Button>

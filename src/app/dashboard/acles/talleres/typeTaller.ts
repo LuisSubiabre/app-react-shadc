@@ -8,4 +8,5 @@ export interface Taller {
   taller_cantidad_inscritos?: number;
   taller_profesor_id: number;
   profesor_nombre?: string;
+  curso_id?: number;
 }
