@@ -54,6 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Curso } from "@/app/dashboard/toor/cursos/types";
 import { User } from "@/app/dashboard/toor/usuarios/types";
 import { Toaster } from "@/components/ui/toaster.tsx";
+import { Link } from "react-router-dom";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -374,6 +375,13 @@ const AcleTalleres: React.FC = () => {
                     >
                       Cursos
                     </Button>
+                    <Link
+                      to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
+                    >
+                      <Button variant="outline" size="sm">
+                        Inscritos
+                      </Button>
+                    </Link>
                   </div>
                 </TableCell>
               </TableRow>
@@ -609,23 +617,6 @@ const AcleTalleres: React.FC = () => {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-
-              {/* <select
-                              id="profesor_jefe_id"
-                              name="profesor_jefe_id"
-                              value={currentCurso.profesor_jefe_id}
-                              onChange={handleSelectChange}
-                              className="form-select"
-                            >
-                              <option value="" disabled>
-                                Seleccionar profesor jefe
-                              </option>
-                              {dataUsuarios?.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                  {user.nombre}
-                                </option>
-                              ))}
-                            </select> */}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="taller_cantidad_cupos">Cantidad de cupos</Label>

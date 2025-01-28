@@ -13,9 +13,10 @@ import Cursos from "@/app/dashboard/toor/cursos/pageCursos";
 import Asignaturas from "@/app/dashboard/toor/asignaturas/pageAsignaturas";
 import AcademicoInicio from "@/app/dashboard/academico/inicio/pageInicio";
 import Calificaciones from "@/app/dashboard/academico/calificaciones/pageCalificaciones";
-import UnauthorizedComponent from "./components/unauthorizedComponent";
-import InspectoriaAsistencia from "./app/dashboard/inspectoria/asistencia/pageAsistencia";
-import AcleTalleres from "./app/dashboard/acles/talleres/pageTalleres";
+import UnauthorizedComponent from "@/components/unauthorizedComponent";
+import InspectoriaAsistencia from "@/app/dashboard/inspectoria/asistencia/pageAsistencia";
+import AcleTalleres from "@/app/dashboard/acles/talleres/pageTalleres";
+import AclesInscritos from "@/app/dashboard/acles/talleres/pageInscritos";
 
 function App() {
   return (
@@ -136,6 +137,16 @@ function App() {
             <ProtectedRoute requiredRoles={[1]}>
               <Layout>
                 <AcleTalleres />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/acles/talleres/inscritos/:id"
+          element={
+            <ProtectedRoute requiredRoles={[1]}>
+              <Layout>
+                <AclesInscritos />
               </Layout>
             </ProtectedRoute>
           }
