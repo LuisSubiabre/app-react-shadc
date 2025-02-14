@@ -60,6 +60,7 @@ const Estudiantes: React.FC = () => {
   });
   const [saving, setSaving] = useState<boolean>(false);
   const [isModalClave, setIsModalClave] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorMessageClave, setErrorMessageClave] = useState<string | null>(
@@ -87,6 +88,7 @@ const Estudiantes: React.FC = () => {
     "estudiantes",
     token
   ); // Trae los datos de la API
+  console.log(data);
   const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
 
   if (loading) return <div className="spinner">Cargando...</div>;
@@ -228,6 +230,16 @@ const Estudiantes: React.FC = () => {
     setIsModalClave(true);
   };
 
+  // Filtrar usuarios según el término de búsqueda
+  const normalizeString = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const filteredUsers = data?.filter((estudiante: Estudiante) =>
+    normalizeString(estudiante.nombre.toLowerCase()).includes(
+      normalizeString(searchTerm.toLowerCase())
+    )
+  );
+
   return (
     <>
       <Toaster />
@@ -239,7 +251,16 @@ const Estudiantes: React.FC = () => {
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div>
           <Button onClick={handleNewClick}>Nuevo Estudiante</Button>
+          <div className="m-4">
+            <Input
+              type="text"
+              placeholder="Buscar usuario por nombre"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
+
         <Table>
           <TableCaption>Lista de estudiantes</TableCaption>
           <TableHeader>
@@ -252,8 +273,8 @@ const Estudiantes: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data && data.length > 0 ? (
-              data.map((c) => (
+            {filteredUsers && filteredUsers.length > 0 ? (
+              filteredUsers.map((c) => (
                 <TableRow key={c.id}>
                   {c.activo ? (
                     <TableCell className="text-green-500">{c.id}</TableCell>
@@ -265,7 +286,7 @@ const Estudiantes: React.FC = () => {
                     <small>{c.email}</small>
                   </TableCell>
                   <TableCell>{c.rut}</TableCell>
-                  <TableCell>1ero Medio A</TableCell>
+                  <TableCell>{c.curso_nombre}</TableCell>
                   <TableCell>
                     <Button className="mr-2" onClick={() => handleEditClick(c)}>
                       <svg

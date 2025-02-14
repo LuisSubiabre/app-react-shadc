@@ -10,4 +10,5 @@ export interface Estudiante {
   activo: boolean;
   fecha_actualizacion: string;
   clave?: string; // Agregamos password como opcional
+  curso_nombre?: string; // Agregamos curso_nombre como opcional
 }
