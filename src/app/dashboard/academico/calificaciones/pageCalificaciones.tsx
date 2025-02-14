@@ -35,6 +35,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import Spinner from "@/components/Spinner";
 
 const Calificaciones = () => {
   const { user } = useAuth() || {};
@@ -56,6 +57,9 @@ const Calificaciones = () => {
 
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertNotaOpen, setAlertNotaOpen] = useState(false);
+
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
+
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -178,6 +182,8 @@ const Calificaciones = () => {
     asignatura_id: number
   ) => {
     try {
+      setLoadingEstudiantes(true); // Inicia la carga
+
       const response = await fetch(
         `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
         {
@@ -198,6 +204,8 @@ const Calificaciones = () => {
     } catch (error) {
       console.error("Error checking enrollment:", error);
       return false;
+    } finally {
+      setLoadingEstudiantes(false); // Finaliza la carga
     }
   };
 
@@ -314,98 +322,42 @@ const Calificaciones = () => {
 
         {selectedSubject && (
           <div className="mt-4">
-            <Table>
-              <TableCaption>Calificaciones de estudiantes</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  {getColumnRange().map((col) => (
-                    <TableHead key={col}>C{col}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {enrolledStudentsList.map((estudiante) => (
-                  <TableRow key={estudiante.id}>
-                    <TableCell>
-                      {estudiante.nombre} {estudiante.id}
-                    </TableCell>
-                    {getColumnRange().map((index) => (
-                      <TableCell key={index}>
-                        {selectedSubject.asignatura_concepto ? (
-                          // Renderizar Select para asignaturas de concepto
-                          <Select
-                            onValueChange={(value) => {
-                              const numericValue = conceptMap[value] || 0;
-                              setStudentGrades((prev) => ({
-                                ...prev,
-                                [`${estudiante.id}-${selectedSubject.id}`]: {
-                                  ...prev[
-                                    `${estudiante.id}-${selectedSubject.id}`
-                                  ],
-                                  [`calificacion${index + 1}`]: numericValue,
-                                },
-                              }));
+            {loadingEstudiantes ? (
+              <Spinner />
+            ) : (
+              <Table>
+                <TableCaption>Calificaciones de estudiantes</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    {getColumnRange().map((col) => (
+                      <TableHead key={col}>C{col}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {enrolledStudentsList.map((estudiante) => (
+                    <TableRow key={estudiante.id}>
+                      <TableCell>
+                        {estudiante.nombre} {estudiante.id}
+                      </TableCell>
+                      {getColumnRange().map((index) => (
+                        <TableCell key={index}>
+                          {selectedSubject.asignatura_concepto ? (
+                            // Renderizar Select para asignaturas de concepto
+                            <Select
+                              onValueChange={(value) => {
+                                const numericValue = conceptMap[value] || 0;
+                                setStudentGrades((prev) => ({
+                                  ...prev,
+                                  [`${estudiante.id}-${selectedSubject.id}`]: {
+                                    ...prev[
+                                      `${estudiante.id}-${selectedSubject.id}`
+                                    ],
+                                    [`calificacion${index + 1}`]: numericValue,
+                                  },
+                                }));
 
-                              const posicionCalificacion = index + 1;
-                              saveCalificaciones(
-                                estudiante.id,
-                                selectedSubject.id,
-                                posicionCalificacion,
-                                numericValue
-                              );
-                            }}
-                            value={Object.keys(conceptMap).find(
-                              (key) =>
-                                conceptMap[key] ===
-                                studentGrades[
-                                  `${estudiante.id}-${selectedSubject.id}`
-                                ]?.[`calificacion${index + 1}`]
-                            )}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(conceptMap).map(
-                                ([label, numericValue]) => (
-                                  <SelectItem key={label} value={label}>
-                                    {label} ({numericValue})
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            type="number"
-                            value={
-                              studentGrades[
-                                `${estudiante.id}-${selectedSubject.id}`
-                              ]?.[`calificacion${index + 1}`] || ""
-                            }
-                            style={{
-                              WebkitAppearance: "none",
-                              MozAppearance: "textfield",
-                            }}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-
-                              // Actualizar el estado inmediatamente
-                              setStudentGrades((prev) => ({
-                                ...prev,
-                                [`${estudiante.id}-${selectedSubject.id}`]: {
-                                  ...prev[
-                                    `${estudiante.id}-${selectedSubject.id}`
-                                  ],
-                                  [`calificacion${index + 1}`]: newValue, // Permite cualquier valor temporalmente
-                                },
-                              }));
-
-                              // Cambiar color a verde cuando el valor cambia
-                              e.target.style.color = "green";
-                              const numericValue = Number(newValue);
-                              if (numericValue >= 10 && numericValue <= 70) {
                                 const posicionCalificacion = index + 1;
                                 saveCalificaciones(
                                   estudiante.id,
@@ -413,41 +365,101 @@ const Calificaciones = () => {
                                   posicionCalificacion,
                                   numericValue
                                 );
+                              }}
+                              value={Object.keys(conceptMap).find(
+                                (key) =>
+                                  conceptMap[key] ===
+                                  studentGrades[
+                                    `${estudiante.id}-${selectedSubject.id}`
+                                  ]?.[`calificacion${index + 1}`]
+                              )}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(conceptMap).map(
+                                  ([label, numericValue]) => (
+                                    <SelectItem key={label} value={label}>
+                                      {label} ({numericValue})
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              type="number"
+                              value={
+                                studentGrades[
+                                  `${estudiante.id}-${selectedSubject.id}`
+                                ]?.[`calificacion${index + 1}`] || ""
                               }
-                            }}
-                            onBlur={(e) => {
-                              const newValue = e.target.value;
+                              style={{
+                                WebkitAppearance: "none",
+                                MozAppearance: "textfield",
+                              }}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
 
-                              // Validar solo si no está vacío
-                              if (newValue !== "") {
+                                // Actualizar el estado inmediatamente
+                                setStudentGrades((prev) => ({
+                                  ...prev,
+                                  [`${estudiante.id}-${selectedSubject.id}`]: {
+                                    ...prev[
+                                      `${estudiante.id}-${selectedSubject.id}`
+                                    ],
+                                    [`calificacion${index + 1}`]: newValue, // Permite cualquier valor temporalmente
+                                  },
+                                }));
+
+                                // Cambiar color a verde cuando el valor cambia
+                                e.target.style.color = "green";
                                 const numericValue = Number(newValue);
-                                if (numericValue < 10 || numericValue > 70) {
-                                  setAlertOpen(true);
-
-                                  e.target.value = "";
-                                  setStudentGrades((prev) => ({
-                                    ...prev,
-                                    [`${estudiante.id}-${selectedSubject.id}`]:
-                                      {
-                                        ...prev[
-                                          `${estudiante.id}-${selectedSubject.id}`
-                                        ],
-                                        [`calificacion${index + 1}`]: "",
-                                      },
-                                  }));
-                                  // Resetear color si el valor es inválido
-                                  e.target.style.color = "";
+                                if (numericValue >= 10 && numericValue <= 70) {
+                                  const posicionCalificacion = index + 1;
+                                  saveCalificaciones(
+                                    estudiante.id,
+                                    selectedSubject.id,
+                                    posicionCalificacion,
+                                    numericValue
+                                  );
                                 }
-                              }
-                            }}
-                          />
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                              }}
+                              onBlur={(e) => {
+                                const newValue = e.target.value;
+
+                                // Validar solo si no está vacío
+                                if (newValue !== "") {
+                                  const numericValue = Number(newValue);
+                                  if (numericValue < 10 || numericValue > 70) {
+                                    setAlertOpen(true);
+
+                                    e.target.value = "";
+                                    setStudentGrades((prev) => ({
+                                      ...prev,
+                                      [`${estudiante.id}-${selectedSubject.id}`]:
+                                        {
+                                          ...prev[
+                                            `${estudiante.id}-${selectedSubject.id}`
+                                          ],
+                                          [`calificacion${index + 1}`]: "",
+                                        },
+                                    }));
+                                    // Resetear color si el valor es inválido
+                                    e.target.style.color = "";
+                                  }
+                                }
+                              }}
+                            />
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         )}
       </div>
