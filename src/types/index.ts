@@ -13,7 +13,7 @@ export interface CursoType {
 
 // types.ts
 export interface EstudianteType {
-  id: number;
+  estudiante_id: number;
   nombre: string;
   email: string;
   clave_email: string;
