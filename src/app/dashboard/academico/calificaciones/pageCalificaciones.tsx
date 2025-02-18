@@ -199,6 +199,7 @@ const Calificaciones = () => {
           ...prev,
           [`${estudiante_id}-${asignatura_id}`]: jsonResponse.data,
         }));
+        console.log(jsonResponse.data);
       }
       return response.ok;
     } catch (error) {
@@ -257,8 +258,8 @@ const Calificaciones = () => {
   const getColumnRange = () => {
     // Define el rango de columnas por semestre
     return selectedSemester === 1
-      ? [...Array(10).keys()].map((n) => n + 1) // C1 - C10
-      : [...Array(10).keys()].map((n) => n + 13); // C13 - C22
+      ? [...Array(10).keys()].map((n) => n + 0) // C1 - C10
+      : [...Array(10).keys()].map((n) => n + 12); // C13 - C22
   };
 
   // Mapeo de valores conceptuales a numéricos
@@ -331,7 +332,7 @@ const Calificaciones = () => {
                   <TableRow>
                     <TableHead>Nombre</TableHead>
                     {getColumnRange().map((col) => (
-                      <TableHead key={col}>C{col}</TableHead>
+                      <TableHead key={col}>C{col + 1}</TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>

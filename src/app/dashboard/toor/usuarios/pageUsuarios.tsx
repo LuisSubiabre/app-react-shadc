@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { API_BASE_URL } from "@/config/config.ts";
+import { API_BASE_URL } from "@/config/config";
 
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks

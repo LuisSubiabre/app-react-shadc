@@ -12,6 +12,7 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  BookDashed,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
@@ -119,6 +120,18 @@ const data = {
         },
       ],
     },
+    {
+      title: "Jefatura",
+      url: "#",
+      icon: BookDashed,
+      items: [
+        {
+          title: "Mi Curso",
+          url: "/dashboard/jefatura",
+        },
+      ],
+    },
+
     {
       title: "Acles",
       url: "#",

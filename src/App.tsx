@@ -17,6 +17,7 @@ import UnauthorizedComponent from "@/components/unauthorizedComponent";
 import InspectoriaAsistencia from "@/app/dashboard/inspectoria/asistencia/pageAsistencia";
 import AcleTalleres from "@/app/dashboard/acles/talleres/pageTalleres";
 import AclesInscritos from "@/app/dashboard/acles/talleres/pageInscritos";
+import Jefatura from "@/app/dashboard/jefatura/pageJefatura";
 
 function App() {
   return (
@@ -147,6 +148,17 @@ function App() {
             <ProtectedRoute requiredRoles={[1]}>
               <Layout>
                 <AclesInscritos />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/jefatura"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Jefatura />
               </Layout>
             </ProtectedRoute>
           }

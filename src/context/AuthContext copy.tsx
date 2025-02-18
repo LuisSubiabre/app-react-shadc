@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config.ts";
+import { API_BASE_URL } from "@/config/config";
 
 // Definir un tipo para el usuario (ajústalo según la estructura real de tu respuesta)
 interface User {

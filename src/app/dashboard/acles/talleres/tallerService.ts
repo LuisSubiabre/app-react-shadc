@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/config.ts";
+import { API_BASE_URL } from "@/config/config";
 import { Taller } from "./typeTaller";
 
 export const saveNew = async (newTaller: Partial<Taller>, token: string) => {
