@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/config.ts";
+import { API_BASE_URL } from "@/config/config";
 import {
   Asignatura,
   ApiResponse,

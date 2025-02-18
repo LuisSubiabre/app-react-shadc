@@ -13,8 +13,11 @@ import Cursos from "@/app/dashboard/toor/cursos/pageCursos";
 import Asignaturas from "@/app/dashboard/toor/asignaturas/pageAsignaturas";
 import AcademicoInicio from "@/app/dashboard/academico/inicio/pageInicio";
 import Calificaciones from "@/app/dashboard/academico/calificaciones/pageCalificaciones";
-import UnauthorizedComponent from "./components/unauthorizedComponent";
-import InspectoriaAsistencia from "./app/dashboard/inspectoria/asistencia/pageAsistencia";
+import UnauthorizedComponent from "@/components/unauthorizedComponent";
+import InspectoriaAsistencia from "@/app/dashboard/inspectoria/asistencia/pageAsistencia";
+import AcleTalleres from "@/app/dashboard/acles/talleres/pageTalleres";
+import AclesInscritos from "@/app/dashboard/acles/talleres/pageInscritos";
+import Jefatura from "@/app/dashboard/jefatura/pageJefatura";
 
 function App() {
   return (
@@ -124,6 +127,38 @@ function App() {
             <ProtectedRoute requiredRoles={[3]}>
               <Layout>
                 <h1>Inspectoria Atrasos</h1>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/acles/talleres"
+          element={
+            <ProtectedRoute requiredRoles={[1]}>
+              <Layout>
+                <AcleTalleres />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/acles/talleres/inscritos/:id"
+          element={
+            <ProtectedRoute requiredRoles={[1]}>
+              <Layout>
+                <AclesInscritos />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/jefatura"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Jefatura />
               </Layout>
             </ProtectedRoute>
           }

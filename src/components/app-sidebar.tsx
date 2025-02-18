@@ -12,6 +12,7 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  BookDashed,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
@@ -120,25 +121,25 @@ const data = {
       ],
     },
     {
-      title: "Settings",
+      title: "Jefatura",
+      url: "#",
+      icon: BookDashed,
+      items: [
+        {
+          title: "Mi Curso",
+          url: "/dashboard/jefatura",
+        },
+      ],
+    },
+
+    {
+      title: "Acles",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Talleres",
+          url: "/dashboard/acles/talleres",
         },
       ],
     },
@@ -186,6 +187,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       if (menu.title === "Inspectoria") {
         return user?.roles?.includes(3); // Mostrar "Models" solo si el usuario tiene el rol 2
+      }
+      if (menu.title === "Acles") {
+        return user?.roles?.includes(1); // Mostrar "Models" solo si el usuario tiene el rol 2
       }
       return true; // Mostrar otros menús sin restricciones
     });

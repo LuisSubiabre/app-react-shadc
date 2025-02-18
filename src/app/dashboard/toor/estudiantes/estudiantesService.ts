@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/config.ts";
+import { API_BASE_URL } from "@/config/config";
 
 // Definición de la interfaz para los roles
 import { Estudiante } from "./types"; // Importa la interfaz desde el archivo types.ts

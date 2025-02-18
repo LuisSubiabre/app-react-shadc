@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Pencil, Printer } from "lucide-react";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
-
 import {
   Table,
   TableBody,
@@ -44,6 +43,7 @@ import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde h
 import { savaEdit } from "./cursoService";
 import { API_BASE_URL } from "@/config/config";
 import { NavLink } from "react-router-dom";
+import Spinner from "@/components/Spinner";
 
 const AcademicoInicio: React.FC = () => {
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
@@ -67,7 +67,7 @@ const AcademicoInicio: React.FC = () => {
     asignatura_id?: number;
   }>({ show: false });
   const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
-
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -229,6 +229,7 @@ const AcademicoInicio: React.FC = () => {
   ) => {
     // console.log(estudiante_id, asignatura_id);
     try {
+      setLoadingEstudiantes(true); // Inicia la carga
       const response = await fetch(
         `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
         {
@@ -241,6 +242,8 @@ const AcademicoInicio: React.FC = () => {
     } catch (error) {
       console.error("Error checking enrollment:", error);
       return false;
+    } finally {
+      setLoadingEstudiantes(false); // Finaliza la carga
     }
   };
 
@@ -620,87 +623,91 @@ const AcademicoInicio: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label>Inscripción de Estudiantes</Label>
-                  <div className="flex justify-end mb-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (selectedSubject) {
-                          // Verificar si ya están todos seleccionados
-                          const allSelected = dataEstudiantes.every(
-                            (estudiante) =>
-                              enrolledStudents[
-                                `${estudiante.id}-${selectedSubject.id}`
-                              ]
-                          );
-
-                          if (!allSelected) {
-                            const updatedEnrolledStudents = {
-                              ...enrolledStudents,
-                            };
-
-                            // Marcar todos los checkboxes
-                            dataEstudiantes.forEach((estudiante) => {
-                              updatedEnrolledStudents[
-                                `${estudiante.id}-${selectedSubject.id}`
-                              ] = true; // Marcar todos
-                            });
-
-                            setEnrolledStudents(updatedEnrolledStudents);
-
-                            // Ejecutar handleCheckboxChange solo para los seleccionados
-                            dataEstudiantes.forEach((estudiante) => {
-                              handleCheckboxChange(
-                                estudiante.id,
-                                selectedSubject.id,
-                                true
-                              );
-                            });
-                          }
-                        }
-                      }}
-                    >
-                      Seleccionar Todos
-                    </Button>
-                  </div>
-                  <div className="p-4 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
-                    <ul>
-                      {Array.isArray(dataEstudiantes) &&
-                        dataEstudiantes.map((estudiante) => (
-                          <li
-                            key={estudiante.id}
-                            className="flex items-center gap-2"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`estudiante-${estudiante.id}`}
-                              checked={
+                {loadingEstudiantes ? (
+                  <Spinner />
+                ) : (
+                  <div className="grid gap-2">
+                    <Label>Inscripción de Estudiantes</Label>
+                    <div className="flex justify-end mb-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (selectedSubject) {
+                            // Verificar si ya están todos seleccionados
+                            const allSelected = dataEstudiantes.every(
+                              (estudiante) =>
                                 enrolledStudents[
-                                  `${estudiante.id}-${selectedSubject?.id}`
-                                ] || false
-                              }
-                              onChange={(e) => {
-                                if (selectedSubject) {
-                                  handleCheckboxChange(
-                                    estudiante.id,
-                                    selectedSubject.id,
-                                    e.target.checked
-                                  );
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`estudiante-${estudiante.id}`}
-                              className="text-sm"
+                                  `${estudiante.id}-${selectedSubject.id}`
+                                ]
+                            );
+
+                            if (!allSelected) {
+                              const updatedEnrolledStudents = {
+                                ...enrolledStudents,
+                              };
+
+                              // Marcar todos los checkboxes
+                              dataEstudiantes.forEach((estudiante) => {
+                                updatedEnrolledStudents[
+                                  `${estudiante.id}-${selectedSubject.id}`
+                                ] = true; // Marcar todos
+                              });
+
+                              setEnrolledStudents(updatedEnrolledStudents);
+
+                              // Ejecutar handleCheckboxChange solo para los seleccionados
+                              dataEstudiantes.forEach((estudiante) => {
+                                handleCheckboxChange(
+                                  estudiante.id,
+                                  selectedSubject.id,
+                                  true
+                                );
+                              });
+                            }
+                          }
+                        }}
+                      >
+                        Seleccionar Todos
+                      </Button>
+                    </div>
+                    <div className="p-4 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
+                      <ul>
+                        {Array.isArray(dataEstudiantes) &&
+                          dataEstudiantes.map((estudiante) => (
+                            <li
+                              key={estudiante.id}
+                              className="flex items-center gap-2"
                             >
-                              {estudiante.nombre}
-                            </label>
-                          </li>
-                        ))}
-                    </ul>
+                              <input
+                                type="checkbox"
+                                id={`estudiante-${estudiante.id}`}
+                                checked={
+                                  enrolledStudents[
+                                    `${estudiante.id}-${selectedSubject?.id}`
+                                  ] || false
+                                }
+                                onChange={(e) => {
+                                  if (selectedSubject) {
+                                    handleCheckboxChange(
+                                      estudiante.id,
+                                      selectedSubject.id,
+                                      e.target.checked
+                                    );
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`estudiante-${estudiante.id}`}
+                                className="text-sm"
+                              >
+                                {estudiante.nombre}
+                              </label>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             )}
           </div>
