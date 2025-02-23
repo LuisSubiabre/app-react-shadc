@@ -8,7 +8,6 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
-  Map,
   PieChart,
   Settings2,
   SquareTerminal,
@@ -27,9 +26,22 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { ModeToggle } from "./mode-toggle";
 
 // Definición de datos
 const data = {
+  projects: [
+    {
+      name: "Inicio",
+      url: "/dashboard",
+      icon: Frame,
+    },
+    {
+      name: "Reglamentos",
+      url: "#",
+      icon: PieChart,
+    },
+  ],
   teams: [
     {
       name: "Acme Inc",
@@ -144,23 +156,6 @@ const data = {
       ],
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -203,8 +198,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>{/* <TeamSwitcher teams={data.teams} /> */}</SidebarHeader>
       <SidebarContent>
-        <NavMain items={filteredNavMain} /> {/* Usar el menú filtrado */}
         <NavProjects projects={data.projects} />
+        <NavMain items={filteredNavMain} /> {/* Usar el menú filtrado */}
+        <ModeToggle />
       </SidebarContent>
       <SidebarFooter>
         <NavUser

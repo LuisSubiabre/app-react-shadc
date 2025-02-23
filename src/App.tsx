@@ -18,156 +18,169 @@ import InspectoriaAsistencia from "@/app/dashboard/inspectoria/asistencia/pageAs
 import AcleTalleres from "@/app/dashboard/acles/talleres/pageTalleres";
 import AclesInscritos from "@/app/dashboard/acles/talleres/pageInscritos";
 import Jefatura from "@/app/dashboard/jefatura/pageJefatura";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<div>Home</div>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/logout" element={<Logout />} />
-        <Route path="/unauthorized" element={<UnauthorizedComponent />} />
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <AuthProvider>
+        <Routes>
+          {/* Public Routes */}
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/toor/usuarios"
-          element={
-            <ProtectedRoute requiredRoles={[1]}>
-              <Layout>
-                <Usuarios />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/toor/roles"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Roles />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/toor/cursos"
-          element={
-            <ProtectedRoute requiredRoles={[1]}>
-              <Layout>
-                <Cursos />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/toor/estudiantes"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Estudiantes />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/toor/asignaturas"
-          element={
-            <ProtectedRoute requiredRoles={[1]}>
-              <Layout>
-                <Asignaturas />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route path="/login" element={<Login />} />
+          <Route path="/logout" element={<Logout />} />
+          <Route path="/unauthorized" element={<UnauthorizedComponent />} />
 
-        <Route
-          path="/dashboard/academico/inicio"
-          element={
-            <ProtectedRoute requiredRoles={[2]}>
-              <Layout>
-                <AcademicoInicio />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/academico/calificaciones/:id"
-          element={
-            <ProtectedRoute requiredRoles={[2]}>
-              <Layout>
-                <Calificaciones />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/inspectoria/asistencia"
-          element={
-            <ProtectedRoute requiredRoles={[3]}>
-              <Layout>
-                <InspectoriaAsistencia />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/inspectoria/atrasos"
-          element={
-            <ProtectedRoute requiredRoles={[3]}>
-              <Layout>
-                <h1>Inspectoria Atrasos</h1>
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/toor/usuarios"
+            element={
+              <ProtectedRoute requiredRoles={[1]}>
+                <Layout>
+                  <Usuarios />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/toor/roles"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Roles />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/toor/cursos"
+            element={
+              <ProtectedRoute requiredRoles={[1]}>
+                <Layout>
+                  <Cursos />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/toor/estudiantes"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Estudiantes />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/toor/asignaturas"
+            element={
+              <ProtectedRoute requiredRoles={[1]}>
+                <Layout>
+                  <Asignaturas />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/dashboard/acles/talleres"
-          element={
-            <ProtectedRoute requiredRoles={[1]}>
-              <Layout>
-                <AcleTalleres />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/acles/talleres/inscritos/:id"
-          element={
-            <ProtectedRoute requiredRoles={[1]}>
-              <Layout>
-                <AclesInscritos />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/dashboard/academico/inicio"
+            element={
+              <ProtectedRoute requiredRoles={[2]}>
+                <Layout>
+                  <AcademicoInicio />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/academico/calificaciones/:id"
+            element={
+              <ProtectedRoute requiredRoles={[2]}>
+                <Layout>
+                  <Calificaciones />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/inspectoria/asistencia"
+            element={
+              <ProtectedRoute requiredRoles={[3]}>
+                <Layout>
+                  <InspectoriaAsistencia />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/inspectoria/atrasos"
+            element={
+              <ProtectedRoute requiredRoles={[3]}>
+                <Layout>
+                  <h1>Inspectoria Atrasos</h1>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/dashboard/jefatura"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Jefatura />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/dashboard/acles/talleres"
+            element={
+              <ProtectedRoute requiredRoles={[1]}>
+                <Layout>
+                  <AcleTalleres />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/acles/talleres/inscritos/:id"
+            element={
+              <ProtectedRoute requiredRoles={[1]}>
+                <Layout>
+                  <AclesInscritos />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Redirect to login if not authenticated */}
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
-    </AuthProvider>
+          <Route
+            path="/dashboard/jefatura"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Jefatura />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirect to login if not authenticated */}
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
