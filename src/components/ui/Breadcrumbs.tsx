@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -41,12 +41,12 @@ const Breadcrumbs = () => {
               <React.Fragment key={href}>
                 <BreadcrumbItem>
                   {index < pathSegments.length - 1 ? (
-                    <BreadcrumbLink as={Link} to={href}>
+                    <BreadcrumbLink>
                       {getBreadcrumbName(segment)}
                     </BreadcrumbLink>
                   ) : (
                     <BreadcrumbPage>
-                      {getBreadcrumbName(segment)}
+                      {isNaN(Number(segment)) ? getBreadcrumbName(segment) : ""}
                     </BreadcrumbPage>
                   )}
                 </BreadcrumbItem>
