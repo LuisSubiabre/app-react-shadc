@@ -82,7 +82,7 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Ingresa tus credenciales para acceder a tu cuenta
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,7 +93,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="tucorreo@liceoexperimental.cl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)} // Actualizamos el estado del email
                   required
@@ -107,7 +107,7 @@ export function LoginForm({
                     href="#"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    ¿Olvidaste tu contraseña?
                   </a>
                 </div>
                 <Input
@@ -125,16 +125,16 @@ export function LoginForm({
                 <div className="text-red-500 text-center mt-2">{error}</div>
               )}
 
-              <Button variant="outline" className="w-full">
+              {/* <Button variant="outline" className="w-full">
                 Login with Google
-              </Button>
+              </Button> */}
             </div>
-            <div className="mt-4 text-center text-sm">
+            {/* <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <a href="#" className="underline underline-offset-4">
                 Sign up
               </a>
-            </div>
+            </div> */}
           </form>
         </CardContent>
       </Card>
