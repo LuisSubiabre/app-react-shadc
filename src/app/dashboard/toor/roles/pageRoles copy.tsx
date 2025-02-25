@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import {
   Table,
@@ -9,8 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RolType } from "@/types/index.ts"; // Importa la interfaz desde el archivo types.ts
-//import { Rol } from "./types/"; // Importa la interfaz desde el archivo types.ts
+import { Rol } from "./types"; // Importa la interfaz desde el archivo types.ts
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,64 +28,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Toaster } from "@/components/ui/toaster";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
+import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
+import { saveNew, savaEdit, deleteRole } from "./roleService";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import {
-  deleteRol,
-  getRoles,
-  savaEditRol,
-  saveNewRol,
-} from "@/services/rolesService";
-import { useToast } from "@/hooks/use-toast";
 
 const Roles: React.FC = () => {
   const [isNewRolModalOpen, setisNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [newRol, setNewRol] = useState<Partial<RolType>>({
+  const [newRol, setNewRol] = useState<Partial<Rol>>({
     nombre: "",
     descripcion: "",
   });
-  const [currentRol, setcurrentRol] = useState<RolType | null>(null);
+  const [currentRol, setcurrentRol] = useState<Rol | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-  const [rolToDelete, setRolToDelete] = useState<RolType | null>(null);
-  const { toast } = useToast();
+  const [rolToDelete, setRolToDelete] = useState<Rol | null>(null);
 
-  const [roles, setRoles] = useState<RolType[]>([]); // Lista de roles
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
     throw new Error("authToken is null");
   }
-  //const token = getTokenFromContext.authToken;
+  const token = getTokenFromContext.authToken;
 
-  //const { data, loading, error, refetch } = useFetch<Rol[]>("roles", token); // Trae los datos de la API
-
-  useEffect(() => {
-    getRoles()
-      .then((response) => {
-        if (response) {
-          setRoles(response.data);
-        } else {
-          setError("No se pudo cargar la información");
-        }
-      })
-      .catch(() => {
-        setError("No se pudo cargar la información");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const { data, loading, error, refetch } = useFetch<Rol[]>("roles", token); // Trae los datos de la API
 
   if (loading)
     return (
@@ -117,17 +89,9 @@ const Roles: React.FC = () => {
     }
 
     try {
-      const createdRol = await saveNewRol(newRol); // Guarda el nuevo rol y obtén la respuesta del backend
-
-      // Asegúrate de que el objeto del rol tenga la estructura correcta
-      const newRolWithId = {
-        id: createdRol.rol_id, // Usa el ID devuelto por el backend
-        nombre: createdRol.nombre,
-        descripcion: createdRol.descripcion,
-      };
-
-      setRoles([...roles, newRolWithId]); // Agrega el nuevo rol con el ID generado por el backend
-      handleCloseNewModal(); // Cierra el modal solo si no hay error
+      await saveNew(newRol, token); // Usamos la función del servicio roleService.ts
+      refetch(); // Recargar la lista de roles
+      handleCloseNewModal(); // Solo se ejecuta si no hay error
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Error desconocido"
@@ -163,16 +127,8 @@ const Roles: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      await savaEditRol({ ...currentRol, id: currentRol.id }); // Usamos el servicio
-      setRoles(
-        roles.map((rol) =>
-          rol.id === currentRol.id ? { ...rol, ...currentRol } : rol
-        )
-      ); // Actualizar la lista de roles
-      toast({
-        title: "Rol actualizado",
-        description: `El rol ${currentRol.nombre} ha sido actualizado`,
-      });
+      await savaEdit(token, { ...currentRol, id: currentRol.id.toString() }); // Usamos el servicio
+      refetch(); // Recargar la lista de roles
       handleCloseEditModal(); // Cerrar el modal solo si no hubo error
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -185,7 +141,7 @@ const Roles: React.FC = () => {
     }
   };
 
-  const handleEditClick = (rol: RolType) => {
+  const handleEditClick = (rol: Rol) => {
     setcurrentRol(rol);
     setIsModalEditOpen(true);
   };
@@ -213,7 +169,7 @@ const Roles: React.FC = () => {
       </div>
     );
 
-  const handleDeleteClick = (rol: RolType) => {
+  const handleDeleteClick = (rol: Rol) => {
     setRolToDelete(rol); // Guardar el rol a eliminar
     setIsDeleteDialogOpen(true); // Abrir el diálogo de confirmación
   };
@@ -222,12 +178,12 @@ const Roles: React.FC = () => {
     if (!rolToDelete) return;
 
     try {
-      await deleteRol(rolToDelete.id); // Usamos el servicio para eliminar el rol
-      setRoles(roles.filter((rol) => rol.id !== rolToDelete.id)); // Eliminar el rol de la lista
-      toast({
-        title: "Rol eliminado",
-        description: `El rol ${rolToDelete.nombre} ha sido eliminado`,
-      });
+      await deleteRole(token, {
+        ...rolToDelete,
+        id: rolToDelete.id.toString(),
+      }); // Usamos el servicio para eliminar el rol
+      // Actualizar la lista después de eliminar
+      refetch(); // Recargar la lista de roles
       setIsDeleteDialogOpen(false); // Cerrar el diálogo de confirmación
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -260,8 +216,8 @@ const Roles: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roles && roles.length > 0 ? (
-              roles.map((rol) => (
+            {data && data.length > 0 ? (
+              data.map((rol) => (
                 <TableRow key={rol.id}>
                   <TableCell className="font-medium">{rol.id}</TableCell>
                   <TableCell>{rol.nombre}</TableCell>
@@ -436,7 +392,6 @@ const Roles: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       {/* Confirmación de eliminación */}
-      <Toaster />
     </>
   );
 };
