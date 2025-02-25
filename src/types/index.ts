@@ -25,3 +25,9 @@ export interface EstudianteType {
   clave?: string; // Agregamos password como opcional
   curso_nombre?: string; // Agregamos curso_nombre como opcional
 }
+
+export interface RolType {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+}
