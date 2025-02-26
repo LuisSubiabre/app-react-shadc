@@ -28,14 +28,29 @@ import { API_BASE_URL } from "@/config/config";
 
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
-import { RolType } from "@/types/index";
+import { FuncionarioType, RolType } from "@/types/index";
 import { Toaster } from "@/components/ui/toaster";
-import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
+import { CursoType } from "@/types/index";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  deleteFuncionario,
+  getFuncionarios,
+  saveNewFuncionario,
+} from "@/services/funcionariosService";
+import Spinner from "@/components/Spinner";
+import { AlertCircle } from "lucide-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 const Usuarios: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalClave, setIsModalClave] = useState<boolean>(false);
@@ -57,7 +72,15 @@ const Usuarios: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<number[]>([]); // Estado para roles del usuario actual
 
-  //paginacion
+  /* refactoring */
+  const [funcionarios, setFuncionarios] = useState<FuncionarioType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [funcionarioToDelete, setFuncionarioToDelete] =
+    useState<FuncionarioType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+
+  /* refactoring */
 
   const { toast } = useToast();
 
@@ -68,46 +91,50 @@ const Usuarios: React.FC = () => {
   }
   const token = getTokenFromContext.authToken;
   const { data } = useFetch<RolType[]>("roles", token); // Trae los datos de la API
-  const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
-
+  const { data: dataCursos } = useFetch<CursoType[]>("cursos", token); // Trae los datos de la API (usuarios)
   useEffect(() => {
-    fetchUsers();
-  }, [userRoles]);
+    getFuncionarios()
+      .then((response) => {
+        if (response) {
+          setFuncionarios(response.data);
+        } else {
+          setError("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setError("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, [userRoles]);
 
   // Filtrar usuarios según el término de búsqueda
-  const filteredUsers = users.filter((user) =>
+  const filteredUsers = funcionarios.filter((user) =>
     user.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const fetchUsers = async (limit = 180, page = 1) => {
-    setLoading(true);
-    try {
-      // Construimos dinámicamente la URL con los parámetros
-      const url = new URL(`${API_BASE_URL}/usuarios`);
-      url.searchParams.append("limit", limit.toString());
-      url.searchParams.append("page", page.toString());
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Spinner />
+      </div>
+    );
 
-      // Realizamos la solicitud
-      const response = await fetch(url.toString());
-      if (!response.ok) {
-        throw new Error("Error al obtener los usuarios");
-      }
-      const data = await response.json();
-
-      // Accedemos a la propiedad `data` para los usuarios
-      setUsers(data.data || []);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage("Unknown error occurred");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <div className="spinner">Cargando...</div>;
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    ); // Mensaje de error al cargar los datos de la API
 
   const handleSaveNewUser = async () => {
     setSaving(true);
@@ -121,21 +148,34 @@ const Usuarios: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUser),
+      const createFuncionario = await saveNewFuncionario({
+        nombre: newUser.nombre!,
+        email: newUser.email!,
+        rut: newUser.rut!,
+        clave: newUser.clave!,
       });
+      console.log(createFuncionario);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al guardar el usuario");
-        return; // Salir sin cerrar el modal
-      }
+      const newFuncionarioWhidId = {
+        id: createFuncionario.usuario_id,
+        nombre: createFuncionario.nombre!,
+        email: createFuncionario.email!,
+        rut: createFuncionario.rut!,
+      };
 
-      await fetchUsers();
+      console.log(createFuncionario);
+      setFuncionarios([
+        ...funcionarios,
+        {
+          ...newFuncionarioWhidId,
+          activo: true, // or any default value
+          fecha_actualizacion: new Date().toISOString(), // or any default value
+        },
+      ]);
+      toast({
+        title: "Usuario creado",
+        description: "El usuario ha sido creado correctamente",
+      });
       handleCloseNewUserModal(); // Solo se ejecuta si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -220,7 +260,6 @@ const Usuarios: React.FC = () => {
       if (!errorMessage) {
         handleCloseEditModal(); // Solo se cierra si no hay error
       }
-      await fetchUsers();
       handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -316,6 +355,36 @@ const Usuarios: React.FC = () => {
       }
     }
   };
+
+  const handleDeleteClick = (funcionario: FuncionarioType) => {
+    setFuncionarioToDelete(funcionario); // Guardar el rol a eliminar
+    setIsDeleteDialogOpen(true); // Abrir el diálogo de confirmación
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!funcionarioToDelete) return;
+
+    try {
+      await deleteFuncionario(funcionarioToDelete.id); // Usamos el servicio para eliminar el rol
+      setFuncionarios((prevFuncionarios) =>
+        prevFuncionarios.filter(
+          (funcionario) => funcionario.id !== funcionarioToDelete?.id
+        )
+      );
+      toast({
+        title: "Funcionario eliminado",
+        description: `El funcionario ${funcionarioToDelete.nombre} ha sido eliminado`,
+      });
+      setIsDeleteDialogOpen(false); // Cerrar el diálogo de confirmación
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage("Error desconocido");
+      }
+    }
+  };
+
   /* Logica Roles */
 
   /* Logica Cambiar Contraseña */
@@ -501,6 +570,22 @@ const Usuarios: React.FC = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                      />
+                    </svg>
+                  </Button>
+                  <Button onClick={() => handleDeleteClick(user)}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.021-2.09 2.201v.916"
                       />
                     </svg>
                   </Button>
@@ -844,6 +929,28 @@ const Usuarios: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El funcionario{" "}
+              <b>{funcionarioToDelete?.nombre}</b> se eliminará permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
