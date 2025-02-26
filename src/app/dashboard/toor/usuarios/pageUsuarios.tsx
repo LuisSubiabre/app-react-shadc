@@ -820,7 +820,7 @@ const Usuarios: React.FC = () => {
         <Dialog open={isModalRolestOpen} onOpenChange={setIsModalRolesOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Roles</DialogTitle>
+              <DialogTitle>Roles {currentUser.nombre}</DialogTitle>
             </DialogHeader>
             <form>
               <div className="space-y-4">
