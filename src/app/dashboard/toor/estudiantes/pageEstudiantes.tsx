@@ -15,7 +15,7 @@ import {
   saveEstudiante,
 } from "@/services/estudiantesService";
 import { getCursos } from "@/services/cursosService";
-
+const PageSize = 1000;
 const Estudiantes: React.FC = () => {
   const {
     useState,
@@ -90,6 +90,10 @@ const Estudiantes: React.FC = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
   const [errorCursos, setErrorCursos] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [selectedLetter, setSelectedLetter] = useState("");
+
   /* Refactory */
 
   useEffect(() => {
@@ -351,12 +355,21 @@ const Estudiantes: React.FC = () => {
   const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const filteredUsers = estudiantes?.filter((estudiante: EstudianteType) =>
-    normalizeString(estudiante.nombre.toLowerCase()).includes(
-      normalizeString(searchTerm.toLowerCase())
-    )
-  );
+  const filteredUsers2 = estudiantes?.filter((estudiante: EstudianteType) => {
+    const nameCondition = normalizeString(
+      estudiante.nombre.toLowerCase()
+    ).includes(normalizeString(searchTerm.toLowerCase()));
+    const letterCondition =
+      !selectedLetter || estudiante.nombre.startsWith(selectedLetter);
+    return nameCondition && letterCondition;
+  });
 
+  // Calcular inicio y fin de la paginación
+  const startIndex = currentPage * PageSize;
+  const paginatedUsers = filteredUsers2.slice(
+    startIndex,
+    startIndex + PageSize
+  );
   return (
     <>
       <Toaster />
@@ -378,6 +391,36 @@ const Estudiantes: React.FC = () => {
           </div>
         </div>
 
+        <div>
+          {/* Filtros por letra */}
+          <div className="mb-4 flex flex-wrap justify-center">
+            {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+              <Button
+                key={letter}
+                className={`px-2 py-1 mx-1 border rounded ${
+                  selectedLetter === letter
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-500"
+                }`}
+                onClick={() => {
+                  setSelectedLetter(letter);
+                  setCurrentPage(0);
+                }}
+              >
+                {letter}
+              </Button>
+            ))}
+            <button
+              className="px-2 py-1 mx-1 border rounded bg-gray-300"
+              onClick={() => {
+                setSelectedLetter("");
+                setCurrentPage(0);
+              }}
+            >
+              Todos
+            </button>
+          </div>
+        </div>
         <Table>
           <TableCaption>Lista de estudiantes</TableCaption>
           <TableHeader>
@@ -390,14 +433,15 @@ const Estudiantes: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers && filteredUsers.length > 0 ? (
-              filteredUsers.map((c) => (
+            {paginatedUsers.length > 0 ? (
+              paginatedUsers.map((c) => (
                 <TableRow key={c.id}>
                   {c.activo ? (
                     <TableCell className="text-green-500">{c.id}</TableCell>
                   ) : (
                     <TableCell className="text-red-500">{c.id}</TableCell>
                   )}
+
                   <TableCell>
                     {c.nombre} <br />
                     <small>{c.email}</small>
