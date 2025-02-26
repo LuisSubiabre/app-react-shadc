@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Curso } from "./types"; // Importa la interfaz desde el archivo types.ts
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -68,9 +67,13 @@ const Cursos: React.FC = () => {
     codigo_ensenanza: 0,
     profesor_jefe_id: 1,
   });
-  const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
+  const [currentCurso, setCurrentCurso] = useState<CursoApiResponseType | null>(
+    null
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-  const [cursoDelete, setCursoDelete] = useState<Curso | null>(null);
+  const [cursoDelete, setCursoDelete] = useState<CursoApiResponseType | null>(
+    null
+  );
 
   /* refactoring */
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
@@ -238,7 +241,7 @@ const Cursos: React.FC = () => {
     }
   };
 
-  const handleEditClick = (curso: Curso) => {
+  const handleEditClick = (curso: CursoApiResponseType) => {
     setCurrentCurso(curso);
     setIsModalEditOpen(true);
   };
@@ -266,7 +269,7 @@ const Cursos: React.FC = () => {
       </div>
     );
 
-  const handleDeleteClick = (curso: Curso) => {
+  const handleDeleteClick = (curso: CursoApiResponseType) => {
     setCursoDelete(curso);
     setIsDeleteDialogOpen(true);
   };
