@@ -64,3 +64,27 @@ export const changePassword = async (id: number, clave: string) => {
     .patch(`/usuarios/password/${id}`, { clave })
     .then((response) => response.data.result);
 };
+
+export const getRolesFuncionario = async (id: number) => {
+  return api.get(`/usuariosroles/${id}`).then((response) => response.data);
+};
+
+export const asignarRolFuncionario = async (
+  rol_id: number,
+  usuario_id: number
+) => {
+  return api
+    .post(`/usuariosroles`, { rol_id, usuario_id })
+    .then((response) => response.data);
+};
+
+export const eliminarRolFuncionario = async (
+  rol_id: number,
+  usuario_id: number
+) => {
+  return api
+    .delete(`/usuariosroles/${usuario_id}/${rol_id}`, {
+      data: { rol_id, usuario_id },
+    })
+    .then((response) => response.data);
+};

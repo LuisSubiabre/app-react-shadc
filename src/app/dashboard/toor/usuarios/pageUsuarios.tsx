@@ -24,20 +24,20 @@ import { Separator } from "@/components/ui/separator";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { API_BASE_URL } from "@/config/config";
 
-import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
-import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
 import { CursoApiResponseType, FuncionarioType, RolType } from "@/types/index";
 import { Toaster } from "@/components/ui/toaster";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   asignarCursoFuncionario,
+  asignarRolFuncionario,
   changePassword,
   deleteFuncionario,
   eliminarCursoFuncionario,
+  eliminarRolFuncionario,
   getFuncionarioCursos,
   getFuncionarios,
+  getRolesFuncionario,
   saveEditFuncionario,
   saveNewFuncionario,
 } from "@/services/funcionariosService";
@@ -62,6 +62,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getCursos } from "@/services/cursosService";
+import { getRoles } from "@/services/rolesService";
+
+// Componente Usuarios
 const Usuarios: React.FC = () => {
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
@@ -91,23 +94,18 @@ const Usuarios: React.FC = () => {
   const [funcionarioToDelete, setFuncionarioToDelete] =
     useState<FuncionarioType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [errorCursos, setErrorCursos] = useState<string | null>(null);
   const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
   const [messageCursos, setMessageCursos] = useState<string | null>(null);
+
+  const [roles, setRoles] = useState<RolType[]>([]);
+  const [errorRoles, setErrorRoles] = useState<string | null>(null);
+  const [loadingRoles, setLoadingRoles] = useState<boolean>(true);
+  const [isModalRolestOpen, setIsModalRolesOpen] = useState<boolean>(false);
   /* refactoring */
 
   const { toast } = useToast();
-
-  /* token para enviar al backend */
-  const getTokenFromContext = useAuth();
-  if (!getTokenFromContext || !getTokenFromContext.authToken) {
-    throw new Error("authToken is null");
-  }
-  const token = getTokenFromContext.authToken;
-
-  const { data } = useFetch<RolType[]>("roles", token); // Trae los datos de la API
 
   useEffect(() => {
     getFuncionarios()
@@ -140,6 +138,23 @@ const Usuarios: React.FC = () => {
       })
       .finally(() => {
         setLoadingCursos(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    getRoles()
+      .then((response) => {
+        if (response) {
+          setRoles(response.data);
+        } else {
+          setErrorRoles("No se pudo cargar la información de roles");
+        }
+      })
+      .catch(() => {
+        setErrorRoles("No se pudo cargar la información de roles");
+      })
+      .finally(() => {
+        setLoadingRoles(false);
       });
   }, []);
 
@@ -305,21 +320,24 @@ const Usuarios: React.FC = () => {
   /* Logica Roles */
   // Función para cargar los roles del usuario
   const fetchUserRoles = async (id: number): Promise<void> => {
+    setErrorRoles(null); // Limpiar mensaje de error
     setUserRoles([]); // Limpiar roles
     try {
-      const response = await fetch(`${API_BASE_URL}/usuariosroles/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await getRolesFuncionario(id); // Llama al servicio para obtener los roles del usuario
 
-      if (!response.ok) {
-        throw new Error("Error al obtener los roles del usuario");
+      if (response === null) {
+        setErrorRoles("No se encontraron roles para este usuario");
+        setUserRoles([]); // Dejar la lista vacía
+        return;
       }
 
-      const roles: { rol_id: number }[] | null = await response.json(); // Puede ser un array o null
+      if (response.error) {
+        setErrorRoles("Error al obtener los roles del usuario");
+      }
+
+      const roles: { rol_id: number }[] | null = await response; // Puede ser un array o null
       if (!roles || roles.length === 0) {
-        console.warn("No se encontraron roles para este usuario");
+        setErrorRoles("No se encontraron roles para este usuario");
         setUserRoles([]); // Dejar la lista vacía
         return;
       }
@@ -328,9 +346,9 @@ const Usuarios: React.FC = () => {
       setUserRoles(userRoles);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        console.error("Error:", err.message);
+        setErrorRoles("Error: " + err.message);
       } else {
-        console.error("Error desconocido:", err);
+        setErrorRoles("Error: " + err);
       }
     }
   };
@@ -342,41 +360,20 @@ const Usuarios: React.FC = () => {
       setUserRoles((prevRoles) => prevRoles.filter((roleId) => roleId !== id));
     }
     try {
-      let url: string;
-      let method: string;
-
       if (isChecked) {
-        url = `${API_BASE_URL}/usuariosroles/${currentUser?.id}/${id}`;
-        method = "DELETE";
+        if (currentUser && currentUser.id !== undefined) {
+          await eliminarRolFuncionario(id, currentUser.id);
+        }
       } else {
-        url = `${API_BASE_URL}/usuariosroles/`;
-        method = "POST";
+        if (currentUser && currentUser.id !== undefined) {
+          await asignarRolFuncionario(id, currentUser.id);
+        }
       }
-      toast({
-        title: "Rol actualizado",
-        description: "Friday, February 10, 2023 at 5:57 PM",
-      });
 
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ rol_id: id, usuario_id: currentUser?.id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al guardar el usuario");
-        throw new Error(errorData.error || "Error al guardar el usuario");
-      }
       toast({
         title: "Rol actualizado",
         description: isChecked ? "Rol eliminado" : "Rol asignado",
       });
-      // await fetchUsers();
-      //handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -415,7 +412,20 @@ const Usuarios: React.FC = () => {
     }
   };
 
-  /* Logica Roles */
+  /* Logica Roles Refactor */
+  const handleRolesClick = (user: User) => {
+    setCurrentUser(user);
+    setIsModalRolesOpen(true);
+    fetchUserRoles(user.id);
+    setMessageCursos(null);
+  };
+  const handleCloseRolesModal = () => {
+    setErrorRoles(null);
+    setErrorMessage(null);
+    setMessageCursos(null);
+    setIsModalRolesOpen(false);
+    setErrorRoles(null);
+  };
 
   /* Logica Cambiar Contraseña */
   const handleChangePasswordClick = (user: User) => {
@@ -606,7 +616,7 @@ const Usuarios: React.FC = () => {
 
                   <Button
                     className="mr-2"
-                    onClick={() => handleCursosClick(user)}
+                    onClick={() => handleRolesClick(user)}
                   >
                     <Puzzle />
                   </Button>
@@ -741,31 +751,6 @@ const Usuarios: React.FC = () => {
                     }
                   />
                 </div>
-                <div>
-                  {data &&
-                    data.length > 0 &&
-                    data.map((rol) => (
-                      <div key={rol.id}>
-                        <Checkbox
-                          id={`terms2-${rol.id}`}
-                          checked={userRoles.includes(rol.id) ? true : false}
-                          onClick={() =>
-                            handleAsignarRol(
-                              rol.id,
-                              userRoles.includes(rol.id) ? true : false
-                            )
-                          }
-                        />
-
-                        <label
-                          htmlFor={`terms2-${rol.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {rol.nombre}
-                        </label>
-                      </div>
-                    ))}
-                </div>
               </div>
             </form>
 
@@ -824,6 +809,60 @@ const Usuarios: React.FC = () => {
               </Button>
               <Button onClick={handleSavePassword} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal Roles */}
+      {isModalRolestOpen && currentUser && (
+        <Dialog open={isModalRolestOpen} onOpenChange={setIsModalRolesOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Roles</DialogTitle>
+            </DialogHeader>
+            <form>
+              <div className="space-y-4">
+                <div>
+                  {loadingRoles && <Spinner />}
+                  <p className="text-red-500">{errorRoles}</p>
+
+                  <p className="text-green-500">{messageCursos}</p>
+                </div>
+                <div>
+                  {roles &&
+                    roles.length > 0 &&
+                    roles.map((rol) => (
+                      <div key={rol.id}>
+                        <Checkbox
+                          id={`terms2-${rol.id}`}
+                          checked={userRoles.includes(rol.id) ? true : false}
+                          onClick={() =>
+                            handleAsignarRol(
+                              rol.id,
+                              userRoles.includes(rol.id) ? true : false
+                            )
+                          }
+                        />
+
+                        <label
+                          htmlFor={`terms2-${rol.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {rol.nombre}
+                        </label>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </form>
+
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+
+            <DialogFooter>
+              <Button variant="secondary" onClick={handleCloseRolesModal}>
+                Cerrar
               </Button>
             </DialogFooter>
           </DialogContent>
