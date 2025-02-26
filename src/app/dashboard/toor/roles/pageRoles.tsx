@@ -208,7 +208,6 @@ const Roles: React.FC = () => {
   if (loading)
     return (
       <div className="flex justify-center items-center h-full w-2/5 mx-auto">
-        {" "}
         <Spinner />
       </div>
     );
