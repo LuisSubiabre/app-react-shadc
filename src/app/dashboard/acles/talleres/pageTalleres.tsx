@@ -51,10 +51,10 @@ import {
   obtenerAsignaciones,
 } from "./tallerService.ts";
 import { useToast } from "@/hooks/use-toast";
-import { Curso } from "@/app/dashboard/toor/cursos/types";
 import { User } from "@/app/dashboard/toor/usuarios/types";
 import { Toaster } from "@/components/ui/toaster.tsx";
 import { Link } from "react-router-dom";
+import { CursoApiResponseType } from "@/types/index.ts";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -91,7 +91,10 @@ const AcleTalleres: React.FC = () => {
     "talleres",
     token
   );
-  const { data: dataCursos } = useFetch<Curso[]>("cursos", token);
+  const { data: dataCursos } = useFetch<CursoApiResponseType[]>(
+    "cursos",
+    token
+  );
   const { data: dataUsuarios } = useFetch<User[]>("usuarios", token);
 
   if (loading) return <div className="spinner">Cargando...</div>;

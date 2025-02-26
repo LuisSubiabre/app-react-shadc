@@ -36,3 +36,25 @@ export const saveEditFuncionario = async (
 export const deleteFuncionario = async (id: number) => {
   return api.delete(`/usuarios/${id}`).then((response) => response.data);
 };
+
+export const getFuncionarioCursos = async (id: number) => {
+  return api.get(`/usuarioscursos/${id}`).then((response) => response.data);
+};
+
+export const asignarCursoFuncionario = async (
+  curso_id: number,
+  usuario_id: number
+) => {
+  return api
+    .post(`/usuarioscursos`, { curso_id, usuario_id })
+    .then((response) => response.data);
+};
+
+export const eliminarCursoFuncionario = async (
+  curso_id: number,
+  usuario_id: number
+) => {
+  return api
+    .delete(`/usuarioscursos`, { data: { curso_id, usuario_id } })
+    .then((response) => response.data);
+};

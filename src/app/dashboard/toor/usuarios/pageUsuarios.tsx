@@ -28,12 +28,14 @@ import { API_BASE_URL } from "@/config/config";
 
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
-import { FuncionarioType, RolType } from "@/types/index";
+import { CursoApiResponseType, FuncionarioType, RolType } from "@/types/index";
 import { Toaster } from "@/components/ui/toaster";
-import { CursoType } from "@/types/index";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  asignarCursoFuncionario,
   deleteFuncionario,
+  eliminarCursoFuncionario,
+  getFuncionarioCursos,
   getFuncionarios,
   saveEditFuncionario,
   saveNewFuncionario,
@@ -51,6 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getCursos } from "@/services/cursosService";
 const Usuarios: React.FC = () => {
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
@@ -80,6 +83,11 @@ const Usuarios: React.FC = () => {
   const [funcionarioToDelete, setFuncionarioToDelete] =
     useState<FuncionarioType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+
+  const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
+  const [errorCursos, setErrorCursos] = useState<string | null>(null);
+  const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
+  const [messageCursos, setMessageCursos] = useState<string | null>(null);
   /* refactoring */
 
   const { toast } = useToast();
@@ -90,8 +98,9 @@ const Usuarios: React.FC = () => {
     throw new Error("authToken is null");
   }
   const token = getTokenFromContext.authToken;
+
   const { data } = useFetch<RolType[]>("roles", token); // Trae los datos de la API
-  const { data: dataCursos } = useFetch<CursoType[]>("cursos", token); // Trae los datos de la API (usuarios)
+  //const { data: dataCursos } = useFetch<CursoType[]>("cursos", token); // Trae los datos de la API (usuarios)
 
   useEffect(() => {
     getFuncionarios()
@@ -110,9 +119,22 @@ const Usuarios: React.FC = () => {
       });
   }, []);
 
-  // useEffect(() => {
-  //   fetchUsers();
-  // }, [userRoles]);
+  useEffect(() => {
+    getCursos()
+      .then((response) => {
+        if (response) {
+          setCursos(response.data);
+        } else {
+          setErrorCursos("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorCursos("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingCursos(false);
+      });
+  }, []);
 
   // Filtrar usuarios según el término de búsqueda
   const filteredUsers = funcionarios.filter((user) =>
@@ -217,6 +239,7 @@ const Usuarios: React.FC = () => {
     setIsModalEditOpen(false);
     setCurrentUser(null);
     setErrorMessage(null); // Limpiar mensaje de error
+    setErrorCursos(null); // Limpiar mensaje de error
   };
 
   // Si tienes un modal para cambiar contraseña
@@ -399,65 +422,58 @@ const Usuarios: React.FC = () => {
     setCurrentUser(user);
     setIsModalCursosOpen(true);
     fetchUsuarioCursos(user.id);
+    setMessageCursos(null);
   };
 
   const handleCloseCursosModal = () => {
-    setIsModalCursosOpen(false);
-    //setNewUser({ nombre: "", email: "", rut: "", clave: "" });
+    setErrorCursos(null); // Limpiar mensaje de error
     setErrorMessage(null); // Limpiar mensaje de error
+    setMessageCursos(null); // Limpiar mensaje de éxitoq
+    setIsModalCursosOpen(false);
   };
 
   const asignarCurso = async (idCurso: number, isChecked: boolean) => {
-    const verbo = isChecked ? "POST" : "DELETE";
+    setMessageCursos(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarioscursos`, {
-        method: verbo,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          curso_id: idCurso,
-          usuario_id: currentUser?.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al asignar el curso");
-        throw new Error(errorData.error || "Error al asignar el curso");
-      }
-      toast({
-        title: isChecked ? "Curso asignado" : "Curso eliminado",
-        description: isChecked
-          ? "El curso ha sido asignado correctamente"
-          : "El curso ha sido eliminado correctamente",
-      });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErrorMessage(err.message);
+      if (currentUser?.id !== undefined) {
+        if (isChecked) {
+          const response = await asignarCursoFuncionario(
+            idCurso,
+            currentUser.id
+          );
+          if (response) {
+            setMessageCursos("Curso asignado correctamente");
+          } else {
+            setErrorCursos("Error al asignar el curso");
+          }
+        } else {
+          const response = await eliminarCursoFuncionario(
+            idCurso,
+            currentUser.id
+          );
+          if (response) {
+            setMessageCursos("Curso eliminado correctamente");
+          } else {
+            setErrorCursos("Error al eliminar el curso");
+          }
+        }
       } else {
-        setErrorMessage("Unknown error occurred");
+        console.error("currentUser.id is undefined");
       }
+    } catch (err) {
+      console.log("error" + err);
     }
   };
 
   const fetchUsuarioCursos = async (id: number): Promise<void> => {
     try {
-      const response = await fetch(
-        `http://localhost:3100/usuarioscursos/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await getFuncionarioCursos(id);
+      console.log(response);
 
-      if (!response.ok) {
-        throw new Error("Error al obtener los cursos del usuario");
-      }
+      // Si la respuesta ya es un array, no necesitas hacer .json()
+      const cursos: { curso_id: number }[] | null = response; // Directamente asigna la respuesta
+      console.log(cursos);
 
-      const cursos: { curso_id: number }[] | null = await response.json(); // Puede ser un array o null
       if (!cursos || cursos.length === 0) {
         console.warn("No se encontraron cursos para este usuario");
         setUserCursos([]); // Dejar la lista vacía
@@ -465,6 +481,7 @@ const Usuarios: React.FC = () => {
       }
 
       const userCursos = cursos.map((curso) => curso.curso_id); // Almacena los IDs de los cursos
+      console.log(userCursos);
       setUserCursos(userCursos);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -859,7 +876,6 @@ const Usuarios: React.FC = () => {
       )}
 
       {/* Cursos */}
-      {/* Nuevo usuario */}
       {isModalCursosOpen && (
         <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
           <DialogContent>
@@ -880,7 +896,11 @@ const Usuarios: React.FC = () => {
                 <Separator />
 
                 <div>
-                  {dataCursos?.map((curso) => (
+                  {loadingCursos && <Spinner />}
+                  {errorCursos && <p className="text-red-500">{errorCursos}</p>}
+                  <p className="text-green-500">{messageCursos}</p>
+
+                  {cursos?.map((curso) => (
                     <div key={curso.id}>
                       <Checkbox
                         id={`curso-${curso.id}`}

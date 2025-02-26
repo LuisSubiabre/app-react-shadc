@@ -1,6 +1,5 @@
 import * as Imports from "@/app/dashboard/toor/estudiantes/importEstudiantes.ts";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
-import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
 import {
   saveNew,
   savaEdit,
@@ -9,6 +8,7 @@ import {
 } from "@/app/dashboard/toor/estudiantes/estudiantesService.ts";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
+import { CursoApiResponseType } from "@/types";
 
 const Estudiantes: React.FC = () => {
   const {
@@ -89,7 +89,10 @@ const Estudiantes: React.FC = () => {
     token
   ); // Trae los datos de la API
   console.log(data);
-  const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
+  const { data: dataCursos } = useFetch<CursoApiResponseType[]>(
+    "cursos",
+    token
+  ); // Trae los datos de la API (usuarios)
 
   if (loading) return <div className="spinner">Cargando...</div>;
   if (error) return <div className="error">{error}</div>; // Mensaje de error al cargar los datos de la API
