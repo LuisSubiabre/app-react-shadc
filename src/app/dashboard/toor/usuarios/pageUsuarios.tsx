@@ -199,7 +199,7 @@ const Usuarios: React.FC = () => {
         rut: newUser.rut!,
         clave: newUser.clave!,
       });
-      console.log(createFuncionario);
+      //console.log(createFuncionario);
 
       const newFuncionarioWhidId = {
         id: createFuncionario.usuario_id,
@@ -208,7 +208,7 @@ const Usuarios: React.FC = () => {
         rut: createFuncionario.rut!,
       };
 
-      console.log(createFuncionario);
+      //console.log(createFuncionario);
       setFuncionarios([
         ...funcionarios,
         {

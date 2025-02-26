@@ -23,7 +23,7 @@ export interface CursoApiResponseType {
 
 // types.ts
 export interface EstudianteType {
-  estudiante_id: number;
+  id: number;
   nombre: string;
   email: string;
   clave_email: string;

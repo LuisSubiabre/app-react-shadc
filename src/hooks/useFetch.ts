@@ -24,7 +24,7 @@
 //       .finally(() => setLoading(false));
 //   }, [url, token]);
 //   return { data, loading, error, refetch: useFetch };
-// }
+// } `${import.meta.env.VITE_URL_BASE}/${url}`,
 
 import { useState, useEffect } from "react";
 
@@ -38,7 +38,7 @@ export function useFetch<T>(url: string, token: string) {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_URL_BASE}/${url}`, {
+      const response = await fetch(`http://localhost:3100/${url}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
