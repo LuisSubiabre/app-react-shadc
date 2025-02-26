@@ -58,3 +58,9 @@ export const eliminarCursoFuncionario = async (
     .delete(`/usuarioscursos`, { data: { curso_id, usuario_id } })
     .then((response) => response.data);
 };
+
+export const changePassword = async (id: number, clave: string) => {
+  return api
+    .patch(`/usuarios/password/${id}`, { clave })
+    .then((response) => response.data.result);
+};
