@@ -28,7 +28,7 @@ import { API_BASE_URL } from "@/config/config";
 
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
-import { Rol } from "@/app/dashboard/toor/roles/types"; // Importa la interfaz desde el archivo types.ts
+import { RolType } from "@/types/index";
 import { Toaster } from "@/components/ui/toaster";
 import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -67,7 +67,7 @@ const Usuarios: React.FC = () => {
     throw new Error("authToken is null");
   }
   const token = getTokenFromContext.authToken;
-  const { data } = useFetch<Rol[]>("roles", token); // Trae los datos de la API
+  const { data } = useFetch<RolType[]>("roles", token); // Trae los datos de la API
   const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
 
   useEffect(() => {
