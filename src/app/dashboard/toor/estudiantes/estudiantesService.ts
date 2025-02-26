@@ -60,39 +60,6 @@ export const savaEdit = async (
   }
 };
 
-export const deleteEstudiante = async (
-  token: string,
-  estudianteToDelete: { id: string }
-): Promise<void> => {
-  if (!estudianteToDelete.id) {
-    throw new Error("ID del rol es obligatorio");
-  }
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/estudiantes/${estudianteToDelete.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Error al eliminar el estudiante");
-    }
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      throw new Error("-" + err.message);
-    } else {
-      throw new Error("Error desconocido");
-    }
-  }
-};
-
 export const updatePassword = async (
   token: string,
   userId: number,

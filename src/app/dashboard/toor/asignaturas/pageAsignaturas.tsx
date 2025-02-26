@@ -50,8 +50,8 @@ import {
   obtenerAsignacionesPorAsignatura,
 } from "./asignaturaService";
 import { useToast } from "@/hooks/use-toast";
-import { Curso } from "@/app/dashboard/toor/cursos/types";
 import { User } from "@/app/dashboard/toor/usuarios/types";
+import { CursoApiResponseType } from "@/types";
 //import { AsignacionPendiente } from "./types";
 
 const Asignaturas: React.FC = () => {
@@ -94,7 +94,10 @@ const Asignaturas: React.FC = () => {
     token
   );
 
-  const { data: dataCursos } = useFetch<Curso[]>("cursos", token);
+  const { data: dataCursos } = useFetch<CursoApiResponseType[]>(
+    "cursos",
+    token
+  );
   const { data: dataUsuarios } = useFetch<User[]>("usuarios", token);
 
   if (loading) return <div className="spinner">Cargando...</div>;
