@@ -35,6 +35,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   deleteFuncionario,
   getFuncionarios,
+  saveEditFuncionario,
   saveNewFuncionario,
 } from "@/services/funcionariosService";
 import Spinner from "@/components/Spinner";
@@ -69,7 +70,7 @@ const Usuarios: React.FC = () => {
     rut: "",
     clave: "",
   });
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<FuncionarioType | null>(null);
   const [userRoles, setUserRoles] = useState<number[]>([]); // Estado para roles del usuario actual
 
   /* refactoring */
@@ -79,7 +80,6 @@ const Usuarios: React.FC = () => {
   const [funcionarioToDelete, setFuncionarioToDelete] =
     useState<FuncionarioType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-
   /* refactoring */
 
   const { toast } = useToast();
@@ -92,6 +92,7 @@ const Usuarios: React.FC = () => {
   const token = getTokenFromContext.authToken;
   const { data } = useFetch<RolType[]>("roles", token); // Trae los datos de la API
   const { data: dataCursos } = useFetch<CursoType[]>("cursos", token); // Trae los datos de la API (usuarios)
+
   useEffect(() => {
     getFuncionarios()
       .then((response) => {
@@ -134,7 +135,7 @@ const Usuarios: React.FC = () => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </div>
-    ); // Mensaje de error al cargar los datos de la API
+    );
 
   const handleSaveNewUser = async () => {
     setSaving(true);
@@ -241,25 +242,24 @@ const Usuarios: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/usuarios/${currentUser.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(currentUser),
-        }
+      await saveEditFuncionario(currentUser.id, {
+        nombre: currentUser.nombre,
+        email: currentUser.email,
+        rut: currentUser.rut || "",
+        activo: currentUser.activo,
+      });
+
+      setFuncionarios((prevFuncionarios) =>
+        prevFuncionarios.map((funcionario) =>
+          funcionario.id === currentUser.id ? currentUser : funcionario
+        )
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error al guardar el usuario");
-        throw new Error(errorData.error || "Error al guardar el usuario");
-      }
-      if (!errorMessage) {
-        handleCloseEditModal(); // Solo se cierra si no hay error
-      }
+      toast({
+        title: "Funcionario actualizado",
+        description: `El funcionario ${currentUser.nombre} ha sido actualizado`,
+      });
+
       handleCloseEditModal(); // Solo se cierra si no hay error
     } catch (err: unknown) {
       if (err instanceof Error) {

@@ -19,20 +19,19 @@ export const saveNewFuncionario = async (newFuncionario: {
     .then((response) => response.data.result);
 };
 
-// export const saveNewCurso = async (newCurso: Partial<CursoApiResponseType>) => {
-//   console.log(newCurso);
-//   //return api.post(`/cursos`, newCurso).then((response) => response.data.result);
-// };
-
-//   export const savaEditRol = async (currentRol: {
-//     id: number;
-//     nombre: string;
-//     descripcion?: string;
-//   }) => {
-//     return api
-//       .patch(`/roles/${currentRol.id}`, currentRol)
-//       .then((response) => response.data);
-//   };
+export const saveEditFuncionario = async (
+  id: number,
+  funcionario: {
+    nombre: string;
+    email: string;
+    rut: string;
+    activo: boolean;
+  }
+) => {
+  return api
+    .patch(`/usuarios/${id}`, funcionario)
+    .then((response) => response.data.result);
+};
 
 export const deleteFuncionario = async (id: number) => {
   return api.delete(`/usuarios/${id}`).then((response) => response.data);
