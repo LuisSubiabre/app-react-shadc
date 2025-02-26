@@ -105,7 +105,7 @@ const PageJefatura = () => {
             </TableHeader>
             <TableBody>
               {estudiantes.map((estudiante: EstudianteType, index: number) => (
-                <TableRow key={estudiante.estudiante_id}>
+                <TableRow key={estudiante.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
                     {estudiante.nombre} <br />{" "}

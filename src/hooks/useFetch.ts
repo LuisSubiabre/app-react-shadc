@@ -24,7 +24,7 @@
 //       .finally(() => setLoading(false));
 //   }, [url, token]);
 //   return { data, loading, error, refetch: useFetch };
-// }
+// } `${import.meta.env.VITE_URL_BASE}/${url}`,
 
 import { useState, useEffect } from "react";
 

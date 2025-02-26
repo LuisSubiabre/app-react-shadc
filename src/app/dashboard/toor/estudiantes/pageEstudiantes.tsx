@@ -1,21 +1,27 @@
 import * as Imports from "@/app/dashboard/toor/estudiantes/importEstudiantes.ts";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
-import { Curso } from "@/app/dashboard/toor/cursos/types.ts";
-import {
-  saveNew,
-  savaEdit,
-  deleteEstudiante,
-  updatePassword,
-} from "@/app/dashboard/toor/estudiantes/estudiantesService.ts";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
+import { CursoApiResponseType, EstudianteType } from "@/types";
+import Spinner from "@/components/Spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Edit, KeySquare, Trash2 } from "lucide-react";
+import { useEffect } from "react";
+import {
+  changePasswordEstudiante,
+  deleteEstudiante,
+  getEstudiantes,
+  saveEditEstudiante,
+  saveEstudiante,
+} from "@/services/estudiantesService";
+import { getCursos } from "@/services/cursosService";
 
 const Estudiantes: React.FC = () => {
   const {
     useState,
-    useAuth,
+
     Breadcrumbs,
-    useFetch,
+
     Button,
     Table,
     TableCaption,
@@ -77,22 +83,65 @@ const Estudiantes: React.FC = () => {
     null
   );
 
-  /* token para enviar al backend */
-  const getTokenFromContext = useAuth();
-  if (!getTokenFromContext || !getTokenFromContext.authToken) {
-    throw new Error("authToken is null");
-  }
-  const token = getTokenFromContext.authToken;
+  /* Refactory */
+  const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
+  const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
+  const [errorCursos, setErrorCursos] = useState<string | null>(null);
+  /* Refactory */
 
-  const { data, loading, error, refetch } = useFetch<Estudiante[]>(
-    "estudiantes",
-    token
-  ); // Trae los datos de la API
-  console.log(data);
-  const { data: dataCursos } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API (usuarios)
+  useEffect(() => {
+    getEstudiantes()
+      .then((response) => {
+        if (response) {
+          setEstudiantes(response.data);
+        } else {
+          setError("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setError("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
-  if (loading) return <div className="spinner">Cargando...</div>;
-  if (error) return <div className="error">{error}</div>; // Mensaje de error al cargar los datos de la API
+  useEffect(() => {
+    getCursos()
+      .then((response) => {
+        if (response) {
+          setCursos(response.data);
+        } else {
+          setErrorCursos("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorCursos("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingCursos(false);
+      });
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Spinner />
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
 
   const handleNewClick = () => {
     setisNewModalOpen(true);
@@ -139,8 +188,30 @@ const Estudiantes: React.FC = () => {
       return;
     }
     try {
-      await saveNew(newEstudiante as Estudiante, token);
-      refetch(); // Recargar la lista de roles
+      const createEstudiante = await saveEstudiante(
+        newEstudiante as EstudianteType
+      );
+      console.log("createEstudiante", createEstudiante);
+      const newEstudianteWithId: EstudianteType = {
+        id: createEstudiante.estudiante_id,
+        nombre: newEstudiante.nombre!,
+        email: newEstudiante.email!,
+        clave_email: newEstudiante.clave_email!,
+        rut: newEstudiante.rut!,
+        curso_id: newEstudiante.curso_id!,
+        numlista: newEstudiante.numlista!,
+        activo: newEstudiante.activo!,
+        curso_nombre: "", // Add appropriate value if needed
+        fecha_actualizacion: "",
+      };
+      console.log("newEstudianteWithId", newEstudianteWithId);
+      console.log("estudiantes", estudiantes);
+
+      setEstudiantes([...estudiantes, newEstudianteWithId]);
+      toast({
+        title: "Estudiante creado",
+        description: "El estudiante ha sido creado correctamente",
+      });
       handleCloseNewModal(); // Solo se ejecuta si no hay error
     } catch (error) {
       setErrorMessage(
@@ -180,11 +251,24 @@ const Estudiantes: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      await savaEdit(token, {
+      await saveEditEstudiante(currentEstudiante);
+
+      // Encuentra el nombre del curso correspondiente
+      const curso = cursos.find((c) => c.id === currentEstudiante.curso_id);
+      const curso_nombre = curso ? curso.nombre : "";
+
+      // Actualiza el estado local con el nuevo curso_nombre
+      const updatedEstudiante = {
         ...currentEstudiante,
-        id: currentEstudiante.id.toString(),
-      }); // Usamos el servicio
-      refetch(); // Recargar la lista de roles
+        curso_nombre,
+      };
+
+      setEstudiantes(
+        estudiantes.map((c) =>
+          c.id === currentEstudiante.id ? updatedEstudiante : c
+        )
+      );
+
       handleCloseEditModal(); // Cerrar el modal solo si no hubo error
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -207,12 +291,13 @@ const Estudiantes: React.FC = () => {
     if (!estudianteDelete) return;
 
     try {
-      await deleteEstudiante(token, {
-        ...estudianteDelete,
-        id: estudianteDelete.id.toString(),
-      }); // Usamos el servicio para eliminar el rol
-      // Actualizar la lista después de eliminar
-      refetch(); // Recargar la lista de roles
+      await deleteEstudiante(estudianteDelete.id);
+      setEstudiantes(estudiantes.filter((c) => c.id !== estudianteDelete.id));
+      toast({
+        title: "Estudiante eliminado",
+        description: "El estudiante ha sido eliminado correctamente",
+      });
+
       setIsDeleteDialogOpen(false); // Cerrar el diálogo de confirmación
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -230,11 +315,43 @@ const Estudiantes: React.FC = () => {
     setIsModalClave(true);
   };
 
+  const handleUpdatePassword = async () => {
+    setSaving(true);
+    setErrorMessageClave(null);
+
+    if (!newEstudiante.clave) {
+      setErrorMessageClave("La contraseña es obligatoria.");
+      setSaving(false);
+      return;
+    }
+
+    try {
+      await changePasswordEstudiante(
+        currentEstudiante!.id,
+        newEstudiante.clave
+      );
+      toast({
+        title: "Contraseña actualizada",
+        description: "La contraseña ha sido actualizada correctamente",
+      });
+      setNewEstudiante({ ...newEstudiante, clave: "" });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessageClave(err.message);
+      } else {
+        setErrorMessageClave("Error desconocido.");
+      }
+    } finally {
+      setSaving(false);
+      setIsModalClave(false);
+    }
+  };
+
   // Filtrar usuarios según el término de búsqueda
   const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const filteredUsers = data?.filter((estudiante: Estudiante) =>
+  const filteredUsers = estudiantes?.filter((estudiante: EstudianteType) =>
     normalizeString(estudiante.nombre.toLowerCase()).includes(
       normalizeString(searchTerm.toLowerCase())
     )
@@ -289,55 +406,16 @@ const Estudiantes: React.FC = () => {
                   <TableCell>{c.curso_nombre}</TableCell>
                   <TableCell>
                     <Button className="mr-2" onClick={() => handleEditClick(c)}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="size-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                        />
-                      </svg>
+                      <Edit />
                     </Button>
                     <Button
                       className="mr-2"
                       onClick={() => handleDeleteClick(c)}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="size-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.021-2.09 2.201v.916"
-                        />
-                      </svg>
+                      <Trash2 />
                     </Button>
                     <Button onClick={() => handleChangePasswordClick(c)}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="size-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                        />
-                      </svg>
+                      <KeySquare />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -421,7 +499,7 @@ const Estudiantes: React.FC = () => {
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Funcionarios</SelectLabel>
-                        {dataCursos?.map((c) => (
+                        {cursos?.map((c) => (
                           <SelectItem
                             key={c.id}
                             value={JSON.stringify({
@@ -528,43 +606,54 @@ const Estudiantes: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="descripcion">Jefatura</Label>
-                  <Select
-                    value={JSON.stringify({
-                      id: currentEstudiante.curso_id,
-                      nombre:
-                        dataCursos?.find(
-                          (c) => c.id === currentEstudiante.curso_id
-                        )?.nombre || "",
-                    })}
-                    onValueChange={(value) => {
-                      const selected = JSON.parse(value);
-                      setCurrentEstudiante({
-                        ...currentEstudiante,
-                        curso_id: selected.id,
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Selecciona Jefatura" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Funcionarios</SelectLabel>
-                        {dataCursos?.map((c) => (
-                          <SelectItem
-                            key={c.id}
-                            value={JSON.stringify({
-                              id: c.id,
-                              nombre: c.nombre,
-                            })}
-                          >
-                            {c.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  {loadingCursos ? <Spinner /> : null}
+                  {errorCursos ? (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{errorCursos}</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <>
+                      <Label htmlFor="descripcion">Curso</Label>
+                      <Select
+                        value={JSON.stringify({
+                          id: currentEstudiante.curso_id,
+                          nombre:
+                            cursos?.find(
+                              (c) => c.id === currentEstudiante.curso_id
+                            )?.nombre || "",
+                        })}
+                        onValueChange={(value) => {
+                          const selected = JSON.parse(value);
+                          setCurrentEstudiante({
+                            ...currentEstudiante,
+                            curso_id: selected.id,
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Selecciona Curso" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Cursos</SelectLabel>
+                            {cursos?.map((c) => (
+                              <SelectItem
+                                key={c.id}
+                                value={JSON.stringify({
+                                  id: c.id,
+                                  nombre: c.nombre,
+                                })}
+                              >
+                                {c.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="descripcion">Número de lista</Label>
@@ -677,39 +766,7 @@ const Estudiantes: React.FC = () => {
               >
                 Cancelar
               </Button>
-              <Button
-                onClick={async () => {
-                  setSaving(true);
-                  setErrorMessageClave(null);
-                  if (!newEstudiante.clave) {
-                    setErrorMessageClave("La contraseña es obligatoria.");
-                    setSaving(false);
-                    return;
-                  }
-                  try {
-                    await updatePassword(
-                      token,
-                      currentEstudiante.id,
-                      currentEstudiante.clave?.toString() || ""
-                    );
-                    toast({
-                      title: "Contraseña actualizada",
-                      description:
-                        "La contraseña ha sido actualizada correctamente",
-                    });
-                  } catch (err: unknown) {
-                    if (err instanceof Error) {
-                      setErrorMessageClave(err.message);
-                    } else {
-                      setErrorMessageClave("Error desconocido.");
-                    }
-                  } finally {
-                    setSaving(false);
-                    setIsModalClave(false);
-                  }
-                }}
-                disabled={saving}
-              >
+              <Button onClick={handleUpdatePassword} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar"}
               </Button>
             </DialogFooter>
