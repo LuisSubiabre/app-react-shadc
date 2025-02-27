@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext";
+import Spinner from "./Spinner";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -15,7 +16,11 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>; // Mostrar un loader mientras se verifica la autenticación
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Spinner />
+      </div>
+    ); // Mostrar un loader mientras se verifica la autenticación
   }
 
   if (!auth || !user) {
