@@ -1,13 +1,13 @@
 import { API_BASE_URL } from "@/config/config";
 import {
-  Asignatura,
+  AsignaturaType,
   ApiResponse,
-  AsignaturaCursoResponse,
-  AsignaturaCursoUsuario,
-} from "./types";
+  AsignaturaCursoResponseType,
+  AsignaturaCursoUsuarioType,
+} from "@/types/index.ts";
 
 export const saveNew = async (
-  newAsignatura: Partial<Asignatura>,
+  newAsignatura: Partial<AsignaturaType>,
   token: string
 ) => {
   try {
@@ -35,7 +35,7 @@ export const saveNew = async (
 
 export const saveEdit = async (
   token: string,
-  currentAsignatura: Asignatura
+  currentAsignatura: AsignaturaType
 ): Promise<void> => {
   if (!currentAsignatura.nombre) {
     throw new Error("El nombre es obligatorio");
@@ -94,7 +94,7 @@ export const deleteAsignatura = async (
 export const fetchAsignaturaCursos = async (
   asignatura_id: number,
   token: string
-): Promise<AsignaturaCursoUsuario[]> => {
+): Promise<AsignaturaCursoUsuarioType[]> => {
   try {
     const response = await fetch(
       `${API_BASE_URL}/asignaturascursos/asignatura/${asignatura_id}`,
@@ -224,7 +224,7 @@ export const actualizarAsignacion = async (
 export const obtenerAsignacionesPorAsignatura = async (
   asignatura_id: number,
   token: string
-): Promise<ApiResponse<AsignaturaCursoResponse>> => {
+): Promise<ApiResponse<AsignaturaCursoResponseType>> => {
   const response = await fetch(
     `${API_BASE_URL}/asignaturascursos/asignatura/${asignatura_id}`,
     {
