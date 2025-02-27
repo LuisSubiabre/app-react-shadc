@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { Pencil, Printer } from "lucide-react";
+import { AlertCircle, Pencil, Printer } from "lucide-react";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 import {
   Table,
@@ -44,6 +44,9 @@ import { savaEdit } from "./cursoService";
 import { API_BASE_URL } from "@/config/config";
 import { NavLink } from "react-router-dom";
 import Spinner from "@/components/Spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@radix-ui/react-separator";
+//import CursosComponent from "@/components/CursosComponent";
 
 const AcademicoInicio: React.FC = () => {
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
@@ -99,9 +102,23 @@ const AcademicoInicio: React.FC = () => {
     loadEnrollments();
   }, [selectedSubject, dataEstudiantes]);
 
-  if (loading) return <div className="spinner">Cargando...</div>; // Spinner de carga
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Spinner />
+      </div>
+    ); // Spinner de carga
 
-  if (error) return <div className="error">{error}</div>; // Mensaje de error al cargar los datos de la API
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    ); // Mensaje de error al cargar los datos de la API
 
   const estudiantesCurso = async (curso_id: number) => {
     try {
@@ -183,7 +200,7 @@ const AcademicoInicio: React.FC = () => {
     estudiantesCurso(curso.id);
     try {
       const response = await fetch(
-        `http://localhost:3100/asignaturascursos/curso/${curso.id}`,
+        `${API_BASE_URL}/asignaturascursos/curso/${curso.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -330,7 +347,11 @@ const AcademicoInicio: React.FC = () => {
         </div>
       </header>
       <Toaster />
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <Separator orientation="horizontal" className="w-full" />
+        {/* <CursosComponent enabledButtons={["Pencil"]} /> */}
+        <Separator orientation="horizontal" className="w-full" />
         <Table>
           <TableCaption>Lista de cursos</TableCaption>
           <TableHeader>
@@ -385,7 +406,6 @@ const AcademicoInicio: React.FC = () => {
           </TableBody>
         </Table>
       </div>
-
       {/* Editar */}
       <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
         <DialogContent>
@@ -512,7 +532,6 @@ const AcademicoInicio: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-
       {/* Modal para gestión de asignaturas */}
       <Dialog
         open={isModalSubjectsOpen}
@@ -727,7 +746,6 @@ const AcademicoInicio: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Modal de confirmación para desinscribir */}
       <Dialog
         open={confirmationData.show}
