@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import {
   Table,
@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Asignatura, AsignaturaCursoResponse } from "./types";
+import { AsignaturaType, AsignaturaCursoResponseType } from "@/types/index.ts";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,11 +39,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { useFetch } from "@/hooks/useFetch";
+
 import {
-  saveNew,
-  saveEdit,
-  deleteAsignatura,
   eliminarAsignacion,
   asignarCurso,
   actualizarAsignacion,
@@ -52,15 +49,49 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/app/dashboard/toor/usuarios/types";
 import { CursoApiResponseType } from "@/types";
-//import { AsignacionPendiente } from "./types";
+import Spinner from "@/components/Spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import {
+  getAsignaturas,
+  saveNewAsignatura,
+  deleteAsignatura,
+  saveEditAsignatura,
+} from "@/services/asignaturasService";
+import { Toaster } from "@/components/ui/toaster";
+import { getCursos } from "@/services/cursosService";
+import { getFuncionarios } from "@/services/funcionariosService";
 
 const Asignaturas: React.FC = () => {
+  /* refactirng */
+  const [asignaturas, setAsignaturas] = useState<AsignaturaType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
+  const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
+  const [errorCursos, setErrorCursos] = useState<string | null>(null);
+  const [funcionarios, setFuncionarios] = useState<User[]>([]);
+  const [loadingFuncionarios, setLoadingFuncionarios] = useState<boolean>(true);
+  const [errorFuncionarios, setErrorFuncionarios] = useState<string | null>(
+    null
+  );
+
+  /* refactirng */
+
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [newAsignatura, setNewAsignatura] = useState<Partial<Asignatura>>({
+  const [newAsignatura, setNewAsignatura] = useState<{
+    nombre: string;
+    descripcion: string;
+    indice: number;
+    concepto: boolean;
+    codigo_sige: number;
+    nivel_educativo: number;
+    es_comun: boolean;
+  }>({
     nombre: "",
     descripcion: "",
     indice: 0,
@@ -69,15 +100,12 @@ const Asignaturas: React.FC = () => {
     nivel_educativo: 0,
     es_comun: false,
   });
-  const [currentAsignatura, setCurrentAsignatura] = useState<Asignatura | null>(
-    null
-  );
+  const [currentAsignatura, setCurrentAsignatura] =
+    useState<AsignaturaType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [asignaturaToDelete, setAsignaturaToDelete] =
-    useState<Asignatura | null>(null);
-  // const [asignacionesPendientes, setAsignacionesPendientes] = useState<
-  //   AsignacionPendiente[]
-  // >([]);
+    useState<AsignaturaType | null>(null);
+
   const [asignacionesActuales, setAsignacionesActuales] = useState<
     Map<number, number[]>
   >(new Map());
@@ -89,32 +117,87 @@ const Asignaturas: React.FC = () => {
   }
   const token = getTokenFromContext.authToken;
 
-  const { data, loading, error, refetch } = useFetch<Asignatura[]>(
-    "asignaturas",
-    token
-  );
+  useEffect(() => {
+    getAsignaturas()
+      .then((response) => {
+        if (response) {
+          setAsignaturas(response.data);
+        } else {
+          setError("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setError("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
-  const { data: dataCursos } = useFetch<CursoApiResponseType[]>(
-    "cursos",
-    token
-  );
-  const { data: dataUsuarios } = useFetch<User[]>("usuarios", token);
+  useEffect(() => {
+    getCursos()
+      .then((response) => {
+        if (response) {
+          setCursos(response.data);
+        } else {
+          setErrorCursos("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorCursos("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingCursos(false);
+      });
+  }, []);
 
-  if (loading) return <div className="spinner">Cargando...</div>;
-  if (error) return <div className="error">{error}</div>;
+  useEffect(() => {
+    getFuncionarios()
+      .then((response) => {
+        if (response) {
+          setFuncionarios(response.data);
+        } else {
+          setErrorFuncionarios("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorFuncionarios("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingFuncionarios(false);
+      });
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Spinner />
+      </div>
+    ); // Spinner de carga
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-full w-2/5 mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    ); // Mensaje de error al cargar los datos de la API
 
   const handleSaveNewFromButton = async (
     e: React.MouseEvent<HTMLButtonElement>
   ) => {
     e.preventDefault();
-    await handleSaveNew(e as unknown as React.FormEvent<HTMLFormElement>);
+    await handleSaveNew();
   };
 
-  const handleSaveNew = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSaveNew = async () => {
     setSaving(true);
     setErrorMessage(null);
 
+    // Validación de los campos
     if (!newAsignatura.nombre) {
       setErrorMessage("El nombre es obligatorio");
       setSaving(false);
@@ -122,10 +205,33 @@ const Asignaturas: React.FC = () => {
     }
 
     try {
-      //const newAsignaturaData: Partial<Asignatura> = { ...newAsignatura };
+      // Guarda la nueva asignatura y obtiene la respuesta del backend
+      const createdAsignatura = await saveNewAsignatura(newAsignatura);
+      console.log("newAsignatura :", newAsignatura);
+      console.log("Asignatura creada:", createdAsignatura);
 
-      await saveNew(newAsignatura, token);
-      refetch();
+      // Asegúrate de que la asignatura tenga la estructura correcta
+      const newAsignaturaWithId = {
+        asignatura_id: createdAsignatura.asignatura_id, // El ID devuelto por el backend
+        nombre: createdAsignatura.nombre,
+        descripcion: createdAsignatura.descripcion,
+        indice: createdAsignatura.indice,
+        concepto: createdAsignatura.concepto,
+        codigo_sige: createdAsignatura.codigo_sige,
+        nivel_educativo: createdAsignatura.nivel_educativo,
+        es_comun: createdAsignatura.es_comun,
+      };
+
+      // Actualiza el estado de asignaturas (agrega la nueva asignatura con el ID)
+      setAsignaturas([...asignaturas, newAsignaturaWithId]);
+
+      // Muestra un mensaje de éxito
+      toast({
+        title: "Éxito",
+        description: "Asignatura creada correctamente",
+      });
+
+      // Cierra el modal
       handleCloseNewModal();
     } catch (error) {
       setErrorMessage(
@@ -200,7 +306,7 @@ const Asignaturas: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleEditClick = (asignatura: Asignatura) => {
+  const handleEditClick = (asignatura: AsignaturaType) => {
     setCurrentAsignatura(asignatura);
     setIsModalEditOpen(true);
   };
@@ -225,8 +331,22 @@ const Asignaturas: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      await saveEdit(token, currentAsignatura);
-      refetch();
+      await saveEditAsignatura(
+        currentAsignatura.asignatura_id,
+        currentAsignatura
+      );
+      setAsignaturas((current) =>
+        current.map((a) =>
+          a.asignatura_id === currentAsignatura?.asignatura_id
+            ? currentAsignatura
+            : a
+        )
+      );
+      toast({
+        title: "Éxito",
+        description: "Asignatura actualizada correctamente",
+      });
+
       handleCloseEditModal();
     } catch (error) {
       setErrorMessage(
@@ -237,7 +357,7 @@ const Asignaturas: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (asignatura: Asignatura) => {
+  const handleDeleteClick = (asignatura: AsignaturaType) => {
     setAsignaturaToDelete(asignatura);
     setIsDeleteDialogOpen(true);
   };
@@ -246,8 +366,16 @@ const Asignaturas: React.FC = () => {
     if (!asignaturaToDelete) return;
 
     try {
-      await deleteAsignatura(token, asignaturaToDelete);
-      refetch();
+      await deleteAsignatura(asignaturaToDelete.asignatura_id);
+      setAsignaturas((current) =>
+        current.filter(
+          (a) => a.asignatura_id !== asignaturaToDelete?.asignatura_id
+        )
+      );
+      toast({
+        title: "Éxito",
+        description: "Asignatura eliminada correctamente",
+      });
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -260,7 +388,7 @@ const Asignaturas: React.FC = () => {
     }
   };
 
-  const handleOpenCursosModal = (asignatura: Asignatura) => {
+  const handleOpenCursosModal = (asignatura: AsignaturaType) => {
     setCurrentAsignatura(asignatura);
     setIsModalCursosOpen(true);
     cargarAsignaciones(asignatura.asignatura_id);
@@ -274,7 +402,7 @@ const Asignaturas: React.FC = () => {
       );
       const asignacionesMap = new Map();
 
-      response.data.forEach((asignacion: AsignaturaCursoResponse) => {
+      response.data.forEach((asignacion: AsignaturaCursoResponseType) => {
         asignacionesMap.set(asignacion.curso_id, [asignacion.profesor_id]);
       });
 
@@ -387,8 +515,8 @@ const Asignaturas: React.FC = () => {
           <TableCaption>Lista de asignaturas</TableCaption>
           <TableHeader>
             <TableRow>
+              <TableHead>ID</TableHead>
               <TableHead>Nombre</TableHead>
-
               <TableHead>Código SIGE</TableHead>
               <TableHead>Nivel Educativo</TableHead>
               <TableHead>Concepto</TableHead>
@@ -397,8 +525,9 @@ const Asignaturas: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.map((asignatura) => (
+            {asignaturas?.map((asignatura) => (
               <TableRow key={asignatura.asignatura_id}>
+                <TableCell>{asignatura.asignatura_id}</TableCell>
                 <TableCell>
                   <strong>{asignatura.nombre}</strong>
                   <br />
@@ -639,7 +768,11 @@ const Asignaturas: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {dataCursos?.map((curso) => {
+            {loadingCursos && <Spinner />}
+            {errorCursos && (
+              <div className="text-red-500 text-sm">{errorCursos}</div>
+            )}
+            {cursos?.map((curso) => {
               const usuariosAsignados =
                 asignacionesActuales.get(curso.id) || [];
               const isSelected = usuariosAsignados.length > 0;
@@ -666,6 +799,12 @@ const Asignaturas: React.FC = () => {
                         {curso.nombre}
                       </Label>
                     </div>
+                    {loadingFuncionarios && <Spinner />}
+                    {errorFuncionarios && (
+                      <div className="text-red-500 text-sm">
+                        {errorFuncionarios}
+                      </div>
+                    )}
 
                     {isSelected && (
                       <Select
@@ -678,7 +817,7 @@ const Asignaturas: React.FC = () => {
                           <SelectValue placeholder="Seleccionar usuario" />
                         </SelectTrigger>
                         <SelectContent>
-                          {dataUsuarios?.map((usuario) => (
+                          {funcionarios?.map((usuario) => (
                             <SelectItem
                               key={usuario.id}
                               value={usuario.id.toString()}
@@ -695,7 +834,7 @@ const Asignaturas: React.FC = () => {
                     <div className="ml-6">
                       <div className="flex flex-wrap gap-2">
                         {usuariosAsignados.map((userId) => {
-                          const usuario = dataUsuarios?.find(
+                          const usuario = funcionarios?.find(
                             (u) => u.id === userId
                           );
                           return (
@@ -747,6 +886,7 @@ const Asignaturas: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Toaster />
     </>
   );
 };
