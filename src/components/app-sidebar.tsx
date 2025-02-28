@@ -99,18 +99,18 @@ const data = {
           title: "Inicio",
           url: "/dashboard/academico/inicio",
         },
-        // {
-        //   title: "Jefaturas",
-        //   url: "#",
-        // },
-        // {
-        //   title: "Asignaturas",
-        //   url: "#",
-        // },
-        // {
-        //   title: "Calificaciones",
-        //   url: "#",
-        // },
+        {
+          title: "Cursos",
+          url: "/dashboard/academico/cursos",
+        },
+        {
+          title: "Asignaturas",
+          url: "/dashboard/academico/asignaturas",
+        },
+        {
+          title: "Calificaciones",
+          url: "/dashboard/academico/notas",
+        },
         // {
         //   title: "Libretas",
         //   url: "#",

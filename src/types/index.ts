@@ -25,6 +25,7 @@ export interface CursoApiResponseType {
 export interface EstudianteType {
   id: number;
   nombre: string;
+  estudiante_nombre?: string;
   email: string;
   clave_email: string;
   rut?: string;

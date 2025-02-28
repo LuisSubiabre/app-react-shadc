@@ -1,11 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { useAuth } from "@/hooks/useAuth";
-import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
-import { AsignaturaCurso } from "../inicio/types";
-import { API_BASE_URL } from "@/config/config";
-
 import {
   Select,
   SelectContent,
@@ -13,7 +7,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { Label } from "@/components/ui/label";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  getAsignaturasCurso,
+  getEstudiantesEnAsignatura,
+} from "@/services/academicoService";
+import { EstudianteType } from "@/types";
 import {
   Table,
   TableBody,
@@ -23,252 +23,98 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Spinner from "@/components/Spinner";
+import { Input } from "@/components/ui/input";
 
-const Calificaciones = () => {
-  const { user } = useAuth() || {};
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [selectedSemester, setSelectedSemester] = useState(1); // 1 = 1er semestre, 2 = 2do semestre
-  const [selectedSubject, setSelectedSubject] =
-    useState<AsignaturaCurso | null>(null);
-  const [subjectsForCourse, setSubjectsForCourse] = useState<AsignaturaCurso[]>(
+const PageCalificaciones: React.FC = () => {
+  const funcionarioId = 84;
+  const { funcionarioCursos } = useCursosFuncionarios(funcionarioId);
+
+  const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
+    null
+  );
+  const [asignaturas, setAsignaturas] = useState<
+    {
+      asignatura_id: number;
+      asignatura_nombre: string;
+      asignatura_concepto: boolean;
+    }[]
+  >([]);
+  const [asignaturaSeleccionada, setAsignaturaSeleccionada] = useState<
+    string | null
+  >(null);
+  const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
+  const [selectedSemester, setSelectedSemester] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const conceptMap = useMemo(
+    () => ({
+      MB: 70,
+      B: 50,
+      S: 40,
+      I: 30,
+    }),
     []
   );
-  const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
-  const [enrolledStudents, setEnrolledStudents] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [studentGrades, setStudentGrades] = useState<{
-    [key: string]: { [key: string]: number | string };
-  }>({});
 
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [alertNotaOpen, setAlertNotaOpen] = useState(false);
-
-  const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
-
-  /* token para enviar al backend */
-  const getTokenFromContext = useAuth();
-  if (!getTokenFromContext || !getTokenFromContext.authToken) {
-    throw new Error("authToken is null");
-  }
-  const token = getTokenFromContext.authToken;
-
-  // Verificar acceso al curso
-  if (id) {
-    const cursoId = parseInt(id, 10);
-    const existeCurso = user?.cursos.includes(cursoId);
-
-    if (!existeCurso) {
-      navigate("/unauthorized");
-    }
-  } else {
-    navigate("/unauthorized");
-  }
-
-  // Cargar estudiantes del curso
-  const estudiantesCurso = async (curso_id: number) => {
+  const handleCursoChange = useCallback(async (cursoId: number) => {
+    setEstudiantes([]);
+    setLoading(true);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/cursos/estudiantes/${curso_id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const responseData = await response.json();
-      const mappedData = Array.isArray(responseData)
-        ? responseData.map((estudiante) => ({
-            ...estudiante,
-            id: estudiante.estudiante_id,
-          }))
-        : [];
-      setDataEstudiantes(mappedData);
+      const response = await getAsignaturasCurso(cursoId);
+      setAsignaturas(response.data || []);
+      setAsignaturaSeleccionada(null);
     } catch (error) {
-      console.error("Error fetching students:", error);
-      setDataEstudiantes([]);
-    }
-  };
-
-  // Cargar asignaturas del curso
-  const loadSubjects = async (curso_id: number) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/asignaturascursos/curso/${curso_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) throw new Error("Error al cargar asignaturas");
-      const data = await response.json();
-
-      const mappedSubjects = data.data.map(
-        (item: {
-          asignatura_id: number;
-          asignatura_nombre: string;
-          asignatura_descripcion: string;
-          curso_id: number;
-          profesor_id: number;
-          asignatura_concepto: boolean;
-        }) => ({
-          id: item.asignatura_id,
-          nombre: item.asignatura_nombre,
-          descripcion: item.asignatura_descripcion,
-          curso_id: item.curso_id,
-          profesor_jefe_id: item.profesor_id,
-          asignatura_concepto: item.asignatura_concepto,
-        })
-      );
-
-      setSubjectsForCourse(mappedSubjects || []);
-    } catch (error) {
-      console.error("Error:", error);
-      setSubjectsForCourse([]);
-    }
-  };
-
-  // Cargar datos iniciales
-  useEffect(() => {
-    if (id) {
-      const curso_id = parseInt(id, 10);
-      estudiantesCurso(curso_id);
-      loadSubjects(curso_id);
-    }
-  }, [id, token]);
-
-  useEffect(() => {
-    const loadEnrollments = async () => {
-      if (selectedSubject && Array.isArray(dataEstudiantes)) {
-        const enrollments: { [key: string]: boolean } = {};
-
-        for (const estudiante of dataEstudiantes) {
-          const isEnrolled = await checkStudentEnrollment(
-            estudiante.id,
-            selectedSubject.id
-          );
-          enrollments[`${estudiante.id}-${selectedSubject.id}`] = isEnrolled;
-        }
-
-        setEnrolledStudents(enrollments);
-      }
-    };
-
-    loadEnrollments();
-  }, [selectedSubject, dataEstudiantes]);
-
-  const handleSubjectSelect = (asignatura: AsignaturaCurso) => {
-    setSelectedSubject(asignatura);
-  };
-
-  const checkStudentEnrollment = async (
-    estudiante_id: number,
-    asignatura_id: number
-  ) => {
-    try {
-      setLoadingEstudiantes(true); // Inicia la carga
-
-      const response = await fetch(
-        `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const jsonResponse = await response.json();
-      if (response.ok) {
-        setStudentGrades((prev) => ({
-          ...prev,
-          [`${estudiante_id}-${asignatura_id}`]: jsonResponse.data,
-        }));
-        console.log(jsonResponse.data);
-      }
-      return response.ok;
-    } catch (error) {
-      console.error("Error checking enrollment:", error);
-      return false;
+      console.error("Error al obtener asignaturas:", error);
+      setAsignaturas([]);
+      setAsignaturaSeleccionada(null);
     } finally {
-      setLoadingEstudiantes(false); // Finaliza la carga
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const enrolledStudentsList = selectedSubject
-    ? dataEstudiantes.filter(
-        (estudiante) =>
-          enrolledStudents[`${estudiante.id}-${selectedSubject.id}`]
-      )
-    : [];
-
-  const saveCalificaciones = async (
-    estudiante_id: number,
-    asignatura_id: number,
-    posicionCalificacion: number,
-    numericValue: number
-  ) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}/${posicionCalificacion}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            nota: numericValue,
-          }),
-        }
-      );
-      // if (!response.ok) throw new Error("Error al guardar calificación");
-      if (!response.ok) {
-        setAlertNotaOpen(true);
+  const getEstudiantes = useCallback(
+    async (asignaturaId: number, cursoId: number) => {
+      setLoading(true);
+      try {
+        const enrolled = await getEstudiantesEnAsignatura(
+          asignaturaId,
+          cursoId
+        );
+        setEstudiantes(enrolled.data || []);
+      } catch (error) {
+        console.error("Error al obtener estudiantes:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+    },
+    []
+  );
 
-  const handleSemesterChange = (semester: number) => {
+  const handleAsignaturasClick = useCallback(
+    (cursoId: number, asignaturaId: number) => {
+      setEstudiantes([]);
+      getEstudiantes(asignaturaId, cursoId);
+    },
+    [getEstudiantes]
+  );
+
+  const handleSemesterChange = useCallback((semester: number) => {
     setSelectedSemester(semester);
-  };
+  }, []);
 
-  // const getColumnsForSemester = () => {
-  //   // Define las columnas según el semestre seleccionado
-  //   return selectedSemester === 1 ? [...Array(10)] : [...Array(10)];
-  // };
-
-  const getColumnRange = () => {
-    // Define el rango de columnas por semestre
+  const getColumnRange = useMemo(() => {
     return selectedSemester === 1
-      ? [...Array(10).keys()].map((n) => n + 0) // C1 - C10
-      : [...Array(10).keys()].map((n) => n + 12); // C13 - C22
-  };
+      ? [...Array(10).keys()].map((n) => n + 0)
+      : [...Array(10).keys()].map((n) => n + 12);
+  }, [selectedSemester]);
 
-  // Mapeo de valores conceptuales a numéricos
-  const conceptMap: { [key: string]: number } = {
-    MB: 70,
-    B: 50,
-    S: 40,
-    I: 30,
-  };
+  useEffect(() => {
+    if (cursoSeleccionado !== null) {
+      handleCursoChange(cursoSeleccionado);
+    }
+  }, [cursoSeleccionado, handleCursoChange]);
 
   return (
     <>
@@ -278,222 +124,138 @@ const Calificaciones = () => {
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <h1 className="text-2xl font-bold">Calificaciones</h1>
+
         <div className="grid gap-2">
-          <Label>Seleccionar Asignatura</Label>
+          <Label>Seleccionar Curso: </Label>
           <Select
-            onValueChange={(value) => {
-              const asignatura = subjectsForCourse.find(
-                (a) => a.id.toString() === value
-              );
-              if (asignatura) handleSubjectSelect(asignatura);
-            }}
+            onValueChange={(value) => setCursoSeleccionado(Number(value))}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccione una asignatura" />
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Seleccione un curso" />
             </SelectTrigger>
             <SelectContent>
-              {subjectsForCourse.map((asignatura) => (
-                <SelectItem
-                  key={asignatura.id}
-                  value={asignatura.id.toString()}
-                >
-                  {asignatura.nombre} -
-                  {asignatura.asignatura_concepto ? "Concepto" : "Tradicional"}
+              {funcionarioCursos.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  {c.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        {/* Semestre Checkboxes */}
-        <RadioGroup
-          value={String(selectedSemester)} // Convertimos el semestre a string para que coincida con el valor esperado
-          onValueChange={(value) => handleSemesterChange(Number(value))} // Convertimos el valor a número para mantener la lógica original
-        >
-          <div className="flex items-center space-x-4 mt-4">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="1" id="semester-1" />
-              <Label htmlFor="semester-1">1er Semestre</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="2" id="semester-2" />
-              <Label htmlFor="semester-2">2do Semestre</Label>
-            </div>
-          </div>
-        </RadioGroup>
 
-        {selectedSubject && (
-          <div className="mt-4">
-            {loadingEstudiantes ? (
-              <Spinner />
-            ) : (
-              <Table>
-                <TableCaption>Calificaciones de estudiantes</TableCaption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    {getColumnRange().map((col) => (
-                      <TableHead key={col}>C{col + 1}</TableHead>
+        <div className="grid gap-2">
+          <Label>Seleccionar Asignatura:</Label>
+          <Select
+            disabled={asignaturas.length === 0}
+            value={asignaturaSeleccionada ?? ""}
+            onValueChange={(value) => {
+              setAsignaturaSeleccionada(value);
+              if (cursoSeleccionado !== null) {
+                handleAsignaturasClick(cursoSeleccionado, Number(value));
+              }
+            }}
+          >
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Seleccione asignatura" />
+            </SelectTrigger>
+            <SelectContent>
+              {asignaturas.map((a) => (
+                <SelectItem
+                  key={a.asignatura_id}
+                  value={a.asignatura_id.toString()}
+                >
+                  {a.asignatura_nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <RadioGroup
+            value={String(selectedSemester)}
+            onValueChange={(value) => handleSemesterChange(Number(value))}
+          >
+            <div className="flex items-center space-x-4 mt-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="1" id="semester-1" />
+                <Label htmlFor="semester-1">1er Semestre</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="2" id="semester-2" />
+                <Label htmlFor="semester-2">2do Semestre</Label>
+              </div>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {loading ? (
+          <div className="text-center">
+            <Spinner />
+          </div>
+        ) : estudiantes.length > 0 ? (
+          <div>
+            <Table>
+              <TableCaption>Calificaciones de estudiantes</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  {getColumnRange.map((col) => (
+                    <TableHead key={col}>C{col + 1}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {estudiantes.map((estudiante) => (
+                  <TableRow key={estudiante.id}>
+                    <TableCell>{estudiante.estudiante_nombre}</TableCell>
+                    {getColumnRange.map((index) => (
+                      <TableCell key={index}>
+                        {asignaturas.find(
+                          (a) =>
+                            a.asignatura_id === Number(asignaturaSeleccionada)
+                        )?.asignatura_concepto ? (
+                          <Select>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(conceptMap).map(
+                                ([concept, value]) => (
+                                  <SelectItem
+                                    key={concept}
+                                    value={String(value)}
+                                  >
+                                    {concept}
+                                  </SelectItem>
+                                )
+                              )}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            type="number"
+                            className="w-full border border-gray-300 rounded p-1"
+                            placeholder="Nota"
+                          />
+                        )}
+                      </TableCell>
                     ))}
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {enrolledStudentsList.map((estudiante) => (
-                    <TableRow key={estudiante.id}>
-                      <TableCell>
-                        {estudiante.nombre} {estudiante.id}
-                      </TableCell>
-                      {getColumnRange().map((index) => (
-                        <TableCell key={index}>
-                          {selectedSubject.asignatura_concepto ? (
-                            // Renderizar Select para asignaturas de concepto
-                            <Select
-                              onValueChange={(value) => {
-                                const numericValue = conceptMap[value] || 0;
-                                setStudentGrades((prev) => ({
-                                  ...prev,
-                                  [`${estudiante.id}-${selectedSubject.id}`]: {
-                                    ...prev[
-                                      `${estudiante.id}-${selectedSubject.id}`
-                                    ],
-                                    [`calificacion${index + 1}`]: numericValue,
-                                  },
-                                }));
-
-                                const posicionCalificacion = index + 1;
-                                saveCalificaciones(
-                                  estudiante.id,
-                                  selectedSubject.id,
-                                  posicionCalificacion,
-                                  numericValue
-                                );
-                              }}
-                              value={Object.keys(conceptMap).find(
-                                (key) =>
-                                  conceptMap[key] ===
-                                  studentGrades[
-                                    `${estudiante.id}-${selectedSubject.id}`
-                                  ]?.[`calificacion${index + 1}`]
-                              )}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(conceptMap).map(
-                                  ([label, numericValue]) => (
-                                    <SelectItem key={label} value={label}>
-                                      {label} ({numericValue})
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              type="number"
-                              value={
-                                studentGrades[
-                                  `${estudiante.id}-${selectedSubject.id}`
-                                ]?.[`calificacion${index + 1}`] || ""
-                              }
-                              style={{
-                                WebkitAppearance: "none",
-                                MozAppearance: "textfield",
-                              }}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-
-                                // Actualizar el estado inmediatamente
-                                setStudentGrades((prev) => ({
-                                  ...prev,
-                                  [`${estudiante.id}-${selectedSubject.id}`]: {
-                                    ...prev[
-                                      `${estudiante.id}-${selectedSubject.id}`
-                                    ],
-                                    [`calificacion${index + 1}`]: newValue, // Permite cualquier valor temporalmente
-                                  },
-                                }));
-
-                                // Cambiar color a verde cuando el valor cambia
-                                e.target.style.color = "green";
-                                const numericValue = Number(newValue);
-                                if (numericValue >= 10 && numericValue <= 70) {
-                                  const posicionCalificacion = index + 1;
-                                  saveCalificaciones(
-                                    estudiante.id,
-                                    selectedSubject.id,
-                                    posicionCalificacion,
-                                    numericValue
-                                  );
-                                }
-                              }}
-                              onBlur={(e) => {
-                                const newValue = e.target.value;
-
-                                // Validar solo si no está vacío
-                                if (newValue !== "") {
-                                  const numericValue = Number(newValue);
-                                  if (numericValue < 10 || numericValue > 70) {
-                                    setAlertOpen(true);
-
-                                    e.target.value = "";
-                                    setStudentGrades((prev) => ({
-                                      ...prev,
-                                      [`${estudiante.id}-${selectedSubject.id}`]:
-                                        {
-                                          ...prev[
-                                            `${estudiante.id}-${selectedSubject.id}`
-                                          ],
-                                          [`calificacion${index + 1}`]: "",
-                                        },
-                                    }));
-                                    // Resetear color si el valor es inválido
-                                    e.target.style.color = "";
-                                  }
-                                }
-                              }}
-                            />
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-xl font-semibold">Estudiantes inscritos:</h2>
+            <p>No hay estudiantes inscritos en la asignatura</p>
           </div>
         )}
       </div>
-
-      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Atención</AlertDialogTitle>
-            <AlertDialogDescription>
-              El valor ingresado debe estar entre 10 y 70.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>Aceptar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={alertNotaOpen} onOpenChange={setAlertNotaOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Atención</AlertDialogTitle>
-            <AlertDialogDescription>
-              Error al guardar la calificación
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>Aceptar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
 
-export default Calificaciones;
+export default PageCalificaciones;

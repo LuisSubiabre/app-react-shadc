@@ -7,6 +7,9 @@ import { AuthProvider } from "@/context/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
 import Spinner from "./components/Spinner";
 import ErrorBoundary from "@/components/ErrorBoundary"; // Importa el ErrorBoundary
+import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageEditarCurso";
+import AcademicoCursosAsignaturas from "./app/dashboard/academico/inicio/pageAsignaturas";
+import PageCalificaciones from "./app/dashboard/academico/calificaciones/pageCalificaciones";
 
 const Login = lazy(() => import("@/app/login/page"));
 const Logout = lazy(() => import("@/app/logout/pageLogout"));
@@ -30,7 +33,7 @@ const AcademicoInicio = lazy(
   () => import("@/app/dashboard/academico/inicio/pageInicio")
 );
 const Calificaciones = lazy(
-  () => import("@/app/dashboard/academico/calificaciones/pageCalificaciones")
+  () => import("@/app/dashboard/academico/calificaciones/pageCalificaciones2")
 );
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
@@ -145,6 +148,36 @@ function App() {
                   <ProtectedRoute requiredRoles={[2]}>
                     <Layout>
                       <AcademicoInicio />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/academico/cursos"
+                element={
+                  <ProtectedRoute requiredRoles={[2]}>
+                    <Layout>
+                      <AcademicoEditarCurso />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/academico/asignaturas"
+                element={
+                  <ProtectedRoute requiredRoles={[2]}>
+                    <Layout>
+                      <AcademicoCursosAsignaturas />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/academico/notas"
+                element={
+                  <ProtectedRoute requiredRoles={[2]}>
+                    <Layout>
+                      <PageCalificaciones />
                     </Layout>
                   </ProtectedRoute>
                 }
