@@ -12,6 +12,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   getAsignaturasCurso,
   getEstudiantesEnAsignatura,
+  saveCalificacion,
 } from "@/services/academicoService";
 import { EstudianteType } from "@/types";
 import {
@@ -23,6 +24,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Spinner from "@/components/Spinner";
 import { Input } from "@/components/ui/input";
@@ -47,6 +57,11 @@ const PageCalificaciones: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
   const [selectedSemester, setSelectedSemester] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [studentGrades, setStudentGrades] = useState<{
+    [key: string]: { [key: string]: number | string };
+  }>({});
+
+  const [alertOpen, setAlertOpen] = useState(false);
 
   const conceptMap = useMemo(
     () => ({
@@ -116,6 +131,21 @@ const PageCalificaciones: React.FC = () => {
     }
   }, [cursoSeleccionado, handleCursoChange]);
 
+  const guardarCalificaciones = async (
+    estudiante_id: number,
+    asignatura_id: number,
+    posicionCalificacion: number,
+    numericValue: number
+  ) => {
+    const response = await saveCalificacion(
+      estudiante_id,
+      asignatura_id,
+      posicionCalificacion,
+      numericValue
+    );
+
+    console.log(response);
+  };
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -209,39 +239,97 @@ const PageCalificaciones: React.FC = () => {
               <TableBody>
                 {estudiantes.map((estudiante) => (
                   <TableRow key={estudiante.id}>
-                    <TableCell>{estudiante.estudiante_nombre}</TableCell>
-                    {getColumnRange.map((index) => (
-                      <TableCell key={index}>
-                        {asignaturas.find(
-                          (a) =>
-                            a.asignatura_id === Number(asignaturaSeleccionada)
-                        )?.asignatura_concepto ? (
-                          <Select>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(conceptMap).map(
-                                ([concept, value]) => (
-                                  <SelectItem
-                                    key={concept}
-                                    value={String(value)}
-                                  >
-                                    {concept}
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            type="number"
-                            className="w-full border border-gray-300 rounded p-1"
-                            placeholder="Nota"
-                          />
-                        )}
-                      </TableCell>
-                    ))}
+                    <TableCell>{estudiante.nombre}</TableCell>
+                    {getColumnRange.map((index) => {
+                      const calificacionKey = `calificacion${
+                        index + 1
+                      }` as keyof EstudianteType;
+                      const calificacion = estudiante[calificacionKey];
+
+                      return (
+                        <TableCell key={index}>
+                          {asignaturas.find(
+                            (a) =>
+                              a.asignatura_id === Number(asignaturaSeleccionada)
+                          )?.asignatura_concepto ? (
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(conceptMap).map(
+                                  ([concept, value]) => (
+                                    <SelectItem
+                                      key={concept}
+                                      value={String(value)}
+                                    >
+                                      {concept}
+                                    </SelectItem>
+                                  )
+                                )}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              type="number"
+                              className="w-full border border-gray-300 rounded p-1"
+                              value={
+                                studentGrades[
+                                  `${estudiante.id}-${asignaturaSeleccionada}`
+                                ]?.[`calificacion${index + 1}`] ||
+                                String(calificacion)
+                              }
+                              style={{
+                                WebkitAppearance: "none",
+                                MozAppearance: "textfield",
+                              }}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                setStudentGrades((prev) => ({
+                                  ...prev,
+                                  [`${estudiante.id}-${asignaturaSeleccionada}`]:
+                                    {
+                                      ...prev[
+                                        `${estudiante.id}-${asignaturaSeleccionada}`
+                                      ],
+                                      [`calificacion${index + 1}`]: newValue,
+                                    },
+                                }));
+                                const numericValue = Number(newValue);
+                                if (numericValue >= 10 && numericValue <= 70) {
+                                  guardarCalificaciones(
+                                    estudiante.id,
+                                    Number(asignaturaSeleccionada),
+                                    index + 1,
+                                    Number(newValue)
+                                  );
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const newValue = e.target.value;
+                                if (newValue === "") return;
+                                const numericValue = Number(newValue);
+                                if (numericValue < 10 || numericValue > 70) {
+                                  // Limpiar el valor en el estado
+                                  setStudentGrades((prev) => ({
+                                    ...prev,
+                                    [`${estudiante.id}-${asignaturaSeleccionada}`]:
+                                      {
+                                        ...prev[
+                                          `${estudiante.id}-${asignaturaSeleccionada}`
+                                        ],
+                                        [`calificacion${index + 1}`]: "", // Limpiar el valor
+                                      },
+                                  }));
+                                  setAlertOpen(true); // Mostrar la alerta
+                                  return;
+                                }
+                              }}
+                            />
+                          )}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))}
               </TableBody>
@@ -254,6 +342,20 @@ const PageCalificaciones: React.FC = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Atención</AlertDialogTitle>
+            <AlertDialogDescription>
+              El valor ingresado debe estar entre 10 y 70.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Aceptar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
