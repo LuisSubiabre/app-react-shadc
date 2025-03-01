@@ -25,6 +25,7 @@ export interface CursoApiResponseType {
 export interface EstudianteType {
   id: number;
   nombre: string;
+  estudiante_nombre?: string;
   email: string;
   clave_email: string;
   rut?: string;
@@ -34,6 +35,29 @@ export interface EstudianteType {
   fecha_actualizacion: string;
   clave?: string; // Agregamos password como opcional
   curso_nombre?: string; // Agregamos curso_nombre como opcional
+  calificacion1?: number | null;
+  calificacion2?: number | null;
+  calificacion3?: number | null;
+  calificacion4?: number | null;
+  calificacion5?: number | null;
+  calificacion6?: number | null;
+  calificacion7?: number | null;
+  calificacion8?: number | null;
+  calificacion9?: number | null;
+  calificacion10?: number | null;
+  calificacion11?: number | null;
+  calificacion12?: number | null;
+  calificacion13?: number | null;
+  calificacion14?: number | null;
+  calificacion15?: number | null;
+  calificacion16?: number | null;
+  calificacion17?: number | null;
+  calificacion18?: number | null;
+  calificacion19?: number | null;
+  calificacion20?: number | null;
+  calificacion21?: number | null;
+  calificacion22?: number | null;
+  calificacion23?: number | null;
 }
 
 export interface RolType {
