@@ -62,7 +62,7 @@ const PageCalificaciones: React.FC = () => {
   }>({});
 
   const [alertOpen, setAlertOpen] = useState(false);
-
+  const [mensageDialogo, setMensajeDialogo] = useState("");
   const conceptMap = useMemo(
     () => ({
       MB: 70,
@@ -144,7 +144,11 @@ const PageCalificaciones: React.FC = () => {
       numericValue
     );
 
-    console.log(response);
+    if (response.status === 200) {
+      return true;
+    } else {
+      return false;
+    }
   };
   return (
     <>
@@ -156,68 +160,70 @@ const PageCalificaciones: React.FC = () => {
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <h1 className="text-2xl font-bold">Calificaciones</h1>
 
-        <div className="grid gap-2">
-          <Label>Seleccionar Curso: </Label>
-          <Select
-            onValueChange={(value) => setCursoSeleccionado(Number(value))}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Seleccione un curso" />
-            </SelectTrigger>
-            <SelectContent>
-              {funcionarioCursos.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>
-                  {c.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid gap-2">
+            <Label>Seleccionar Curso: </Label>
+            <Select
+              onValueChange={(value) => setCursoSeleccionado(Number(value))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccione un curso" />
+              </SelectTrigger>
+              <SelectContent>
+                {funcionarioCursos.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="grid gap-2">
-          <Label>Seleccionar Asignatura:</Label>
-          <Select
-            disabled={asignaturas.length === 0}
-            value={asignaturaSeleccionada ?? ""}
-            onValueChange={(value) => {
-              setAsignaturaSeleccionada(value);
-              if (cursoSeleccionado !== null) {
-                handleAsignaturasClick(cursoSeleccionado, Number(value));
-              }
-            }}
-          >
-            <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Seleccione asignatura" />
-            </SelectTrigger>
-            <SelectContent>
-              {asignaturas.map((a) => (
-                <SelectItem
-                  key={a.asignatura_id}
-                  value={a.asignatura_id.toString()}
-                >
-                  {a.asignatura_nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="grid gap-2">
+            <Label>Seleccionar Asignatura:</Label>
+            <Select
+              disabled={asignaturas.length === 0}
+              value={asignaturaSeleccionada ?? ""}
+              onValueChange={(value) => {
+                setAsignaturaSeleccionada(value);
+                if (cursoSeleccionado !== null) {
+                  handleAsignaturasClick(cursoSeleccionado, Number(value));
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccione asignatura" />
+              </SelectTrigger>
+              <SelectContent>
+                {asignaturas.map((a) => (
+                  <SelectItem
+                    key={a.asignatura_id}
+                    value={a.asignatura_id.toString()}
+                  >
+                    {a.asignatura_nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="grid gap-2">
-          <RadioGroup
-            value={String(selectedSemester)}
-            onValueChange={(value) => handleSemesterChange(Number(value))}
-          >
-            <div className="flex items-center space-x-4 mt-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="1" id="semester-1" />
-                <Label htmlFor="semester-1">1er Semestre</Label>
+          <div className="grid gap-2">
+            <RadioGroup
+              value={String(selectedSemester)}
+              onValueChange={(value) => handleSemesterChange(Number(value))}
+            >
+              <div className="flex items-center space-x-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1" id="semester-1" />
+                  <Label htmlFor="semester-1">1er Semestre</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="2" id="semester-2" />
+                  <Label htmlFor="semester-2">2do Semestre</Label>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="2" id="semester-2" />
-                <Label htmlFor="semester-2">2do Semestre</Label>
-              </div>
-            </div>
-          </RadioGroup>
+            </RadioGroup>
+          </div>
         </div>
 
         {loading ? (
@@ -296,13 +302,24 @@ const PageCalificaciones: React.FC = () => {
                                     },
                                 }));
                                 const numericValue = Number(newValue);
+
                                 if (numericValue >= 10 && numericValue <= 70) {
                                   guardarCalificaciones(
                                     estudiante.id,
                                     Number(asignaturaSeleccionada),
                                     index + 1,
                                     Number(newValue)
-                                  );
+                                  ).then((response) => {
+                                    if (response) {
+                                      e.target.style.color = "green";
+                                    } else {
+                                      setMensajeDialogo(
+                                        "Error al guardar la calificación"
+                                      );
+
+                                      e.target.style.color = "red";
+                                    }
+                                  });
                                 }
                               }}
                               onBlur={(e) => {
@@ -321,6 +338,9 @@ const PageCalificaciones: React.FC = () => {
                                         [`calificacion${index + 1}`]: "", // Limpiar el valor
                                       },
                                   }));
+                                  setMensajeDialogo(
+                                    "La calificación debe estar entre 10 y 70"
+                                  );
                                   setAlertOpen(true); // Mostrar la alerta
                                   return;
                                 }
@@ -347,9 +367,7 @@ const PageCalificaciones: React.FC = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Atención</AlertDialogTitle>
-            <AlertDialogDescription>
-              El valor ingresado debe estar entre 10 y 70.
-            </AlertDialogDescription>
+            <AlertDialogDescription>{mensageDialogo}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>Aceptar</AlertDialogAction>
