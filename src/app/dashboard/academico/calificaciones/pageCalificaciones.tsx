@@ -258,23 +258,49 @@ const PageCalificaciones: React.FC = () => {
                             (a) =>
                               a.asignatura_id === Number(asignaturaSeleccionada)
                           )?.asignatura_concepto ? (
-                            <Select>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccione" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(conceptMap).map(
-                                  ([concept, value]) => (
-                                    <SelectItem
-                                      key={concept}
+                            <RadioGroup
+                              value={String(
+                                studentGrades[
+                                  `${estudiante.id}-${asignaturaSeleccionada}`
+                                ]?.[`calificacion${index + 1}`] || calificacion
+                              )}
+                              onValueChange={(value) => {
+                                console.log(asignaturaSeleccionada);
+                                saveCalificacion(
+                                  estudiante.id,
+                                  Number(asignaturaSeleccionada),
+                                  index + 1,
+                                  Number(value)
+                                ).then((response) => {
+                                  if (response) {
+                                    console.log("Guardado correctamente");
+                                  } else {
+                                    console.log(
+                                      "Error al guardar la calificación"
+                                    );
+                                  }
+                                });
+                              }}
+                            >
+                              {Object.entries(conceptMap).map(
+                                ([concept, value]) => (
+                                  <div
+                                    key={concept}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <RadioGroupItem
                                       value={String(value)}
+                                      id={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${value}`}
+                                    />
+                                    <Label
+                                      htmlFor={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${value}`}
                                     >
                                       {concept}
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectContent>
-                            </Select>
+                                    </Label>
+                                  </div>
+                                )
+                              )}
+                            </RadioGroup>
                           ) : (
                             <Input
                               type="number"
