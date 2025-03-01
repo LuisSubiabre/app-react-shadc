@@ -21,7 +21,7 @@ export const saveCalificacion = async (
   estudiante_id: number,
   asignatura_id: number,
   posicion: number,
-  nota: number
+  nota: number | null
 ) => {
   return api
     .patch(
