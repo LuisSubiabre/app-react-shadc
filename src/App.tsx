@@ -10,6 +10,7 @@ import ErrorBoundary from "@/components/ErrorBoundary"; // Importa el ErrorBound
 import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageEditarCurso";
 import AcademicoCursosAsignaturas from "./app/dashboard/academico/inicio/pageAsignaturas";
 import PageCalificaciones from "./app/dashboard/academico/calificaciones/pageCalificaciones";
+import PageAtrasos from "./app/dashboard/inspectoria/atrasos/pageAtrasos";
 
 const Login = lazy(() => import("@/app/login/page"));
 const Logout = lazy(() => import("@/app/logout/pageLogout"));
@@ -207,7 +208,7 @@ function App() {
                 element={
                   <ProtectedRoute requiredRoles={[3]}>
                     <Layout>
-                      <h1>Inspectoria Atrasos</h1>
+                      <PageAtrasos />
                     </Layout>
                   </ProtectedRoute>
                 }
