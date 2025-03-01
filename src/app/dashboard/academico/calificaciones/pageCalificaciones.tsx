@@ -58,8 +58,9 @@ const PageCalificaciones: React.FC = () => {
   const [selectedSemester, setSelectedSemester] = useState(1);
   const [loading, setLoading] = useState(false);
   const [studentGrades, setStudentGrades] = useState<{
-    [key: string]: { [key: string]: number | string };
+    [key: string]: { [key: string]: number | string | null };
   }>({});
+  const [ordenAlfabetico, setOrdenAlfabetico] = useState(false);
 
   const [alertOpen, setAlertOpen] = useState(false);
   const [mensageDialogo, setMensajeDialogo] = useState("");
@@ -69,6 +70,7 @@ const PageCalificaciones: React.FC = () => {
       B: 50,
       S: 40,
       I: 30,
+      Quitar: null,
     }),
     []
   );
@@ -135,8 +137,14 @@ const PageCalificaciones: React.FC = () => {
     estudiante_id: number,
     asignatura_id: number,
     posicionCalificacion: number,
-    numericValue: number
+    numericValue: number | null
   ) => {
+    console.log(
+      estudiante_id,
+      asignatura_id,
+      posicionCalificacion,
+      numericValue
+    );
     const response = await saveCalificacion(
       estudiante_id,
       asignatura_id,
@@ -150,6 +158,15 @@ const PageCalificaciones: React.FC = () => {
       return false;
     }
   };
+
+  const estudiantesOrdenados = useMemo(() => {
+    if (!ordenAlfabetico) return estudiantes;
+
+    return [...estudiantes].sort((a, b) =>
+      a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" })
+    );
+  }, [estudiantes, ordenAlfabetico]);
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -232,6 +249,49 @@ const PageCalificaciones: React.FC = () => {
           </div>
         ) : estudiantes.length > 0 ? (
           <div>
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <span>
+                  {ordenAlfabetico
+                    ? "Orden Original"
+                    : "Ordenar Alfabéticamente"}
+                </span>
+                {ordenAlfabetico ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
             <Table>
               <TableCaption>Calificaciones de estudiantes</TableCaption>
               <TableHeader>
@@ -243,7 +303,7 @@ const PageCalificaciones: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {estudiantes.map((estudiante) => (
+                {estudiantesOrdenados.map((estudiante) => (
                   <TableRow key={estudiante.id}>
                     <TableCell>{estudiante.nombre}</TableCell>
                     {getColumnRange.map((index) => {
@@ -259,28 +319,44 @@ const PageCalificaciones: React.FC = () => {
                               a.asignatura_id === Number(asignaturaSeleccionada)
                           )?.asignatura_concepto ? (
                             <RadioGroup
-                              value={String(
+                              value={
                                 studentGrades[
                                   `${estudiante.id}-${asignaturaSeleccionada}`
-                                ]?.[`calificacion${index + 1}`] || calificacion
-                              )}
-                              onValueChange={(value) => {
-                                console.log(asignaturaSeleccionada);
-                                saveCalificacion(
+                                ]?.[`calificacion${index + 1}`] === null
+                                  ? "null"
+                                  : String(
+                                      studentGrades[
+                                        `${estudiante.id}-${asignaturaSeleccionada}`
+                                      ]?.[`calificacion${index + 1}`] ||
+                                        calificacion ||
+                                        ""
+                                    )
+                              }
+                              onValueChange={(value: string) => {
+                                const numericValue =
+                                  value === "null" ? null : Number(value);
+
+                                const newGrades = {
+                                  ...studentGrades,
+                                  [`${estudiante.id}-${asignaturaSeleccionada}`]:
+                                    {
+                                      ...studentGrades[
+                                        `${estudiante.id}-${asignaturaSeleccionada}`
+                                      ],
+                                      [`calificacion${index + 1}`]:
+                                        numericValue,
+                                    },
+                                };
+                                setStudentGrades(newGrades);
+
+                                guardarCalificaciones(
                                   estudiante.id,
                                   Number(asignaturaSeleccionada),
                                   index + 1,
-                                  Number(value)
-                                ).then((response) => {
-                                  if (response) {
-                                    console.log("Guardado correctamente");
-                                  } else {
-                                    console.log(
-                                      "Error al guardar la calificación"
-                                    );
-                                  }
-                                });
+                                  numericValue
+                                );
                               }}
+                              className="flex flex-col space-y-1"
                             >
                               {Object.entries(conceptMap).map(
                                 ([concept, value]) => (
@@ -289,11 +365,13 @@ const PageCalificaciones: React.FC = () => {
                                     className="flex items-center space-x-2"
                                   >
                                     <RadioGroupItem
-                                      value={String(value)}
-                                      id={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${value}`}
+                                      value={
+                                        value === null ? "null" : String(value)
+                                      }
+                                      id={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${concept}`}
                                     />
                                     <Label
-                                      htmlFor={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${value}`}
+                                      htmlFor={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${concept}`}
                                     >
                                       {concept}
                                     </Label>
@@ -308,8 +386,15 @@ const PageCalificaciones: React.FC = () => {
                               value={
                                 studentGrades[
                                   `${estudiante.id}-${asignaturaSeleccionada}`
-                                ]?.[`calificacion${index + 1}`] ||
-                                String(calificacion)
+                                ]?.[`calificacion${index + 1}`] !== undefined
+                                  ? String(
+                                      studentGrades[
+                                        `${estudiante.id}-${asignaturaSeleccionada}`
+                                      ][`calificacion${index + 1}`]
+                                    )
+                                  : calificacion
+                                  ? String(calificacion)
+                                  : ""
                               }
                               style={{
                                 WebkitAppearance: "none",
@@ -327,6 +412,27 @@ const PageCalificaciones: React.FC = () => {
                                       [`calificacion${index + 1}`]: newValue,
                                     },
                                 }));
+
+                                if (newValue === "") {
+                                  guardarCalificaciones(
+                                    estudiante.id,
+                                    Number(asignaturaSeleccionada),
+                                    index + 1,
+                                    null
+                                  ).then((response) => {
+                                    if (response) {
+                                      e.target.style.color = "green";
+                                    } else {
+                                      setMensajeDialogo(
+                                        "Error al guardar la calificación"
+                                      );
+
+                                      e.target.style.color = "red";
+                                    }
+                                  });
+                                  return;
+                                }
+
                                 const numericValue = Number(newValue);
 
                                 if (numericValue >= 10 && numericValue <= 70) {
@@ -350,7 +456,10 @@ const PageCalificaciones: React.FC = () => {
                               }}
                               onBlur={(e) => {
                                 const newValue = e.target.value;
-                                if (newValue === "") return;
+                                if (newValue === "") {
+                                  console.log("vacio");
+                                  return;
+                                }
                                 const numericValue = Number(newValue);
                                 if (numericValue < 10 || numericValue > 70) {
                                   // Limpiar el valor en el estado
