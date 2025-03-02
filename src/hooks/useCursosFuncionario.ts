@@ -2,8 +2,9 @@ import { getCursos } from "@/services/cursosService";
 import { getFuncionarioCursos } from "@/services/funcionariosService";
 import { CursoApiResponseType } from "@/types";
 import { useEffect, useState } from "react";
+import { useAuth } from "./useAuth";
 
-export const useCursosFuncionarios = (funcionarioId: number) => {
+export const useCursosFuncionarios = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -11,7 +12,8 @@ export const useCursosFuncionarios = (funcionarioId: number) => {
     CursoApiResponseType[]
   >([]);
   const [funcionarioError, setFuncionarioError] = useState<string | null>(null);
-
+  const { user } = useAuth();
+  const funcionarioId = user?.id ? parseInt(user.id) : 0;
   useEffect(() => {
     const fetchData = async () => {
       try {

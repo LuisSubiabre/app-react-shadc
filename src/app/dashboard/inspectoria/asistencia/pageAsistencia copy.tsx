@@ -1,10 +1,16 @@
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { Curso } from "@/app/dashboard/academico/inicio/types.ts"; // Importa la interfaz desde el archivo types.ts
-import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
-
-import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useFetch } from "@/hooks/useFetch";
-
+import { API_BASE_URL } from "@/config/config";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,17 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { API_BASE_URL } from "@/config/config";
-import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -36,29 +33,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import { Curso } from "@/app/dashboard/academico/inicio/types.ts";
+import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 
 const InspectoriaAsistencia = () => {
-  const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
-  // Cargar estudiantes del curso
+  const { user } = useAuth() || {};
   const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
-
   const [cargaAsistencias, setCargaAsistencias] = useState<{
     [key: number]: string;
   }>({});
-  const [cargaDiasTrabajados, serCargaDiasTrabajados] = useState<{
-    [key: number]: string;
-  }>({});
-  const [diasTrabajadosEstudiantes, setDiasTrabajadosEstudiantes] = useState<{
+  const [cargaDiasTrabajados, setCargaDiasTrabajados] = useState<{
     [key: number]: string;
   }>({});
   const [diasTrabajados, setDiasTrabajados] = useState<string | null>(null);
-  const [mesSeleccionado, setMesSeleccionado] = useState<number>(3); // Estado para el mes seleccionado
+  const [mesSeleccionado, setMesSeleccionado] = useState<number>(3);
+  const [cargandoAsistencias, setCargandoAsistencias] =
+    useState<boolean>(false); // Nuevo estado para controlar la carga
 
   useEffect(() => {
     const fetchAsistencias = async () => {
+      setCargandoAsistencias(true); // Activar el estado de carga
       const nuevasAsistencias: { [key: number]: string } = {};
       const nuevasDiasTrabajados: { [key: number]: string } = {};
-
       for (const estudiante of dataEstudiantes) {
         const asistencia = await consultaAsistencia(
           estudiante.id,
@@ -69,7 +66,8 @@ const InspectoriaAsistencia = () => {
         nuevasDiasTrabajados[estudiante.id] = asistencia?.total_dias || "";
       }
       setCargaAsistencias(nuevasAsistencias);
-      serCargaDiasTrabajados(nuevasDiasTrabajados);
+      setCargaDiasTrabajados(nuevasDiasTrabajados);
+      setCargandoAsistencias(false); // Desactivar el estado de carga
     };
 
     if (dataEstudiantes.length > 0) {
@@ -77,18 +75,15 @@ const InspectoriaAsistencia = () => {
     }
   }, [dataEstudiantes, mesSeleccionado]);
 
-  /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
     throw new Error("authToken is null");
   }
   const token = getTokenFromContext.authToken;
-  const { data, loading, error } = useFetch<Curso[]>("cursos", token); // Trae los datos de la API
+  const { data, loading, error } = useFetch<Curso[]>("cursos", token);
 
-  if (loading) return <div className="spinner">Cargando...</div>; // Spinner de carga
-  if (error) return <div className="error">{error}</div>; // Mensaje de error al cargar los datos de la API
-
-  /* logica de negocio */
+  if (loading) return <div className="spinner">Cargando cursos...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   const estudiantesCurso = async (curso_id: number) => {
     try {
@@ -109,7 +104,6 @@ const InspectoriaAsistencia = () => {
           }))
         : [];
       setDataEstudiantes(mappedData);
-      //console.log("Estudiantes del curso:", dataEstudiantes);
     } catch (error) {
       console.error("Error fetching students:", error);
       setDataEstudiantes([]);
@@ -164,27 +158,27 @@ const InspectoriaAsistencia = () => {
       console.error("Error al guardar la asistencia:", error);
     }
   };
+
   const handleGuardarDiasTrabajados = () => {
     const nuevoValor = diasTrabajados || "";
     const nuevoEstado: { [key: number]: string } = dataEstudiantes.reduce(
       (acc: { [key: number]: string }, estudiante) => {
-        acc[estudiante.id] = nuevoValor; // Asigna el mismo valor de días trabajados a cada estudiante
+        acc[estudiante.id] = nuevoValor;
         return acc;
       },
       {} as { [key: number]: string }
     );
-    setDiasTrabajadosEstudiantes(nuevoEstado); // Actualiza el estado con los días trabajados de cada estudiante
+    setCargaDiasTrabajados(nuevoEstado);
     dataEstudiantes.forEach((estudiante) => {
-      console.log("Estudiante:", estudiante);
       handleAsistencia(
         estudiante.id,
-        Number(diasTrabajadosEstudiantes[estudiante.id] || diasTrabajados), //
+        Number(cargaDiasTrabajados[estudiante.id] || diasTrabajados),
         mesSeleccionado,
         Number(diasTrabajados)
       );
     });
-    setDiasTrabajados(""); // Resetea el valor global del input
   };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -192,6 +186,7 @@ const InspectoriaAsistencia = () => {
           <Breadcrumbs />
         </div>
       </header>
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="mt-4"></div>
         <label
@@ -207,7 +202,7 @@ const InspectoriaAsistencia = () => {
           <SelectContent>
             {data && data.length > 0 ? (
               data
-                .filter((c) => user?.cursos.includes(c.id)) // Filtra los cursos cuyo id esté en user.cursos
+                .filter((c) => user?.cursos.includes(c.id))
                 .map((c) => (
                   <SelectItem key={c.id} value={c.id.toString()}>
                     {c.nombre}
@@ -239,121 +234,166 @@ const InspectoriaAsistencia = () => {
           </SelectContent>
         </Select>
 
-        {/* Tabla de asistencia */}
-        <Table>
-          <TableCaption>Tabla de asistencia</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Estudiante</TableHead>
-              <TableHead className="w-[100px]">Asistencia</TableHead>
-              <TableHead className="w-[100px]">
-                {/* Dialog de días trabajados */}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary" size="sm">
-                      Establecer días trabajados
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Días trabajados</DialogTitle>
-                      <DialogDescription>
-                        Establecer días trabajados para todos los estudiantes
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="diasTrabajados" className="text-right">
-                          Total días trabajados:
-                        </Label>
-                        <Input
-                          id="diasTrabajados"
-                          className="col-span-3"
-                          value={diasTrabajados || ""}
-                          onChange={(e) => setDiasTrabajados(e.target.value)}
-                        />
+        {dataEstudiantes.length > 0 ? (
+          <Table>
+            <TableCaption>Tabla de asistencia</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Estudiante</TableHead>
+                <TableHead className="w-[100px]">Asistencia</TableHead>
+                <TableHead className="w-[100px]">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="secondary" size="sm">
+                        Establecer días trabajados
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Días trabajados</DialogTitle>
+                        <DialogDescription>
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Atención</AlertTitle>
+                            <AlertDescription>
+                              Al Establecer los días trabajados de forma masiva,
+                              se actualizará la cantidad de asistencias de todos
+                              los estudiantes del curso.
+                            </AlertDescription>
+                          </Alert>
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label
+                            htmlFor="diasTrabajados"
+                            className="text-right"
+                          >
+                            Total días trabajados:
+                          </Label>
+                          <Input
+                            id="diasTrabajados"
+                            className="col-span-3"
+                            value={diasTrabajados || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              if (
+                                newValue &&
+                                (Number(newValue) < 1 || Number(newValue) > 31)
+                              ) {
+                                return;
+                              }
+                              setDiasTrabajados(newValue);
+                            }}
+                            type="number"
+                            min="1"
+                            max="31"
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button
-                          type="button"
-                          onClick={handleGuardarDiasTrabajados}
-                        >
-                          Guardar
-                        </Button>
-                      </DialogClose>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {dataEstudiantes.length > 0 ? (
-              dataEstudiantes.map((estudiante) => (
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button
+                            type="button"
+                            onClick={handleGuardarDiasTrabajados}
+                            disabled={!diasTrabajados}
+                          >
+                            Guardar
+                          </Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dataEstudiantes.map((estudiante) => (
                 <TableRow key={estudiante.id}>
                   <TableCell>{estudiante.nombre}</TableCell>
                   <TableCell>
-                    <Input
-                      defaultValue={cargaAsistencias[estudiante.id] || ""}
-                      className="w-8/12"
-                      data-estudiante-id={`primer-${estudiante.id}`} // Identificador único
-                      onBlur={(e) => {
-                        const newValue = e.target.value; // Captura el valor del input actual
-                        const totalDiasTrabajados =
-                          diasTrabajadosEstudiantes[estudiante.id];
-                        handleAsistencia(
-                          estudiante.id,
-                          Number(newValue),
-                          mesSeleccionado,
-                          Number(totalDiasTrabajados)
-                        );
-                      }}
-                    />
+                    {cargandoAsistencias ? ( // Mostrar spinner si está cargando
+                      <div className="spinner">Cargando...</div>
+                    ) : (
+                      <Input
+                        value={cargaAsistencias[estudiante.id] || ""}
+                        className="w-8/12"
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          const diasTrabajados =
+                            cargaDiasTrabajados[estudiante.id] || "0";
+                          if (
+                            newValue &&
+                            (Number(newValue) < 1 ||
+                              Number(newValue) > 31 ||
+                              Number(newValue) > Number(diasTrabajados))
+                          ) {
+                            return;
+                          }
+                          setCargaAsistencias({
+                            ...cargaAsistencias,
+                            [estudiante.id]: newValue,
+                          });
+                        }}
+                        onBlur={() => {
+                          const totalDiasTrabajados =
+                            cargaDiasTrabajados[estudiante.id] || "0";
+                          handleAsistencia(
+                            estudiante.id,
+                            Number(cargaAsistencias[estudiante.id] || "0"),
+                            mesSeleccionado,
+                            Number(totalDiasTrabajados)
+                          );
+                        }}
+                        type="number"
+                        min="1"
+                        max="31"
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
-                    <Input
-                      defaultValue={cargaDiasTrabajados[estudiante.id] || ""}
-                      className="w-8/12"
-                      value={diasTrabajadosEstudiantes[estudiante.id] || ""}
-                      onChange={(e) =>
-                        setDiasTrabajadosEstudiantes({
-                          ...diasTrabajadosEstudiantes,
-                          [estudiante.id]: e.target.value, // Actualiza solo el valor de este estudiante
-                        })
-                      }
-                      onBlur={(e) => {
-                        const newValueSegundoInput = e.target.value; // Valor del segundo input
-                        // Capturar el valor del primer input
-                        const primerInput = document.querySelector(
-                          `input[data-estudiante-id="primer-${estudiante.id}"]`
-                        );
-                        const valorPrimerInput = primerInput
-                          ? Number((primerInput as HTMLInputElement).value) || 1
-                          : 0;
-
-                        handleAsistencia(
-                          estudiante.id,
-                          valorPrimerInput, // Valor capturado del primer input
-                          mesSeleccionado,
-                          Number(newValueSegundoInput) // Valor del segundo input
-                        );
-                      }}
-                    />
+                    {cargandoAsistencias ? ( // Mostrar spinner si está cargando
+                      <div className="spinner">Cargando...</div>
+                    ) : (
+                      <Input
+                        value={cargaDiasTrabajados[estudiante.id] || ""}
+                        className="w-8/12"
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          if (
+                            newValue &&
+                            (Number(newValue) < 1 || Number(newValue) > 31)
+                          ) {
+                            return;
+                          }
+                          setCargaDiasTrabajados({
+                            ...cargaDiasTrabajados,
+                            [estudiante.id]: newValue,
+                          });
+                        }}
+                        onBlur={() => {
+                          const totalDiasAsistidos =
+                            cargaAsistencias[estudiante.id] || "0";
+                          handleAsistencia(
+                            estudiante.id,
+                            Number(totalDiasAsistidos),
+                            mesSeleccionado,
+                            Number(cargaDiasTrabajados[estudiante.id] || "0")
+                          );
+                        }}
+                        type="number"
+                        min="1"
+                        max="31"
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3}>
-                  No hay estudiantes disponibles
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        {/* Tabla de asistencia */}
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div>No hay estudiantes disponibles</div>
+        )}
       </div>
     </>
   );
