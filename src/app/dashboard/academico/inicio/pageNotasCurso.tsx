@@ -27,13 +27,12 @@ import { CursoApiResponseType } from "@/types";
 
 const AcademicoNotasCurso: React.FC = () => {
   /* refactory */
-  const funcionarioId = 84; // O cualquier ID de funcionario que quieras pasar
   const {
     error,
     loading,
     funcionarioCursos,
     // Desestructura setFuncionarioCursos
-  } = useCursosFuncionarios(funcionarioId);
+  } = useCursosFuncionarios();
 
   useEffect(() => {
     // Aquí puedes hacer algo cuando el `funcionarioCursos` cambie o cuando se haya cargado
