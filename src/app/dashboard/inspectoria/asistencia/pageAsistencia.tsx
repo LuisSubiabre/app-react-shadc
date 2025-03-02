@@ -17,9 +17,7 @@ import { TablaAsistencia } from "@/components/asistencia/TablaAsistencia";
 
 const PageAsistencia = () => {
   const { authToken } = useAuth() || {};
-  const funcionarioId = 84; // TODO: Obtener de contexto o props
-  const { funcionarioCursos, loading: loadingCursos } =
-    useCursosFuncionarios(funcionarioId);
+  const { funcionarioCursos, loading: loadingCursos } = useCursosFuncionarios();
 
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
     null

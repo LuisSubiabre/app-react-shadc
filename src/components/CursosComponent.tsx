@@ -1,9 +1,8 @@
 import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts"; // Asegúrate de importar el hook que creaste
 
 const CursosComponent = () => {
-  const funcionarioId = 84; // O cualquier ID de funcionario que quieras pasar
   const { error, loading, funcionarioCursos, funcionarioError } =
-    useCursosFuncionarios(funcionarioId);
+    useCursosFuncionarios();
 
   if (loading) {
     return <div>Cargando cursos...</div>;

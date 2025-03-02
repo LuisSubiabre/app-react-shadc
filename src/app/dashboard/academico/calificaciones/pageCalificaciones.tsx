@@ -22,8 +22,7 @@ import { TablaCalificaciones } from "@/components/calificaciones/TablaCalificaci
 import { Asignatura, CalificacionesState } from "@/types/calificaciones";
 
 const PageCalificaciones: React.FC = () => {
-  const funcionarioId = 84;
-  const { funcionarioCursos } = useCursosFuncionarios(funcionarioId);
+  const { funcionarioCursos } = useCursosFuncionarios();
 
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
     null

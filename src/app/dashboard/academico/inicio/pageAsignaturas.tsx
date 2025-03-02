@@ -49,23 +49,13 @@ import { Separator } from "@radix-ui/react-separator";
 import { CursoApiResponseType } from "@/types";
 
 const AcademicoCursoAsignaturas: React.FC = () => {
-  /* refactory */
-  const funcionarioId = 84; // O cualquier ID de funcionario que quieras pasar
-  const {
-    error,
-    loading,
-    funcionarioCursos,
-    // Desestructura setFuncionarioCursos
-  } = useCursosFuncionarios(funcionarioId);
+  const { error, loading, funcionarioCursos } = useCursosFuncionarios();
 
   useEffect(() => {
-    // Aquí puedes hacer algo cuando el `funcionarioCursos` cambie o cuando se haya cargado
     if (funcionarioCursos) {
       console.log("Cursos del funcionario cargados:", funcionarioCursos);
     }
-  }, []);
-
-  /* refactory */
+  }, [funcionarioCursos]);
 
   const [isModalSubjectsOpen, setIsModalSubjectsOpen] =
     useState<boolean>(false);
