@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import {
   Table,
@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Taller } from "./typeTaller";
+import { TallerType } from "@/types/index.ts";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,24 +41,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { useFetch } from "@/hooks/useFetch";
-import {
-  saveNew,
-  saveEdit,
-  deleteTaller,
-  eliminarAsignacion,
-  asignarCurso,
-  obtenerAsignaciones,
-} from "./tallerService.ts";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/app/dashboard/toor/usuarios/types";
 import { Toaster } from "@/components/ui/toaster.tsx";
 import { Link } from "react-router-dom";
 import { CursoApiResponseType } from "@/types/index.ts";
-import Spinner from "@/components/Spinner.tsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle } from "lucide-react";
 import LoadingErrorHandler from "@/components/LoadingErrorHandler.tsx";
+import {
+  deleteTaller,
+  getTalleres,
+  saveEditTaller,
+  saveNewTaller,
+  obtenerAsignaciones,
+  eliminarAsignacion,
+  asignarCurso,
+} from "@/services/talleresService.ts";
+import { getFuncionarios } from "@/services/funcionariosService.ts";
+import Spinner from "@/components/Spinner.tsx";
+import { getCursos } from "@/services/cursosService.ts";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -66,7 +66,7 @@ const AcleTalleres: React.FC = () => {
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [newTaller, setNewTaller] = useState<Partial<Taller>>({
+  const [newTaller, setNewTaller] = useState<Partial<TallerType>>({
     taller_nombre: "",
     taller_descripcion: "",
     taller_horario: "",
@@ -75,9 +75,9 @@ const AcleTalleres: React.FC = () => {
     taller_profesor_id: 1,
   });
 
-  const [currentTaller, setCurrentTaller] = useState<Taller | null>(null);
+  const [currentTaller, setCurrentTaller] = useState<TallerType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-  const [tallerToDelete, setTallerToDelete] = useState<Taller | null>(null);
+  const [tallerToDelete, setTallerToDelete] = useState<TallerType | null>(null);
 
   const [asignacionesActuales, setAsignacionesActuales] = useState<
     Map<number, number[]>
@@ -88,18 +88,70 @@ const AcleTalleres: React.FC = () => {
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
     throw new Error("authToken is null");
   }
-  const token = getTokenFromContext.authToken;
 
-  /* fetchs */
-  const { data, loading, error, refetch } = useFetch<Taller[]>(
-    "talleres",
-    token
-  );
-  const { data: dataCursos } = useFetch<CursoApiResponseType[]>(
-    "cursos",
-    token
-  );
-  const { data: dataUsuarios } = useFetch<User[]>("usuarios", token);
+  /* refactor */
+  const [talleres, setTalleres] = useState<TallerType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [funcionarios, setFuncionarios] = useState<User[]>([]);
+  const [loadingFuncionario, setLoadingFuncionario] = useState<boolean>(true);
+  const [errorFuncionario, setErrorFuncionario] = useState<string | null>(null);
+  const [dataCursos, setDataCursos] = useState<CursoApiResponseType[]>([]);
+  const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
+  const [errorCursos, setErrorCursos] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTalleres()
+      .then((response) => {
+        if (response) {
+          setTalleres(response.data);
+        } else {
+          setError("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setError("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    getFuncionarios()
+      .then((response) => {
+        if (response) {
+          setFuncionarios(response.data);
+        } else {
+          setErrorFuncionario("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorFuncionario("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingFuncionario(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    getCursos()
+      .then((response) => {
+        if (response) {
+          setDataCursos(response.data);
+        } else {
+          setErrorCursos("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorCursos("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingCursos(false);
+      });
+  }, []);
+
+  /* refactor */
 
   const handleSaveNewFromButton = async (
     e: React.MouseEvent<HTMLButtonElement>
@@ -113,8 +165,6 @@ const AcleTalleres: React.FC = () => {
     setSaving(true);
     setErrorMessage(null);
 
-    console.log(newTaller);
-
     if (!newTaller.taller_nombre || !newTaller.taller_cantidad_cupos) {
       setErrorMessage("Falta completar campos obligatorios");
       setSaving(false);
@@ -122,10 +172,28 @@ const AcleTalleres: React.FC = () => {
     }
 
     try {
-      //const newTallerData: Partial<Taller> = { ...newTaller };
+      const createTaller = await saveNewTaller(newTaller as TallerType);
+      const newTallerWithId = {
+        ...newTaller,
+        taller_id: createTaller.taller_id,
+      };
+      setTalleres((curr) => [
+        ...curr,
+        {
+          ...newTallerWithId,
+          taller_nombre: newTallerWithId.taller_nombre || "",
+          taller_descripcion: newTallerWithId.taller_descripcion || "",
+          taller_horario: newTallerWithId.taller_horario || "",
+          taller_nivel: newTallerWithId.taller_nivel || "pre-basica",
+          taller_cantidad_cupos: newTallerWithId.taller_cantidad_cupos || 10,
+          taller_profesor_id: newTallerWithId.taller_profesor_id || 1,
+        },
+      ]);
+      toast({
+        title: "Éxito",
+        description: "Taller creado correctamente",
+      });
 
-      await saveNew(newTaller, token);
-      refetch();
       handleCloseNewModal();
     } catch (error) {
       setErrorMessage(
@@ -178,7 +246,7 @@ const AcleTalleres: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleEditClick = (taller: Taller) => {
+  const handleEditClick = (taller: TallerType) => {
     setCurrentTaller(taller);
     setIsModalEditOpen(true);
   };
@@ -204,9 +272,24 @@ const AcleTalleres: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      await saveEdit(token, currentTaller);
+      await saveEditTaller(currentTaller);
 
-      refetch();
+      setTalleres((curr) =>
+        curr.map((taller) =>
+          taller.taller_id === currentTaller.taller_id
+            ? {
+                ...currentTaller,
+                taller_nombre: currentTaller.taller_nombre || "",
+                taller_descripcion: currentTaller.taller_descripcion || "",
+                taller_horario: currentTaller.taller_horario || "",
+                taller_nivel: currentTaller.taller_nivel || "pre-basica",
+                taller_cantidad_cupos:
+                  currentTaller.taller_cantidad_cupos || 10,
+                taller_profesor_id: currentTaller.taller_profesor_id || 1,
+              }
+            : taller
+        )
+      );
       handleCloseEditModal();
     } catch (error) {
       setErrorMessage(
@@ -217,7 +300,7 @@ const AcleTalleres: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (taller: Taller) => {
+  const handleDeleteClick = (taller: TallerType) => {
     setTallerToDelete(taller);
     setIsDeleteDialogOpen(true);
   };
@@ -226,8 +309,10 @@ const AcleTalleres: React.FC = () => {
     if (!tallerToDelete) return;
 
     try {
-      await deleteTaller(token, tallerToDelete);
-      refetch();
+      await deleteTaller(tallerToDelete.taller_id);
+      setTalleres((curr) =>
+        curr.filter((taller) => taller.taller_id !== tallerToDelete.taller_id)
+      );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -240,7 +325,7 @@ const AcleTalleres: React.FC = () => {
     }
   };
 
-  const handleOpenCursosModal = (taller: Taller) => {
+  const handleOpenCursosModal = (taller: TallerType) => {
     setCurrentTaller(taller);
     setIsModalCursosOpen(true);
     cargarAsignaciones(taller.taller_id);
@@ -248,9 +333,9 @@ const AcleTalleres: React.FC = () => {
 
   const cargarAsignaciones = async (taller_id: number) => {
     try {
-      const response = await obtenerAsignaciones(taller_id, token);
+      const response = await obtenerAsignaciones(taller_id);
       const asignacionesMap = new Map(); // Mapa de asignaciones por curso_id
-      response.data.forEach((asignacion) => {
+      response.data.forEach((asignacion: { curso_id: number }) => {
         // Usamos curso_id como clave para el mapa
         asignacionesMap.set(asignacion.curso_id, asignacion);
       });
@@ -279,12 +364,12 @@ const AcleTalleres: React.FC = () => {
 
     try {
       if (checked) {
-        await asignarCurso(currentTaller.taller_id, cursoId, token);
+        await asignarCurso(currentTaller.taller_id, cursoId);
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.set(cursoId, [1]); // usuario_id 1 por defecto
         setAsignacionesActuales(newAsignaciones);
       } else {
-        await eliminarAsignacion(currentTaller.taller_id, cursoId, token);
+        await eliminarAsignacion(currentTaller.taller_id, cursoId);
 
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.delete(cursoId);
@@ -343,7 +428,7 @@ const AcleTalleres: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.map((taller) => (
+              {talleres?.map((taller) => (
                 <TableRow key={taller.taller_id}>
                   <TableCell>
                     <strong>{taller.taller_nombre}</strong>
@@ -458,6 +543,10 @@ const AcleTalleres: React.FC = () => {
                 </Select>
               </div>
               <div>
+                {loadingFuncionario && <Spinner />}
+                {errorFuncionario && (
+                  <div className="text-red-500 text-sm">{errorFuncionario}</div>
+                )}
                 <Label htmlFor="descripcion">Monitor:</Label>
                 <Select
                   onValueChange={(value) => {
@@ -469,12 +558,12 @@ const AcleTalleres: React.FC = () => {
                   }}
                 >
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Selecciona Jefatura" />
+                    <SelectValue placeholder="Seleccione Monitor" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Funcionarios</SelectLabel>
-                      {dataUsuarios?.map((user) => (
+                      {funcionarios?.map((user) => (
                         <SelectItem
                           key={user.id}
                           value={JSON.stringify({
@@ -578,12 +667,15 @@ const AcleTalleres: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="descripcion">Jefatura</Label>
+                <Label htmlFor="descripcion">Monitor</Label>
+                {errorFuncionario && (
+                  <div className="text-red-500 text-sm">{errorFuncionario}</div>
+                )}
                 <Select
                   value={JSON.stringify({
                     id: currentTaller?.taller_profesor_id,
                     nombre:
-                      dataUsuarios?.find(
+                      funcionarios?.find(
                         (user) => user.id === currentTaller?.taller_profesor_id
                       )?.nombre || "",
                   })}
@@ -605,7 +697,7 @@ const AcleTalleres: React.FC = () => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Funcionarios</SelectLabel>
-                      {dataUsuarios?.map((user) => (
+                      {funcionarios?.map((user) => (
                         <SelectItem
                           key={user.id}
                           value={JSON.stringify({
@@ -654,7 +746,11 @@ const AcleTalleres: React.FC = () => {
               Taller: {currentTaller?.taller_nombre}
             </div>
             <div className="grid gap-2">
-              <div className="p-4 border rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
+              <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-64 overflow-y-auto">
+                {loadingCursos && <Spinner />}
+                {errorCursos && (
+                  <div className="text-red-500 text-sm">{errorCursos}</div>
+                )}
                 {dataCursos?.map((curso) => {
                   const cursosAsignados = asignacionesActuales.get(curso.id);
 
