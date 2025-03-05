@@ -1,6 +1,5 @@
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Toaster } from "@/components/ui/toaster";
-import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -25,11 +24,6 @@ import {
 import { getEstudiantes } from "@/services/estudiantesService";
 
 const AclesInscritos = () => {
-  const [api, setApi] = useState<{
-    taller_nombre: string;
-    taller_horario: string;
-    taller_cantidad_inscritos: number;
-  } | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [taller, setTaller] = useState<TallerType | null>(null);
 
@@ -61,6 +55,9 @@ const AclesInscritos = () => {
       fetchEstudiantes();
       setTotalInscritos(data.taller_cantidad_inscritos);
     });
+    if (!id) {
+      setErrorMessage("No se encontró el ID del taller");
+    }
   }, [id]);
 
   const fetchEstudiantes = async () => {
@@ -126,6 +123,7 @@ const AclesInscritos = () => {
         </div>
       </header>
       <Toaster />
+      {errorMessage && <h4>{errorMessage}</h4>}
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <h1 className="text-2xl font-bold">Talleres ACLE</h1>
@@ -197,7 +195,7 @@ const AclesInscritos = () => {
         <h2>Inscritos</h2>
         <Table>
           <TableCaption>
-            Estudiantes inscritos en <strong>{api?.taller_nombre}</strong>
+            Estudiantes inscritos en <strong>{taller?.taller_nombre}</strong>
           </TableCaption>
           <TableHeader>
             <TableRow>

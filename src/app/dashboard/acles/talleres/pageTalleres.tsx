@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { TallerType } from "@/types/index.ts";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,23 +18,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/app/dashboard/toor/usuarios/types";
 import { Toaster } from "@/components/ui/toaster.tsx";
-import { Link } from "react-router-dom";
+import { TallerType } from "@/types/index.ts";
 import { CursoApiResponseType } from "@/types/index.ts";
 import LoadingErrorHandler from "@/components/LoadingErrorHandler.tsx";
 import {
@@ -57,8 +35,10 @@ import {
   asignarCurso,
 } from "@/services/talleresService.ts";
 import { getFuncionarios } from "@/services/funcionariosService.ts";
-import Spinner from "@/components/Spinner.tsx";
 import { getCursos } from "@/services/cursosService.ts";
+import { FiltrosTalleres } from "@/components/talleres/FiltrosTalleres";
+import { TablaTalleres } from "@/components/talleres/TablaTalleres";
+import { ModalCursos } from "@/components/talleres/ModalCursos";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -89,7 +69,6 @@ const AcleTalleres: React.FC = () => {
     throw new Error("authToken is null");
   }
 
-  /* refactor */
   const [talleres, setTalleres] = useState<TallerType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -150,8 +129,6 @@ const AcleTalleres: React.FC = () => {
         setLoadingCursos(false);
       });
   }, []);
-
-  /* refactor */
 
   const handleSaveNewFromButton = async (
     e: React.MouseEvent<HTMLButtonElement>
@@ -216,7 +193,6 @@ const AcleTalleres: React.FC = () => {
     const parsedValue = type === "number" ? Number(value) : value;
 
     if (form === "new") {
-      console.log("newTaller", newTaller);
       setNewTaller({
         ...newTaller,
         [name]: parsedValue,
@@ -334,9 +310,8 @@ const AcleTalleres: React.FC = () => {
   const cargarAsignaciones = async (taller_id: number) => {
     try {
       const response = await obtenerAsignaciones(taller_id);
-      const asignacionesMap = new Map(); // Mapa de asignaciones por curso_id
+      const asignacionesMap = new Map();
       response.data.forEach((asignacion: { curso_id: number }) => {
-        // Usamos curso_id como clave para el mapa
         asignacionesMap.set(asignacion.curso_id, asignacion);
       });
       setAsignacionesActuales(asignacionesMap);
@@ -355,7 +330,6 @@ const AcleTalleres: React.FC = () => {
   const handleCloseCursosModal = () => {
     setIsModalCursosOpen(false);
     setCurrentTaller(null);
-    //setAsignacionesPendientes([]);
     setAsignacionesActuales(new Map());
   };
 
@@ -366,11 +340,10 @@ const AcleTalleres: React.FC = () => {
       if (checked) {
         await asignarCurso(currentTaller.taller_id, cursoId);
         const newAsignaciones = new Map(asignacionesActuales);
-        newAsignaciones.set(cursoId, [1]); // usuario_id 1 por defecto
+        newAsignaciones.set(cursoId, [1]);
         setAsignacionesActuales(newAsignaciones);
       } else {
         await eliminarAsignacion(currentTaller.taller_id, cursoId);
-
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.delete(cursoId);
         setAsignacionesActuales(newAsignaciones);
@@ -414,182 +387,34 @@ const AcleTalleres: React.FC = () => {
             <Button onClick={handleAddClick}>Agregar Taller</Button>
           </div>
 
-          <Table>
-            <TableCaption>Lista de talleres</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Horario</TableHead>
-                <TableHead>Nivel</TableHead>
-                <TableHead>Cupos</TableHead>
-                <TableHead>Inscritos</TableHead>
-
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {talleres?.map((taller) => (
-                <TableRow key={taller.taller_id}>
-                  <TableCell>
-                    <strong>{taller.taller_nombre}</strong>
-                    <br />
-                    <small>{taller.profesor_nombre}</small>
-                  </TableCell>
-                  <TableCell>{taller.taller_horario}</TableCell>
-
-                  <TableCell>{taller.taller_nivel}</TableCell>
-                  <TableCell>{taller.taller_cantidad_cupos}</TableCell>
-                  <TableCell>{taller.taller_cantidad_inscritos}</TableCell>
-
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditClick(taller)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteClick(taller)}
-                      >
-                        Eliminar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenCursosModal(taller)}
-                      >
-                        Cursos
-                      </Button>
-                      <Link
-                        to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
-                      >
-                        <Button variant="outline" size="sm">
-                          Inscritos
-                        </Button>
-                      </Link>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <TablaTalleres
+            talleres={talleres}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
+            onOpenCursosModal={handleOpenCursosModal}
+          />
         </div>
+
         {/* Modal para nuevo taller */}
         <Dialog open={isNewModalOpen} onOpenChange={setIsNewModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Nuevo Taller</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nombre">Nombre</Label>
-                <Input
-                  id="taller_nombre"
-                  name="taller_nombre"
-                  value={newTaller.taller_nombre}
-                  onChange={(e) => handleInputChange(e, "new")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="descripcion">Descripción</Label>
-                <Input
-                  id="taller_descripcion"
-                  name="taller_descripcion"
-                  value={newTaller.taller_descripcion}
-                  onChange={(e) => handleInputChange(e, "new")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="indice">Horario</Label>
-                <Input
-                  type="text"
-                  id="taller_horario"
-                  name="taller_horario"
-                  value={newTaller.taller_horario}
-                  onChange={(e) => handleInputChange(e, "new")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="nivel">Nivel</Label>
-                <Select
-                  name="nivel"
-                  defaultValue="pre-basica"
-                  value={newTaller.taller_nivel?.toString()}
-                  onValueChange={(value) =>
-                    handleInputChange(
-                      {
-                        target: {
-                          name: "taller_nivel",
-                          value,
-                          type: "select-one",
-                        },
-                      } as React.ChangeEvent<HTMLInputElement>,
-                      "new"
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar nivel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pre-basica">Pre-Básica</SelectItem>
-                    <SelectItem value="basica">Básica</SelectItem>
-                    <SelectItem value="media">Media</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                {loadingFuncionario && <Spinner />}
-                {errorFuncionario && (
-                  <div className="text-red-500 text-sm">{errorFuncionario}</div>
-                )}
-                <Label htmlFor="descripcion">Monitor:</Label>
-                <Select
-                  onValueChange={(value) => {
-                    const selected = JSON.parse(value); // De
-                    setNewTaller({
-                      ...newTaller,
-                      taller_profesor_id: selected.id,
-                    });
-                  }}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Seleccione Monitor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Funcionarios</SelectLabel>
-                      {funcionarios?.map((user) => (
-                        <SelectItem
-                          key={user.id}
-                          value={JSON.stringify({
-                            id: user.id,
-                            nombre: user.nombre,
-                          })}
-                        >
-                          {user.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="cupos">Cantidad de cupos</Label>
-                <Input
-                  type="number"
-                  id="taller_cantidad_cupos"
-                  name="taller_cantidad_cupos"
-                  value={newTaller.taller_cantidad_cupos}
-                  onChange={(e) => handleInputChange(e, "new")}
-                />
-              </div>
-            </div>
+            <FiltrosTalleres
+              funcionarios={funcionarios}
+              loadingFuncionario={loadingFuncionario}
+              errorFuncionario={errorFuncionario}
+              onFuncionarioChange={(value) => {
+                const selected = JSON.parse(value);
+                setNewTaller({
+                  ...newTaller,
+                  taller_profesor_id: selected.id,
+                });
+              }}
+              newTaller={newTaller}
+              handleInputChange={handleInputChange}
+            />
             {errorMessage && (
               <div className="text-red-500 text-sm">{errorMessage}</div>
             )}
@@ -603,126 +428,31 @@ const AcleTalleres: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* Modal para editar asignatura */}
+
+        {/* Modal para editar taller */}
         <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Editar Taller</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="taller_nombre">Nombre</Label>
-                <Input
-                  id="taller_nombre"
-                  name="taller_nombre"
-                  value={currentTaller?.taller_nombre}
-                  onChange={(e) => handleInputChange(e, "edit")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="taller_descripcion">Descripción</Label>
-                <Input
-                  id="taller_descripcion"
-                  name="taller_descripcion"
-                  value={currentTaller?.taller_descripcion}
-                  onChange={(e) => handleInputChange(e, "edit")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="taller_horario">Horario</Label>
-                <Input
-                  id="taller_horario"
-                  name="taller_horario"
-                  value={currentTaller?.taller_horario}
-                  onChange={(e) => handleInputChange(e, "edit")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="taller_nivel">Nivel</Label>
-                <Select
-                  name="taller_nivel"
-                  defaultValue="pre-basica"
-                  value={currentTaller?.taller_nivel?.toString()}
-                  onValueChange={(value) =>
-                    handleInputChange(
-                      {
-                        target: {
-                          name: "taller_nivel",
-                          value,
-                          type: "select-one",
-                        },
-                      } as React.ChangeEvent<HTMLInputElement>,
-                      "edit"
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar nivel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pre-basica">Pre-Básica</SelectItem>
-                    <SelectItem value="basica">Básica</SelectItem>
-                    <SelectItem value="media">Media</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="descripcion">Monitor</Label>
-                {errorFuncionario && (
-                  <div className="text-red-500 text-sm">{errorFuncionario}</div>
-                )}
-                <Select
-                  value={JSON.stringify({
-                    id: currentTaller?.taller_profesor_id,
-                    nombre:
-                      funcionarios?.find(
-                        (user) => user.id === currentTaller?.taller_profesor_id
-                      )?.nombre || "",
-                  })}
-                  onValueChange={(value) => {
-                    const selected = JSON.parse(value);
-                    setCurrentTaller((curr) =>
-                      curr
-                        ? {
-                            ...curr,
-                            taller_profesor_id: selected.id,
-                          }
-                        : null
-                    );
-                  }}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Selecciona Jefatura" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Funcionarios</SelectLabel>
-                      {funcionarios?.map((user) => (
-                        <SelectItem
-                          key={user.id}
-                          value={JSON.stringify({
-                            id: user.id,
-                            nombre: user.nombre,
-                          })}
-                        >
-                          {user.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="taller_cantidad_cupos">Cantidad de cupos</Label>
-                <Input
-                  type="number"
-                  id="taller_cantidad_cupos"
-                  name="taller_cantidad_cupos"
-                  value={currentTaller?.taller_cantidad_cupos}
-                  onChange={(e) => handleInputChange(e, "edit")}
-                />
-              </div>
-            </div>
+            <FiltrosTalleres
+              funcionarios={funcionarios}
+              loadingFuncionario={loadingFuncionario}
+              errorFuncionario={errorFuncionario}
+              onFuncionarioChange={(value) => {
+                const selected = JSON.parse(value);
+                setCurrentTaller((curr) =>
+                  curr
+                    ? {
+                        ...curr,
+                        taller_profesor_id: selected.id,
+                      }
+                    : null
+                );
+              }}
+              newTaller={currentTaller || newTaller}
+              handleInputChange={handleInputChange}
+            />
             {errorMessage && (
               <div className="text-red-500 text-sm">{errorMessage}</div>
             )}
@@ -736,65 +466,20 @@ const AcleTalleres: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
         {/* Modal para asignar cursos */}
-        <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Asignar Cursos</DialogTitle>
-            </DialogHeader>
-            <div className="font-semibold leading-none tracking-tight">
-              Taller: {currentTaller?.taller_nombre}
-            </div>
-            <div className="grid gap-2">
-              <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-64 overflow-y-auto">
-                {loadingCursos && <Spinner />}
-                {errorCursos && (
-                  <div className="text-red-500 text-sm">{errorCursos}</div>
-                )}
-                {dataCursos?.map((curso) => {
-                  const cursosAsignados = asignacionesActuales.get(curso.id);
+        <ModalCursos
+          isOpen={isModalCursosOpen}
+          onClose={handleCloseCursosModal}
+          currentTaller={currentTaller}
+          dataCursos={dataCursos}
+          loadingCursos={loadingCursos}
+          errorCursos={errorCursos}
+          asignacionesActuales={asignacionesActuales}
+          onCursoChange={handleCursoChange}
+          errorMessage={errorMessage}
+        />
 
-                  const isSelected = cursosAsignados ? true : false;
-                  console.log("curso", curso.id, " ", isSelected);
-                  console.log("cursosAsignados", cursosAsignados);
-
-                  return (
-                    <div
-                      key={curso.id}
-                      className="space-y-3 border-b pb-3 last:border-0"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`curso-${curso.id}`}
-                            checked={isSelected}
-                            onCheckedChange={(checked) =>
-                              handleCursoChange(curso.id, checked as boolean)
-                            }
-                          />
-                          <Label
-                            htmlFor={`curso-${curso.id}`}
-                            className="font-medium"
-                          >
-                            {curso.nombre}
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <DialogFooter>
-              {errorMessage && (
-                <div className="text-red-500 text-sm">{errorMessage}</div>
-              )}
-              <Button variant="outline" onClick={handleCloseCursosModal}>
-                Cerrar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         {/* Diálogo de confirmación para eliminar */}
         <AlertDialog
           open={isDeleteDialogOpen}

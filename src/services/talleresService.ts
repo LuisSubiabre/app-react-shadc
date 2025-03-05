@@ -1,5 +1,6 @@
 import { TallerType } from "@/types/index.ts";
 import api from "../config/api.ts";
+import axios from "axios";
 
 // ** Rutas Públicas **
 
@@ -49,9 +50,25 @@ export const asignarCurso = async (
 };
 
 export const getEstudiantesInscritos = async (taller_id: number) => {
-  return api
-    .get(`/talleres/estudiantes/${taller_id}`)
-    .then((response) => response.data);
+  try {
+    console.log(
+      "Iniciando llamada a getEstudiantesInscritos con taller_id:",
+      taller_id
+    );
+    const response = await api.get(`/talleres/estudiantes/${taller_id}`);
+    console.log("Respuesta completa de la API:", response);
+    return response.data;
+  } catch (error) {
+    console.error("Error en getEstudiantesInscritos:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Detalles del error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+    }
+    throw error;
+  }
 };
 
 export const inscribirEstudianteTaller = async (
