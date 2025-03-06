@@ -10,12 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-//import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-
-import { Curso } from "./types"; // Importa la interfaz desde el archivo types.ts
-import { User } from "@/app/dashboard/toor/usuarios/types"; // Importa la interfaz desde el archivo types.ts
-
+import { Curso } from "./types";
+import { User } from "@/app/dashboard/toor/usuarios/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +21,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-
 import {
   Select,
   SelectContent,
@@ -36,67 +32,80 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
-import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
+import { useAuth } from "@/hooks/useAuth";
 import { savaEdit } from "./cursoService";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CursoApiResponseType } from "@/types";
+import { getFuncionarios } from "@/services/funcionariosService";
 
 const AcademicoCalificacionesCurso: React.FC = () => {
-  /* refactory */
-
-  const {
-    error,
-    loading,
-    funcionarioCursos,
-    setFuncionarioCursos, // Desestructura setFuncionarioCursos
-  } = useCursosFuncionarios();
-
-  useEffect(() => {
-    // Aquí puedes hacer algo cuando el `funcionarioCursos` cambie o cuando se haya cargado
-    if (funcionarioCursos) {
-      console.log("Cursos del funcionario cargados:", funcionarioCursos);
-    }
-  }, []);
-
-  /* refactory */
+  const { error, loading, funcionarioCursos, setFuncionarioCursos } =
+    useCursosFuncionarios();
 
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
-  useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
+  const [dataUsuarios, setDataUsuarios] = useState<User[]>([]);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(true);
+  const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
 
-  /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
     throw new Error("authToken is null");
   }
   const token = getTokenFromContext.authToken;
-  //const { toast } = useToast();
 
-  const { data: dataUsuarios } = useFetch<User[]>("usuarios", token); // Trae los datos de la API (usuarios)
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        setLoadingUsuarios(true);
+        const response = await getFuncionarios();
+        setDataUsuarios(response.data);
+      } catch (err) {
+        setErrorUsuarios(
+          err instanceof Error ? err.message : "Error al cargar usuarios"
+        );
+        console.error("Error al cargar usuarios:", err);
+      } finally {
+        setLoadingUsuarios(false);
+      }
+    };
 
-  if (loading)
+    fetchUsuarios();
+  }, []);
+
+  useEffect(() => {
+    if (funcionarioCursos && dataUsuarios.length > 0) {
+      // Actualizar los cursos con la información completa de jefatura
+      const cursosActualizados = funcionarioCursos.map((curso) => ({
+        ...curso,
+        jefatura:
+          dataUsuarios.find((user) => user.id === curso.profesor_jefe_id)
+            ?.nombre || "S/N",
+      }));
+      setFuncionarioCursos(cursosActualizados);
+    }
+  }, [funcionarioCursos, dataUsuarios]);
+
+  if (loading || loadingUsuarios)
     return (
       <div className="flex justify-center items-center h-full w-2/5 mx-auto">
         <Spinner />
       </div>
-    ); // Spinner de carga
+    );
 
-  if (error)
+  if (error || errorUsuarios)
     return (
       <div className="flex justify-center items-center h-full w-2/5 mx-auto">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error || errorUsuarios}</AlertDescription>
         </Alert>
       </div>
-    ); // Mensaje de error al cargar los datos de la API
-
-  /* Logica Editar */
+    );
 
   const handleSaveEdit = async () => {
     if (!currentCurso) return;
@@ -131,7 +140,7 @@ const AcademicoCalificacionesCurso: React.FC = () => {
         )
       );
 
-      setIsModalEditOpen(false); // Cerrar el modal después de guardar
+      setIsModalEditOpen(false);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -149,6 +158,28 @@ const AcademicoCalificacionesCurso: React.FC = () => {
   };
 
   const handleCloseEditModal = () => {
+    if (currentCurso) {
+      // Actualizar el estado funcionarioCursos con el curso actual
+      setFuncionarioCursos((prevCursos) =>
+        prevCursos.map((curso) =>
+          curso.id === currentCurso.id
+            ? {
+                ...curso,
+                nombre: currentCurso.nombre,
+                descripcion: currentCurso.descripcion || "",
+                indice: currentCurso.indice,
+                codigo_ensenanza: currentCurso.codigo_ensenanza,
+                profesor_jefe_id: currentCurso.profesor_jefe_id,
+                jefatura:
+                  dataUsuarios?.find(
+                    (user) => user.id === currentCurso.profesor_jefe_id
+                  )?.nombre || "S/N",
+                email_jefatura: curso.email_jefatura,
+              }
+            : curso
+        )
+      );
+    }
     setCurrentCurso(null);
     setErrorMessage(null);
     setIsModalEditOpen(false);
@@ -315,7 +346,7 @@ const AcademicoCalificacionesCurso: React.FC = () => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Funcionarios</SelectLabel>
-                      {dataUsuarios?.map((user) => (
+                      {dataUsuarios?.map((user: User) => (
                         <SelectItem
                           key={user.id}
                           value={JSON.stringify({

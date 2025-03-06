@@ -471,6 +471,18 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         if (!response.ok)
                           throw new Error("Error al actualizar profesor");
 
+                        // Actualizar el estado local de subjectsForCourse
+                        setSubjectsForCourse((prevSubjects) =>
+                          prevSubjects.map((subject) =>
+                            subject.id === selectedSubject.id
+                              ? {
+                                  ...subject,
+                                  profesor_jefe_id: parseInt(value),
+                                }
+                              : subject
+                          )
+                        );
+
                         setSelectedSubject({
                           ...selectedSubject,
                           profesor_jefe_id: parseInt(value),
