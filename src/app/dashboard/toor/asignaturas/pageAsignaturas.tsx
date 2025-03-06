@@ -3,7 +3,6 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -505,129 +504,266 @@ const Asignaturas: React.FC = () => {
           <Breadcrumbs />
         </div>
       </header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <h1 className="text-2xl font-bold">Asignaturas</h1>
-        <div>
-          <Button onClick={handleAddClick}>Agregar Asignatura</Button>
+      <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestión de Asignaturas
+            </h1>
+            <p className="text-muted-foreground">
+              Administra las asignaturas del sistema
+            </p>
+          </div>
+          <Button
+            onClick={handleAddClick}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5 mr-2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
+            </svg>
+            Nueva Asignatura
+          </Button>
         </div>
 
-        <Table>
-          <TableCaption>Lista de asignaturas</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Código SIGE</TableHead>
-              <TableHead>Nivel Educativo</TableHead>
-              <TableHead>Concepto</TableHead>
-              <TableHead>Es Común</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {asignaturas?.map((asignatura) => (
-              <TableRow key={asignatura.asignatura_id}>
-                <TableCell>{asignatura.asignatura_id}</TableCell>
-                <TableCell>
-                  <strong>{asignatura.nombre}</strong>
-                  <br />
-                  <small>{asignatura.descripcion}</small>
-                </TableCell>
-
-                <TableCell>{asignatura.codigo_sige}</TableCell>
-                <TableCell>
-                  {asignatura.nivel_educativo === 1
-                    ? "Básica"
-                    : asignatura.nivel_educativo === 2
-                    ? "Media"
-                    : asignatura.nivel_educativo}
-                </TableCell>
-                <TableCell>{asignatura.concepto ? "Sí" : "No"}</TableCell>
-                <TableCell>{asignatura.es_comun ? "Sí" : "No"}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditClick(asignatura)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteClick(asignatura)}
-                    >
-                      Eliminar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenCursosModal(asignatura)}
-                    >
-                      Cursos
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-muted/50">
+                <TableHead className="w-[100px] font-semibold">ID</TableHead>
+                <TableHead className="w-[200px] font-semibold">
+                  Nombre
+                </TableHead>
+                <TableHead className="w-[150px] font-semibold">
+                  Código SIGE
+                </TableHead>
+                <TableHead className="w-[150px] font-semibold">
+                  Nivel Educativo
+                </TableHead>
+                <TableHead className="w-[100px] font-semibold">
+                  Concepto
+                </TableHead>
+                <TableHead className="w-[100px] font-semibold">
+                  Es Común
+                </TableHead>
+                <TableHead className="w-[150px] font-semibold text-right">
+                  Acciones
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {asignaturas && asignaturas.length > 0 ? (
+                asignaturas.map((asignatura) => (
+                  <TableRow
+                    key={asignatura.asignatura_id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="font-medium">
+                      {asignatura.asignatura_id}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{asignatura.nombre}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {asignatura.descripcion}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{asignatura.codigo_sige}</TableCell>
+                    <TableCell>
+                      {asignatura.nivel_educativo === 1
+                        ? "Básica"
+                        : asignatura.nivel_educativo === 2
+                        ? "Media"
+                        : asignatura.nivel_educativo}
+                    </TableCell>
+                    <TableCell>{asignatura.concepto ? "Sí" : "No"}</TableCell>
+                    <TableCell>{asignatura.es_comun ? "Sí" : "No"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditClick(asignatura)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="size-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                            />
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(asignatura)}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="size-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.021-2.09 2.201v.916"
+                            />
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenCursosModal(asignatura)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="size-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
+                            />
+                          </svg>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 text-muted-foreground"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                      <p className="text-muted-foreground">
+                        No hay asignaturas disponibles
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Modal para nueva asignatura */}
       <Dialog open={isNewModalOpen} onOpenChange={setIsNewModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Nueva Asignatura</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Agregar Nueva Asignatura
+            </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="nombre">Nombre</Label>
+
+          <form className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="nombre" className="text-sm font-medium">
+                Nombre
+              </Label>
               <Input
                 id="nombre"
                 name="nombre"
                 value={newAsignatura.nombre}
                 onChange={(e) => handleInputChange(e, "new")}
+                placeholder="Ingresa el nombre de la asignatura"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="descripcion">Descripción</Label>
+            <div className="space-y-2">
+              <Label htmlFor="descripcion" className="text-sm font-medium">
+                Descripción
+              </Label>
               <Input
                 id="descripcion"
                 name="descripcion"
                 value={newAsignatura.descripcion}
                 onChange={(e) => handleInputChange(e, "new")}
+                placeholder="Ingresa una descripción"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="indice">Índice</Label>
+            <div className="space-y-2">
+              <Label htmlFor="indice" className="text-sm font-medium">
+                Índice
+              </Label>
               <Input
                 type="number"
                 id="indice"
                 name="indice"
                 value={newAsignatura.indice}
                 onChange={(e) => handleInputChange(e, "new")}
+                placeholder="Ingresa el índice"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="codigo_sige">Código SIGE</Label>
+            <div className="space-y-2">
+              <Label htmlFor="codigo_sige" className="text-sm font-medium">
+                Código SIGE
+              </Label>
               <Input
                 type="number"
                 id="codigo_sige"
                 name="codigo_sige"
                 value={newAsignatura.codigo_sige}
                 onChange={(e) => handleInputChange(e, "new")}
+                placeholder="Ingresa el código SIGE"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="nivel_educativo">Nivel Educativo</Label>
+            <div className="space-y-2">
+              <Label htmlFor="nivel_educativo" className="text-sm font-medium">
+                Nivel Educativo
+              </Label>
               <Input
                 type="number"
                 id="nivel_educativo"
                 name="nivel_educativo"
                 value={newAsignatura.nivel_educativo}
                 onChange={(e) => handleInputChange(e, "new")}
+                placeholder="Ingresa el nivel educativo"
+                className="w-full"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -639,7 +775,9 @@ const Asignaturas: React.FC = () => {
                   handleCheckboxChange("concepto", checked as boolean, "new")
                 }
               />
-              <Label htmlFor="concepto">Concepto</Label>
+              <Label htmlFor="concepto" className="text-sm font-medium">
+                Concepto
+              </Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -650,18 +788,54 @@ const Asignaturas: React.FC = () => {
                   handleCheckboxChange("es_comun", checked as boolean, "new")
                 }
               />
-              <Label htmlFor="es_comun">Es Común</Label>
+              <Label htmlFor="es_comun" className="text-sm font-medium">
+                Es Común
+              </Label>
             </div>
-          </div>
+          </form>
+
           {errorMessage && (
-            <div className="text-red-500 text-sm">{errorMessage}</div>
+            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+              {errorMessage}
+            </div>
           )}
-          <DialogFooter>
+
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={handleCloseNewModal}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveNewFromButton} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar"}
+            <Button
+              onClick={handleSaveNewFromButton}
+              disabled={saving}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {saving ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Guardando...
+                </>
+              ) : (
+                "Guardar"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -669,57 +843,83 @@ const Asignaturas: React.FC = () => {
 
       {/* Modal para editar asignatura */}
       <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Editar Asignatura</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Editar Asignatura
+            </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-nombre">Nombre</Label>
+
+          <form className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-nombre" className="text-sm font-medium">
+                Nombre
+              </Label>
               <Input
                 id="edit-nombre"
                 name="nombre"
                 value={currentAsignatura?.nombre}
                 onChange={(e) => handleInputChange(e, "edit")}
+                placeholder="Ingresa el nombre de la asignatura"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-descripcion">Descripción</Label>
+            <div className="space-y-2">
+              <Label htmlFor="edit-descripcion" className="text-sm font-medium">
+                Descripción
+              </Label>
               <Input
                 id="edit-descripcion"
                 name="descripcion"
                 value={currentAsignatura?.descripcion}
                 onChange={(e) => handleInputChange(e, "edit")}
+                placeholder="Ingresa una descripción"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-indice">Índice</Label>
+            <div className="space-y-2">
+              <Label htmlFor="edit-indice" className="text-sm font-medium">
+                Índice
+              </Label>
               <Input
                 type="number"
                 id="edit-indice"
                 name="indice"
                 value={currentAsignatura?.indice}
                 onChange={(e) => handleInputChange(e, "edit")}
+                placeholder="Ingresa el índice"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-codigo_sige">Código SIGE</Label>
+            <div className="space-y-2">
+              <Label htmlFor="edit-codigo_sige" className="text-sm font-medium">
+                Código SIGE
+              </Label>
               <Input
                 type="number"
                 id="edit-codigo_sige"
                 name="codigo_sige"
                 value={currentAsignatura?.codigo_sige}
                 onChange={(e) => handleInputChange(e, "edit")}
+                placeholder="Ingresa el código SIGE"
+                className="w-full"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-nivel_educativo">Nivel Educativo</Label>
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-nivel_educativo"
+                className="text-sm font-medium"
+              >
+                Nivel Educativo
+              </Label>
               <Input
                 type="number"
                 id="edit-nivel_educativo"
                 name="nivel_educativo"
                 value={currentAsignatura?.nivel_educativo}
                 onChange={(e) => handleInputChange(e, "edit")}
+                placeholder="Ingresa el nivel educativo"
+                className="w-full"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -731,7 +931,9 @@ const Asignaturas: React.FC = () => {
                   handleCheckboxChange("concepto", checked as boolean, "edit")
                 }
               />
-              <Label htmlFor="edit-concepto">Concepto</Label>
+              <Label htmlFor="edit-concepto" className="text-sm font-medium">
+                Concepto
+              </Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -742,18 +944,54 @@ const Asignaturas: React.FC = () => {
                   handleCheckboxChange("es_comun", checked as boolean, "edit")
                 }
               />
-              <Label htmlFor="edit-es_comun">Es Común</Label>
+              <Label htmlFor="edit-es_comun" className="text-sm font-medium">
+                Es Común
+              </Label>
             </div>
-          </div>
+          </form>
+
           {errorMessage && (
-            <div className="text-red-500 text-sm">{errorMessage}</div>
+            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+              {errorMessage}
+            </div>
           )}
-          <DialogFooter>
+
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={handleCloseEditModal}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveEditFromButton} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar"}
+            <Button
+              onClick={handleSaveEditFromButton}
+              disabled={saving}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {saving ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Guardando...
+                </>
+              ) : (
+                "Guardar"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -763,14 +1001,16 @@ const Asignaturas: React.FC = () => {
       <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
               Asignar Cursos - {currentAsignatura?.nombre}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
             {loadingCursos && <Spinner />}
             {errorCursos && (
-              <div className="text-red-500 text-sm">{errorCursos}</div>
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorCursos}
+              </div>
             )}
             {cursos?.map((curso) => {
               const usuariosAsignados =
@@ -801,7 +1041,7 @@ const Asignaturas: React.FC = () => {
                     </div>
                     {loadingFuncionarios && <Spinner />}
                     {errorFuncionarios && (
-                      <div className="text-red-500 text-sm">
+                      <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
                         {errorFuncionarios}
                       </div>
                     )}
@@ -868,19 +1108,45 @@ const Asignaturas: React.FC = () => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente la
-              asignatura {asignaturaToDelete?.nombre}.
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-full bg-destructive/10">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 text-destructive"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                  />
+                </svg>
+              </div>
+              <AlertDialogTitle className="text-xl font-semibold">
+                ¿Estás seguro?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm text-muted-foreground">
+              Esta acción no se puede deshacer. La asignatura{" "}
+              <span className="font-medium text-foreground">
+                {asignaturaToDelete?.nombre}
+              </span>{" "}
+              se eliminará permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-transparent hover:bg-muted">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>

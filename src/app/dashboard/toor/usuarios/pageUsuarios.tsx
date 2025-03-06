@@ -3,7 +3,6 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -549,146 +548,297 @@ const Usuarios: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div>
-          <Button onClick={handleAddUserClick}>Nuevo Usuario</Button>
-          <div className="m-4">
+      <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestión de Usuarios
+            </h1>
+            <p className="text-muted-foreground">
+              Administra los usuarios del sistema
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
             <Input
               type="text"
               placeholder="Buscar usuario por nombre"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-[300px]"
             />
+            <Button
+              onClick={handleAddUserClick}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5 mr-2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+              Nuevo Usuario
+            </Button>
           </div>
         </div>
 
-        <Toaster />
-
-        <Table>
-          <TableCaption>Lista de usuarios</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">ID</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                {user.activo ? (
-                  <TableCell className="text-green-500">{user.id}</TableCell>
-                ) : (
-                  <TableCell className="text-red-500">{user.id}</TableCell>
-                )}
-                <TableCell>
-                  <div> {user.nombre} </div>
-
-                  <div className="text-xs"> {user.email} </div>
-                </TableCell>
-                <TableCell></TableCell>
-                <TableCell>
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleEditClick(user)}
-                  >
-                    <FilePenLine />
-                  </Button>
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleCursosClick(user)}
-                  >
-                    <GraduationCap />
-                  </Button>
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleChangePasswordClick(user)}
-                  >
-                    <KeySquare />
-                  </Button>
-
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleDeleteClick(user)}
-                  >
-                    <Trash2 />
-                  </Button>
-
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleRolesClick(user)}
-                  >
-                    <Puzzle />
-                  </Button>
-                </TableCell>
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-muted/50">
+                <TableHead className="w-[100px] font-semibold">ID</TableHead>
+                <TableHead className="w-[200px] font-semibold">
+                  Nombre
+                </TableHead>
+                <TableHead className="w-[200px] font-semibold">Email</TableHead>
+                <TableHead className="w-[150px] font-semibold text-right">
+                  Acciones
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers && filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="font-medium">
+                      <span
+                        className={`inline-flex items-center gap-2 ${
+                          user.activo ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
+                        {user.activo ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18 18 6M6 6l12 12"
+                            />
+                          </svg>
+                        )}
+                        {user.id}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-medium">{user.nombre}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {user.email}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditClick(user)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <FilePenLine className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCursosClick(user)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <GraduationCap className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleChangePasswordClick(user)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <KeySquare className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRolesClick(user)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Puzzle className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(user)}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="size-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 text-muted-foreground"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                      <p className="text-muted-foreground">
+                        No hay usuarios disponibles
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Nuevo usuario */}
       {isNewUserModalOpen && (
         <Dialog open={isNewUserModalOpen} onOpenChange={setIsNewUserModalOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Agregar Nuevo Usuario</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Agregar Nuevo Usuario
+              </DialogTitle>
             </DialogHeader>
-            <form>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input
-                    id="name"
-                    name="nombre"
-                    value={newUser.nombre}
-                    onChange={handleNewUserInputChange}
-                    placeholder="Nombre del usuario"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={handleNewUserInputChange}
-                    placeholder="Correo electrónico"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rut">RUT</Label>
-                  <Input
-                    id="rut"
-                    name="rut"
-                    value={newUser.rut || ""}
-                    onChange={handleNewUserInputChange}
-                    placeholder="RUT del usuario"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Input
-                    id="password"
-                    name="clave"
-                    type="password"
-                    value={newUser.clave || ""}
-                    onChange={handleNewUserInputChange}
-                    placeholder="Contraseña"
-                  />
-                </div>
+
+            <form className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nombre
+                </Label>
+                <Input
+                  id="name"
+                  name="nombre"
+                  value={newUser.nombre}
+                  onChange={handleNewUserInputChange}
+                  placeholder="Ingresa el nombre del usuario"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={newUser.email}
+                  onChange={handleNewUserInputChange}
+                  placeholder="Ingresa el correo electrónico"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rut" className="text-sm font-medium">
+                  RUT
+                </Label>
+                <Input
+                  id="rut"
+                  name="rut"
+                  value={newUser.rut || ""}
+                  onChange={handleNewUserInputChange}
+                  placeholder="Ingresa el RUT"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Contraseña
+                </Label>
+                <Input
+                  id="password"
+                  name="clave"
+                  type="password"
+                  value={newUser.clave || ""}
+                  onChange={handleNewUserInputChange}
+                  placeholder="Ingresa la contraseña"
+                  className="w-full"
+                />
               </div>
             </form>
 
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+            {errorMessage && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorMessage}
+              </div>
+            )}
 
-            <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseNewUserModal}>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCloseNewUserModal}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveNewUser} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
+              <Button
+                onClick={handleSaveNewUser}
+                disabled={saving}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -698,70 +848,116 @@ const Usuarios: React.FC = () => {
       {/* Editar usuario */}
       {isModalEditOpen && currentUser && (
         <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Editar Usuario</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Editar Usuario
+              </DialogTitle>
             </DialogHeader>
 
-            <form>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input
-                    id="name"
-                    name="nombre"
-                    value={currentUser.nombre}
-                    onChange={handleInputChange}
-                    placeholder="Nombre del usuario"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={currentUser.email}
-                    onChange={handleInputChange}
-                    placeholder="Correo electrónico"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rut">RUT</Label>
-                  <Input
-                    id="rut"
-                    name="rut"
-                    value={currentUser.rut || ""}
-                    onChange={handleInputChange}
-                    placeholder="RUT del usuario"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="activo">Activo </Label>
-                  <input
-                    id="activo"
-                    name="activo"
-                    type="checkbox"
-                    checked={currentUser.activo}
-                    onChange={(e) =>
-                      setCurrentUser({
-                        ...currentUser,
-                        activo: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
+            <form className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nombre
+                </Label>
+                <Input
+                  id="name"
+                  name="nombre"
+                  value={currentUser.nombre}
+                  onChange={handleInputChange}
+                  placeholder="Ingresa el nombre del usuario"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={currentUser.email}
+                  onChange={handleInputChange}
+                  placeholder="Ingresa el correo electrónico"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rut" className="text-sm font-medium">
+                  RUT
+                </Label>
+                <Input
+                  id="rut"
+                  name="rut"
+                  value={currentUser.rut || ""}
+                  onChange={handleInputChange}
+                  placeholder="Ingresa el RUT"
+                  className="w-full"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="activo"
+                  name="activo"
+                  type="checkbox"
+                  checked={currentUser.activo}
+                  onChange={(e) =>
+                    setCurrentUser({
+                      ...currentUser,
+                      activo: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor="activo" className="text-sm font-medium">
+                  Usuario Activo
+                </Label>
               </div>
             </form>
 
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+            {errorMessage && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorMessage}
+              </div>
+            )}
 
-            <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseEditModal}>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCloseEditModal}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveEdit} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
+              <Button
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -771,44 +967,74 @@ const Usuarios: React.FC = () => {
       {/* Editar clave */}
       {isModalClave && currentUser && (
         <Dialog open={isModalClave} onOpenChange={setIsModalClave}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Cambiar Contraseña</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Cambiar Contraseña
+              </DialogTitle>
             </DialogHeader>
 
-            <form>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="newPassword">
-                    usuario: {currentUser.nombre}
-                  </Label>
-                  <Input
-                    id="newPassword"
-                    name="newPassword"
-                    type="password"
-                    value={newUser.clave || ""}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, clave: e.target.value })
-                    }
-                    placeholder="Nueva Contraseña"
-                  />
-                </div>
+            <form className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Usuario: {currentUser.nombre}
+                </Label>
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  value={newUser.clave || ""}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, clave: e.target.value })
+                  }
+                  placeholder="Ingresa la nueva contraseña"
+                  className="w-full"
+                />
               </div>
             </form>
 
             {errorMessageClave && (
-              <p className="text-red-500">{errorMessageClave}</p>
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorMessageClave}
+              </div>
             )}
 
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => setIsModalClave(false)}
-              >
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setIsModalClave(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSavePassword} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
+              <Button
+                onClick={handleSavePassword}
+                disabled={saving}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -818,50 +1044,55 @@ const Usuarios: React.FC = () => {
       {/* Modal Roles */}
       {isModalRolestOpen && currentUser && (
         <Dialog open={isModalRolestOpen} onOpenChange={setIsModalRolesOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Roles {currentUser.nombre}</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Roles - {currentUser.nombre}
+              </DialogTitle>
             </DialogHeader>
-            <form>
-              <div className="space-y-4">
-                <div>
-                  {loadingRoles && <Spinner />}
-                  <p className="text-red-500">{errorRoles}</p>
 
-                  <p className="text-green-500">{messageCursos}</p>
+            <div className="space-y-4 py-4">
+              {loadingRoles && (
+                <div className="flex justify-center py-4">
+                  <Spinner />
                 </div>
-                <div>
-                  {roles &&
-                    roles.length > 0 &&
-                    roles.map((rol) => (
-                      <div key={rol.id}>
-                        <Checkbox
-                          id={`terms2-${rol.id}`}
-                          checked={userRoles.includes(rol.id) ? true : false}
-                          onClick={() =>
-                            handleAsignarRol(
-                              rol.id,
-                              userRoles.includes(rol.id) ? true : false
-                            )
-                          }
-                        />
+              )}
+              {errorRoles && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                  {errorRoles}
+                </div>
+              )}
+              {messageCursos && (
+                <div className="bg-green-50 text-green-700 text-sm p-3 rounded-md">
+                  {messageCursos}
+                </div>
+              )}
 
-                        <label
-                          htmlFor={`terms2-${rol.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {rol.nombre}
-                        </label>
-                      </div>
-                    ))}
-                </div>
+              <div className="space-y-2">
+                {roles &&
+                  roles.length > 0 &&
+                  roles.map((rol) => (
+                    <div key={rol.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`terms2-${rol.id}`}
+                        checked={userRoles.includes(rol.id)}
+                        onClick={() =>
+                          handleAsignarRol(rol.id, userRoles.includes(rol.id))
+                        }
+                      />
+                      <Label
+                        htmlFor={`terms2-${rol.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {rol.nombre}
+                      </Label>
+                    </div>
+                  ))}
               </div>
-            </form>
+            </div>
 
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-
-            <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseRolesModal}>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCloseRolesModal}>
                 Cerrar
               </Button>
             </DialogFooter>
@@ -869,14 +1100,17 @@ const Usuarios: React.FC = () => {
         </Dialog>
       )}
 
-      {/* Cursos */}
+      {/* Modal Cursos */}
       {isModalCursosOpen && (
         <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Asignar Cursos</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Asignar Cursos
+              </DialogTitle>
             </DialogHeader>
-            <Alert>
+
+            <Alert className="mb-4">
               <AlertTitle>Atención</AlertTitle>
               <AlertDescription>
                 La información de los cursos se actualiza automáticamente al dar
@@ -884,87 +1118,121 @@ const Usuarios: React.FC = () => {
               </AlertDescription>
             </Alert>
 
-            <form>
-              <div className="space-y-4">
-                {currentUser?.nombre}
-                <Separator />
+            <div className="space-y-4 py-4">
+              <div className="font-medium">{currentUser?.nombre}</div>
+              <Separator />
 
-                <div>
-                  {loadingCursos && <Spinner />}
-                  {errorCursos && <p className="text-red-500">{errorCursos}</p>}
-                  <p className="text-green-500">{messageCursos}</p>
-
-                  {cursos?.map((curso) => (
-                    <div key={curso.id}>
-                      <Checkbox
-                        id={`curso-${curso.id}`}
-                        value={JSON.stringify({
-                          id: curso.id,
-                          nombre: curso.nombre,
-                        })}
-                        checked={userCursos.includes(curso.id)}
-                        onClick={() => {
-                          if (userCursos.includes(curso.id)) {
-                            setUserCursos((prevCursos) =>
-                              prevCursos.filter((id) => id !== curso.id)
-                            );
-                            asignarCurso(curso.id, false);
-                          } else {
-                            setUserCursos((prevCursos) => [
-                              ...prevCursos,
-                              curso.id,
-                            ]);
-                            asignarCurso(curso.id, true);
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor={`curso-${curso.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {curso.nombre}
-                      </label>
-                    </div>
-                  ))}
+              {loadingCursos && (
+                <div className="flex justify-center py-4">
+                  <Spinner />
                 </div>
+              )}
+              {errorCursos && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                  {errorCursos}
+                </div>
+              )}
+              {messageCursos && (
+                <div className="bg-green-50 text-green-700 text-sm p-3 rounded-md">
+                  {messageCursos}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {cursos?.map((curso) => (
+                  <div key={curso.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`curso-${curso.id}`}
+                      value={JSON.stringify({
+                        id: curso.id,
+                        nombre: curso.nombre,
+                      })}
+                      checked={userCursos.includes(curso.id)}
+                      onClick={() => {
+                        if (userCursos.includes(curso.id)) {
+                          setUserCursos((prevCursos) =>
+                            prevCursos.filter((id) => id !== curso.id)
+                          );
+                          asignarCurso(curso.id, false);
+                        } else {
+                          setUserCursos((prevCursos) => [
+                            ...prevCursos,
+                            curso.id,
+                          ]);
+                          asignarCurso(curso.id, true);
+                        }
+                      }}
+                    />
+                    <Label
+                      htmlFor={`curso-${curso.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {curso.nombre}
+                    </Label>
+                  </div>
+                ))}
               </div>
-            </form>
+            </div>
 
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-
-            <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseCursosModal}>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCloseCursosModal}>
                 Cerrar
               </Button>
-              {/* <Button onClick={handleSaveNewUser} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
-              </Button> */}
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Eliminar usuario */}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El funcionario{" "}
-              <b>{funcionarioToDelete?.nombre}</b> se eliminará permanentemente.
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-full bg-destructive/10">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 text-destructive"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                  />
+                </svg>
+              </div>
+              <AlertDialogTitle className="text-xl font-semibold">
+                ¿Estás seguro?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm text-muted-foreground">
+              Esta acción no se puede deshacer. El usuario{" "}
+              <span className="font-medium text-foreground">
+                {funcionarioToDelete?.nombre}
+              </span>{" "}
+              se eliminará permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-transparent hover:bg-muted">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Toaster />
     </>
   );
 };
