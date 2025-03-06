@@ -19,12 +19,9 @@ const PageSize = 1000;
 const Estudiantes: React.FC = () => {
   const {
     useState,
-
     Breadcrumbs,
-
     Button,
     Table,
-    TableCaption,
     TableHeader,
     TableRow,
     TableHead,
@@ -375,174 +372,318 @@ const Estudiantes: React.FC = () => {
       <Toaster />
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
-          <Breadcrumbs /> {/* Usa el componente de breadcrumbs aquí */}
+          <Breadcrumbs />
         </div>
       </header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div>
-          <Button onClick={handleNewClick}>Nuevo Estudiante</Button>
-          <div className="m-4">
+
+      <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestión de Estudiantes
+            </h1>
+            <p className="text-muted-foreground">
+              Administra los estudiantes del sistema
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
             <Input
               type="text"
-              placeholder="Buscar usuario por nombre"
+              placeholder="Buscar estudiante por nombre"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-[300px]"
             />
+            <Button
+              onClick={handleNewClick}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5 mr-2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+              Nuevo Estudiante
+            </Button>
           </div>
         </div>
 
-        <div>
-          {/* Filtros por letra */}
-          <div className="mb-4 flex flex-wrap justify-center">
-            {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
-              <Button
-                key={letter}
-                className={`px-2 py-1 mx-1 border rounded ${
-                  selectedLetter === letter
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-500"
-                }`}
-                onClick={() => {
-                  setSelectedLetter(letter);
-                  setCurrentPage(0);
-                }}
-              >
-                {letter}
-              </Button>
-            ))}
-            <button
-              className="px-2 py-1 mx-1 border rounded bg-gray-300"
+        <div className="flex flex-wrap gap-2">
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+            <Button
+              key={letter}
+              variant={selectedLetter === letter ? "default" : "outline"}
+              size="sm"
               onClick={() => {
-                setSelectedLetter("");
+                setSelectedLetter(letter);
                 setCurrentPage(0);
               }}
             >
-              Todos
-            </button>
-          </div>
+              {letter}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedLetter("");
+              setCurrentPage(0);
+            }}
+          >
+            Todos
+          </Button>
         </div>
-        <Table>
-          <TableCaption>Lista de estudiantes</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[10px]">ID</TableHead>
-              <TableHead className="w-[100px]">Nombre</TableHead>
-              <TableHead className="w-[100px]">RUT</TableHead>
-              <TableHead className="w-[100px]">Curso</TableHead>
-              <TableHead className="w-[100px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedUsers.length > 0 ? (
-              paginatedUsers.map((c) => (
-                <TableRow key={c.id}>
-                  {c.activo ? (
-                    <TableCell className="text-green-500">{c.id}</TableCell>
-                  ) : (
-                    <TableCell className="text-red-500">{c.id}</TableCell>
-                  )}
 
-                  <TableCell>
-                    {c.nombre} <br />
-                    <small>{c.email}</small>
-                  </TableCell>
-                  <TableCell>{c.rut}</TableCell>
-                  <TableCell>{c.curso_nombre}</TableCell>
-                  <TableCell>
-                    <Button className="mr-2" onClick={() => handleEditClick(c)}>
-                      <Edit />
-                    </Button>
-                    <Button
-                      className="mr-2"
-                      onClick={() => handleDeleteClick(c)}
-                    >
-                      <Trash2 />
-                    </Button>
-                    <Button onClick={() => handleChangePasswordClick(c)}>
-                      <KeySquare />
-                    </Button>
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-muted/50">
+                <TableHead className="w-[10px] font-semibold">ID</TableHead>
+                <TableHead className="w-[200px] font-semibold">
+                  Nombre
+                </TableHead>
+                <TableHead className="w-[100px] font-semibold">RUT</TableHead>
+                <TableHead className="w-[100px] font-semibold">Curso</TableHead>
+                <TableHead className="w-[150px] font-semibold text-right">
+                  Acciones
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedUsers.length > 0 ? (
+                paginatedUsers.map((c) => (
+                  <TableRow
+                    key={c.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="font-medium">
+                      <span
+                        className={`inline-flex items-center gap-2 ${
+                          c.activo ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
+                        {c.activo ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18 18 6M6 6l12 12"
+                            />
+                          </svg>
+                        )}
+                        {c.id}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{c.nombre}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {c.email}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{c.rut}</TableCell>
+                    <TableCell>{c.curso_nombre}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditClick(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Edit className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(c)}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleChangePasswordClick(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <KeySquare className="size-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 text-muted-foreground"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                      <p className="text-muted-foreground">
+                        No hay estudiantes disponibles
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">
-                  No hay estudiantes disponibles.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
-      {/* Nuevo */}
+      {/* Nuevo Estudiante */}
       {isNewModalOpen && (
         <Dialog open={isNewModalOpen} onOpenChange={setisNewModalOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Agregar Nuevo Estudiante</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Agregar Nuevo Estudiante
+              </DialogTitle>
             </DialogHeader>
 
-            <form>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input
-                    id="nombre"
-                    name="nombre"
-                    onChange={handleNewInputChange}
-                    placeholder="Nombre del estudiante (apellidos nombres)"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="descripcion">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    onChange={handleNewInputChange}
-                    placeholder="Ingresa email"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="descripcion">Clave Email</Label>
-                  <Input
-                    id="clave_email"
-                    name="clave_email"
-                    type="text"
-                    onChange={handleNewInputChange}
-                    placeholder="Ingresa clave email"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="descripcion">RUT</Label>
-                  <Input
-                    id="rut"
-                    name="rut"
-                    type="text"
-                    //value={newCurso.indice}
-                    onChange={handleNewInputChange}
-                    placeholder="Ingrese el índice"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="descripcion">Curso</Label>
+            <form className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nombre
+                </Label>
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  onChange={handleNewInputChange}
+                  placeholder="Nombre del estudiante (apellidos nombres)"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  onChange={handleNewInputChange}
+                  placeholder="Ingresa email"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clave_email" className="text-sm font-medium">
+                  Clave Email
+                </Label>
+                <Input
+                  id="clave_email"
+                  name="clave_email"
+                  type="text"
+                  onChange={handleNewInputChange}
+                  placeholder="Ingresa clave email"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rut" className="text-sm font-medium">
+                  RUT
+                </Label>
+                <Input
+                  id="rut"
+                  name="rut"
+                  type="text"
+                  onChange={handleNewInputChange}
+                  placeholder="Ingrese el RUT"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="curso" className="text-sm font-medium">
+                  Curso
+                </Label>
+                {loadingCursos ? (
+                  <div className="flex items-center justify-center h-10 w-full border rounded-md">
+                    <svg
+                      className="animate-spin h-4 w-4 text-primary"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                ) : errorCursos ? (
+                  <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                    {errorCursos}
+                  </div>
+                ) : (
                   <Select
                     onValueChange={(value) => {
-                      const selected = JSON.parse(value); // De
+                      const selected = JSON.parse(value);
                       setNewEstudiante({
                         ...newEstudiante,
                         curso_id: selected.id,
                       });
                     }}
                   >
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione Curso..." />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel>Funcionarios</SelectLabel>
+                        <SelectLabel>Cursos</SelectLabel>
                         {cursos?.map((c) => (
                           <SelectItem
                             key={c.id}
@@ -557,186 +698,374 @@ const Estudiantes: React.FC = () => {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="descripcion">Número de lista</Label>
-                  <Input
-                    id="numlista"
-                    name="numlista"
-                    type="number"
-                    //value={newCurso.indice}
-                    onChange={handleNewInputChange}
-                    placeholder="Ingrese el número de lista"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Contraseña sesión</Label>
-                  <Input
-                    id="clave"
-                    name="clave"
-                    type="password"
-                    onChange={handleNewInputChange}
-                    placeholder="Ingresa clave email"
-                  />
-                </div>
-                {/* <div>
-                  <Label htmlFor="activo">Activo </Label>
-                  <Checkbox id="activo" name="activo" defaultChecked />
-                </div> */}
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="numlista" className="text-sm font-medium">
+                  Número de lista
+                </Label>
+                <Input
+                  id="numlista"
+                  name="numlista"
+                  type="number"
+                  onChange={handleNewInputChange}
+                  placeholder="Ingrese el número de lista"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Contraseña sesión
+                </Label>
+                <Input
+                  id="clave"
+                  name="clave"
+                  type="password"
+                  onChange={handleNewInputChange}
+                  placeholder="Ingresa la contraseña"
+                  className="w-full"
+                />
               </div>
             </form>
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
 
-            <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseNewModal}>
+            {errorMessage && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorMessage}
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCloseNewModal}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveNew}>Guardar</Button>
+              <Button
+                onClick={handleSaveNew}
+                disabled={saving}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar"
+                )}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Editar */}
+      {/* Editar Estudiante */}
       {isModalEditOpen && currentEstudiante && (
         <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Editar Estudiante</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Editar Estudiante
+              </DialogTitle>
             </DialogHeader>
 
-            <form>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input
-                    id="name"
-                    name="nombre"
-                    value={currentEstudiante.nombre}
-                    onChange={handleInputChange}
-                    placeholder="Nombre del estudiante (apellidos nombres)"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={currentEstudiante.email}
-                    onChange={handleInputChange}
-                    placeholder="Ingresa email"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Clave Email</Label>
-                  <Input
-                    id="clave_email"
-                    name="clave_email"
-                    type="text"
-                    value={currentEstudiante.clave_email}
-                    onChange={handleInputChange}
-                    placeholder="Ingresa email"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rut">RUT</Label>
-                  <Input
-                    id="rut"
-                    name="rut"
-                    value={currentEstudiante.rut || ""}
-                    onChange={handleInputChange}
-                    placeholder="RUT del usuario"
-                  />
-                </div>
-                <div>
-                  {loadingCursos ? <Spinner /> : null}
-                  {errorCursos ? (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>{errorCursos}</AlertDescription>
-                    </Alert>
-                  ) : (
-                    <>
-                      <Label htmlFor="descripcion">Curso</Label>
-                      <Select
-                        value={JSON.stringify({
-                          id: currentEstudiante.curso_id,
-                          nombre:
-                            cursos?.find(
-                              (c) => c.id === currentEstudiante.curso_id
-                            )?.nombre || "",
-                        })}
-                        onValueChange={(value) => {
-                          const selected = JSON.parse(value);
-                          setCurrentEstudiante({
-                            ...currentEstudiante,
-                            curso_id: selected.id,
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Selecciona Curso" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Cursos</SelectLabel>
-                            {cursos?.map((c) => (
-                              <SelectItem
-                                key={c.id}
-                                value={JSON.stringify({
-                                  id: c.id,
-                                  nombre: c.nombre,
-                                })}
-                              >
-                                {c.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="descripcion">Número de lista</Label>
-                  <Input
-                    id="numlista"
-                    name="numlista"
-                    type="number"
-                    value={currentEstudiante.numlista}
-                    onChange={handleInputChange}
-                    placeholder="Ingrese el número de lista"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="activo">Activo </Label>
-                  <input
-                    id="activo"
-                    name="activo"
-                    type="checkbox"
-                    checked={currentEstudiante.activo}
-                    onChange={(e) =>
+            <form className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nombre
+                </Label>
+                <Input
+                  id="name"
+                  name="nombre"
+                  value={currentEstudiante.nombre}
+                  onChange={handleInputChange}
+                  placeholder="Nombre del estudiante (apellidos nombres)"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={currentEstudiante.email}
+                  onChange={handleInputChange}
+                  placeholder="Ingresa email"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="clave_email" className="text-sm font-medium">
+                  Clave Email
+                </Label>
+                <Input
+                  id="clave_email"
+                  name="clave_email"
+                  type="text"
+                  value={currentEstudiante.clave_email}
+                  onChange={handleInputChange}
+                  placeholder="Ingresa clave email"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rut" className="text-sm font-medium">
+                  RUT
+                </Label>
+                <Input
+                  id="rut"
+                  name="rut"
+                  value={currentEstudiante.rut || ""}
+                  onChange={handleInputChange}
+                  placeholder="RUT del estudiante"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="curso" className="text-sm font-medium">
+                  Curso
+                </Label>
+                {loadingCursos ? (
+                  <div className="flex items-center justify-center h-10 w-full border rounded-md">
+                    <svg
+                      className="animate-spin h-4 w-4 text-primary"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                ) : errorCursos ? (
+                  <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                    {errorCursos}
+                  </div>
+                ) : (
+                  <Select
+                    value={JSON.stringify({
+                      id: currentEstudiante.curso_id,
+                      nombre:
+                        cursos?.find((c) => c.id === currentEstudiante.curso_id)
+                          ?.nombre || "",
+                    })}
+                    onValueChange={(value) => {
+                      const selected = JSON.parse(value);
                       setCurrentEstudiante({
                         ...currentEstudiante,
-                        activo: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
+                        curso_id: selected.id,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona Curso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Cursos</SelectLabel>
+                        {cursos?.map((c) => (
+                          <SelectItem
+                            key={c.id}
+                            value={JSON.stringify({
+                              id: c.id,
+                              nombre: c.nombre,
+                            })}
+                          >
+                            {c.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="numlista" className="text-sm font-medium">
+                  Número de lista
+                </Label>
+                <Input
+                  id="numlista"
+                  name="numlista"
+                  type="number"
+                  value={currentEstudiante.numlista}
+                  onChange={handleInputChange}
+                  placeholder="Ingrese el número de lista"
+                  className="w-full"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="activo"
+                  name="activo"
+                  type="checkbox"
+                  checked={currentEstudiante.activo}
+                  onChange={(e) =>
+                    setCurrentEstudiante({
+                      ...currentEstudiante,
+                      activo: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="activo" className="text-sm font-medium">
+                  Activo
+                </Label>
               </div>
             </form>
 
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+            {errorMessage && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorMessage}
+              </div>
+            )}
 
-            <DialogFooter>
-              <Button variant="secondary" onClick={handleCloseEditModal}>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={handleCloseEditModal}>
                 Cancelar
               </Button>
-              <Button onClick={handleSaveEdit} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
+              <Button
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Cambiar Contraseña */}
+      {isModalClave && currentEstudiante && (
+        <Dialog open={isModalClave} onOpenChange={setIsModalClave}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">
+                Cambiar Contraseña de acceso
+              </DialogTitle>
+            </DialogHeader>
+
+            <form className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Usuario: {currentEstudiante.nombre}
+                </Label>
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  value={newEstudiante.clave || ""}
+                  onChange={(e) =>
+                    setNewEstudiante({
+                      ...newEstudiante,
+                      clave: e.target.value,
+                    })
+                  }
+                  placeholder="Nueva Contraseña"
+                  className="w-full"
+                />
+              </div>
+            </form>
+
+            {errorMessageClave && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {errorMessageClave}
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setIsModalClave(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleUpdatePassword}
+                disabled={saving}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -748,75 +1077,50 @@ const Estudiantes: React.FC = () => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El estudiante se eliminará
-              permanentemente.
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-full bg-destructive/10">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 text-destructive"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                  />
+                </svg>
+              </div>
+              <AlertDialogTitle className="text-xl font-semibold">
+                ¿Estás seguro?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm text-muted-foreground">
+              Esta acción no se puede deshacer. El estudiante{" "}
+              <span className="font-medium text-foreground">
+                {estudianteDelete?.nombre}
+              </span>{" "}
+              se eliminará permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-transparent hover:bg-muted">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* Confirmación de eliminación */}
-
-      {/* Cambiar clave */}
-      {isModalClave && currentEstudiante && (
-        <Dialog open={isModalClave} onOpenChange={setIsModalClave}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cambiar Contraseña de acceso</DialogTitle>
-            </DialogHeader>
-
-            <form>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="newPassword">
-                    usuario: {currentEstudiante.nombre}
-                  </Label>
-                  <Input
-                    id="newPassword"
-                    name="newPassword"
-                    type="password"
-                    value={newEstudiante.clave || ""}
-                    onChange={(e) =>
-                      setNewEstudiante({
-                        ...newEstudiante,
-                        clave: e.target.value,
-                      })
-                    }
-                    placeholder="Nueva Contraseña"
-                  />
-                </div>
-              </div>
-            </form>
-
-            {errorMessageClave && (
-              <p className="text-red-500">{errorMessageClave}</p>
-            )}
-
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => setIsModalClave(false)}
-              >
-                Cancelar
-              </Button>
-              <Button onClick={handleUpdatePassword} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
     </>
   );
 };

@@ -2,11 +2,14 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Download } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -22,6 +25,11 @@ import {
   inscribirEstudianteTaller,
 } from "@/services/talleresService";
 import { getEstudiantes } from "@/services/estudiantesService";
+import { Badge } from "@/components/ui/badge";
+
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: typeof autoTable;
+}
 
 const AclesInscritos = () => {
   const [errorMessage, setErrorMessage] = useState("");
@@ -33,7 +41,7 @@ const AclesInscritos = () => {
       nombre: string;
       curso_nombre: string;
     }[]
-  >([]); // Inicializa como un array vacío
+  >([]);
 
   const [estudiantesInscritos, setEstudiantesInscritos] = useState<
     {
@@ -67,8 +75,13 @@ const AclesInscritos = () => {
   };
 
   const fetchEstudiantesInscritos = async (id_taller: number) => {
-    const data = await getEstudiantesInscritos(id_taller);
-    setEstudiantesInscritos(data.estudiantes);
+    try {
+      const data = await getEstudiantesInscritos(id_taller);
+      setEstudiantesInscritos(data.estudiantes || []);
+    } catch (error) {
+      console.error("Error fetching estudiantes inscritos:", error);
+      setEstudiantesInscritos([]);
+    }
   };
 
   const inscribirEstudiante = async (
@@ -115,131 +128,262 @@ const AclesInscritos = () => {
       normalizarTexto(estudiante.nombre).includes(normalizarTexto(query))
   );
 
+  const exportarPDF = () => {
+    if (!taller || !estudiantesInscritos || estudiantesInscritos.length === 0)
+      return;
+
+    const doc = new jsPDF() as JsPDFWithAutoTable;
+
+    // Título
+    doc.setFontSize(16);
+    doc.text("Lista de Estudiantes Inscritos", 14, 15);
+    doc.setFontSize(12);
+    doc.text(`Taller: ${taller.taller_nombre}`, 14, 25);
+    doc.text(`Horario: ${taller.taller_horario}`, 14, 32);
+    doc.text(`Total Inscritos: ${totalInscritos}`, 14, 39);
+
+    // Tabla
+    const tableData = estudiantesInscritos.map((estudiante) => [
+      estudiante.estudiante_nombre,
+      estudiante.curso_nombre,
+    ]);
+
+    autoTable(doc, {
+      startY: 45,
+      head: [["Estudiante", "Curso"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 100 },
+        1: { cellWidth: 80 },
+      },
+    });
+
+    // Guardar el PDF
+    doc.save(
+      `estudiantes-inscritos-${taller.taller_nombre
+        .toLowerCase()
+        .replace(/\s+/g, "-")}.pdf`
+    );
+  };
+
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-16 shrink-0 items-center gap-2 px-4">
           <Breadcrumbs />
         </div>
       </header>
       <Toaster />
-      {errorMessage && <h4>{errorMessage}</h4>}
 
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <h1 className="text-2xl font-bold">Talleres ACLE</h1>
-
+      <main className="container mx-auto py-6 px-4">
         {errorMessage ? (
-          <h4>{errorMessage}</h4>
+          <div className="rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+            {errorMessage}
+          </div>
         ) : (
-          <div className="flex flex-col gap-2 p-4 bg-white dark:bg-gray-800 rounded-md shadow-md">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold tracking-tight">
+                Talleres ACLE
+              </h1>
+            </div>
+
             {taller && (
-              <>
-                <h2 className="text-xl font-bold">{taller.taller_nombre}</h2>
-                <div className="text-sm text-gray-500">
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      <span>Horario:</span> {taller.taller_horario}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      <span>Total inscritos:</span>{" "}
-                      {totalInscritos || "No hay inscritos"}
-                    </p>
+              <Card className="border-none shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-2xl">
+                    {taller.taller_nombre}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="h-8 px-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        {taller.taller_horario}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="h-8 px-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2"
+                        >
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        {totalInscritos || "No hay inscritos"} inscritos
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              </>
+                </CardContent>
+              </Card>
             )}
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="border-none shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle>Estudiantes Inscritos</CardTitle>
+                  {estudiantesInscritos && estudiantesInscritos.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportarPDF}
+                      className="ml-auto"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Exportar PDF
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Estudiante</TableHead>
+                          <TableHead>Curso</TableHead>
+                          <TableHead className="w-[100px]">Acción</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {!estudiantesInscritos ||
+                        estudiantesInscritos.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-8">
+                              <div className="text-muted-foreground">
+                                No hay estudiantes inscritos en este taller.
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          estudiantesInscritos.map((estudiante) => (
+                            <TableRow key={estudiante.estudiante_id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">
+                                    {estudiante.estudiante_nombre}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {estudiante.curso_nombre}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>{estudiante.curso_nombre}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() =>
+                                    desinscribirEstudiante(
+                                      Number(id),
+                                      estudiante.estudiante_id
+                                    )
+                                  }
+                                >
+                                  Desinscribir
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-lg">
+                <CardHeader>
+                  <CardTitle>Inscribir Estudiantes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative mb-4">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar estudiante..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  <div className="rounded-lg border">
+                    <div className="max-h-[600px] overflow-y-auto">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-background">
+                          <TableRow>
+                            <TableHead>Estudiante</TableHead>
+                            <TableHead className="w-[100px]">Acción</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {estudiantesDisponiblesFiltrados.map((estudiante) => (
+                            <TableRow key={estudiante.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">
+                                    {estudiante.nombre}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {estudiante.curso_nombre}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() =>
+                                    inscribirEstudiante(
+                                      Number(id),
+                                      estudiante.id
+                                    )
+                                  }
+                                >
+                                  Inscribir
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
-
-        <div className="flex flex-col gap-4 p-4 bg-white dark:bg-gray-900 rounded-md shadow-md">
-          <Input
-            type="text"
-            placeholder="Buscar estudiante"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="max-h-96 overflow-y-auto p-4 border border-gray-300 rounded-lg">
-            <Table>
-              <TableCaption>Listado de estudiantes</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Estudiante</TableHead>
-                  <TableHead>Acción</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {estudiantesDisponiblesFiltrados.map((estudiante) => (
-                  <TableRow key={estudiante.id}>
-                    <TableCell className="font-medium">
-                      {estudiante.nombre}
-                      <p>
-                        <small>{estudiante.curso_nombre}</small>
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        onClick={() =>
-                          inscribirEstudiante(Number(id), estudiante.id)
-                        }
-                      >
-                        Inscribir
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        <h2>Inscritos</h2>
-        <Table>
-          <TableCaption>
-            Estudiantes inscritos en <strong>{taller?.taller_nombre}</strong>
-          </TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Estudiante</TableHead>
-              <TableHead>Curso</TableHead>
-              <TableHead>Acción</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {estudiantesInscritos.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center">
-                  No hay estudiantes inscritos.
-                </TableCell>
-              </TableRow>
-            )}
-            {estudiantesInscritos.length > 0 &&
-              estudiantesInscritos.map((estudiante) => (
-                <TableRow key={estudiante.estudiante_id}>
-                  <TableCell className="font-medium">
-                    {estudiante.estudiante_nombre}
-                    <p>
-                      <small>{estudiante.curso_nombre}</small>
-                    </p>
-                  </TableCell>
-                  <TableCell>{estudiante.curso_nombre}</TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() =>
-                        desinscribirEstudiante(
-                          Number(id),
-                          estudiante.estudiante_id
-                        )
-                      }
-                    >
-                      Desinscribir
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </div>
-    </>
+      </main>
+    </div>
   );
 };
 

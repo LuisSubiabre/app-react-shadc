@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-
-/* refactory */
-import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts"; // Asegúrate de importar el hook que creaste
-/* refactory */
-
+import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts";
 import { AlertCircle, Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -46,7 +41,6 @@ import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde h
 import { savaEdit } from "./cursoService";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@radix-ui/react-separator";
 import { CursoApiResponseType } from "@/types";
 
 const AcademicoCalificacionesCurso: React.FC = () => {
@@ -177,53 +171,102 @@ const AcademicoCalificacionesCurso: React.FC = () => {
       </header>
       <Toaster />
 
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <h1 className="text-2xl font-bold">Cursos</h1>
-        <Separator orientation="horizontal" className="w-full" />
-        <Separator orientation="horizontal" className="w-full" />
-        <Table>
-          <TableCaption>Lista de cursos</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">Nombre</TableHead>
-              <TableHead className="w-[50px]">Jefatura</TableHead>
-              <TableHead className="w-[100px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {funcionarioCursos.length > 0 ? (
-              funcionarioCursos.map((c: CursoApiResponseType) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.nombre}</TableCell>
-                  <TableCell>{c.jefatura}</TableCell>
-                  <TableCell>
-                    <Button className="mr-2" onClick={() => handleEditClick(c)}>
-                      <Pencil />
-                    </Button>
+      <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Gestión de Cursos
+          </h1>
+          <p className="text-muted-foreground">
+            Administra los cursos del sistema
+          </p>
+        </div>
+
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-muted/50">
+                <TableHead className="w-[200px] font-semibold">
+                  Nombre
+                </TableHead>
+                <TableHead className="w-[200px] font-semibold">
+                  Jefatura
+                </TableHead>
+                <TableHead className="w-[150px] font-semibold text-right">
+                  Acciones
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {funcionarioCursos.length > 0 ? (
+                funcionarioCursos.map((c: CursoApiResponseType) => (
+                  <TableRow
+                    key={c.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="font-medium">{c.nombre}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {c.jefatura}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditClick(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Pencil className="size-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 text-muted-foreground"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                      <p className="text-muted-foreground">
+                        No hay cursos disponibles
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">
-                  No hay cursos disponibles.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
-      {/* Editar */}
       <Dialog open={isModalEditOpen} onOpenChange={setIsModalEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Editar Curso</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Editar Curso
+            </DialogTitle>
           </DialogHeader>
           {currentCurso && (
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="mb-4">
-                <Label htmlFor="nombre">Nombre</Label>
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="space-y-4 py-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="nombre" className="text-sm font-medium">
+                  Nombre
+                </Label>
                 <Input
                   disabled
                   id="nombre"
@@ -231,19 +274,25 @@ const AcademicoCalificacionesCurso: React.FC = () => {
                   value={currentCurso.nombre}
                   onChange={handleInputChange}
                   required
+                  className="w-full"
                 />
               </div>
-              <div className="mb-4">
-                <Label htmlFor="descripcion">Descripción</Label>
+              <div className="space-y-2">
+                <Label htmlFor="descripcion" className="text-sm font-medium">
+                  Descripción
+                </Label>
                 <Input
                   id="descripcion"
                   name="descripcion"
                   value={currentCurso.descripcion}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
-              <div>
-                <Label htmlFor="descripcion">Jefatura</Label>
+              <div className="space-y-2">
+                <Label htmlFor="jefatura" className="text-sm font-medium">
+                  Jefatura
+                </Label>
                 <Select
                   value={JSON.stringify({
                     id: currentCurso.profesor_jefe_id,
@@ -260,7 +309,7 @@ const AcademicoCalificacionesCurso: React.FC = () => {
                     });
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Selecciona Jefatura" />
                   </SelectTrigger>
                   <SelectContent>
@@ -281,42 +330,78 @@ const AcademicoCalificacionesCurso: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="mb-4">
-                <Label htmlFor="indice">Índice</Label>
+              <div className="space-y-2">
+                <Label htmlFor="indice" className="text-sm font-medium">
+                  Índice
+                </Label>
                 <Input
                   id="indice"
                   name="indice"
                   type="number"
                   value={currentCurso.indice}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
-              <div className="mb-4">
-                <Label htmlFor="codigo_ensenanza">Código Enseñanza</Label>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="codigo_ensenanza"
+                  className="text-sm font-medium"
+                >
+                  Código Enseñanza
+                </Label>
                 <Input
                   id="codigo_ensenanza"
                   name="codigo_ensenanza"
                   type="number"
                   value={currentCurso.codigo_ensenanza}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
 
-              {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCloseEditModal}
-                >
+              {errorMessage && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                  {errorMessage}
+                </div>
+              )}
+
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={handleCloseEditModal}>
                   Cancelar
                 </Button>
                 <Button
-                  type="submit"
                   onClick={handleSaveEdit}
                   disabled={saving}
+                  className="bg-primary hover:bg-primary/90"
                 >
-                  {saving ? "Guardando..." : "Guardar Cambios"}
+                  {saving ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
