@@ -10,7 +10,6 @@ import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -45,7 +44,6 @@ import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde h
 import { API_BASE_URL } from "@/config/config";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@radix-ui/react-separator";
 import { CursoApiResponseType } from "@/types";
 
 const AcademicoCursoAsignaturas: React.FC = () => {
@@ -304,44 +302,98 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       </header>
       <Toaster />
 
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <h1 className="text-2xl font-bold">Asignaturas</h1>
-        <Separator orientation="horizontal" className="w-full" />
-        <Separator orientation="horizontal" className="w-full" />
-        <Table>
-          <TableCaption>Lista de cursos</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">Nombre</TableHead>
-              <TableHead className="w-[50px]">Jefatura</TableHead>
-              <TableHead className="w-[100px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {funcionarioCursos.length > 0 ? (
-              funcionarioCursos.map((c: CursoApiResponseType) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.nombre}</TableCell>
-                  <TableCell>{c.jefatura}</TableCell>
-                  <TableCell>
-                    <Button
-                      className="mr-2"
-                      onClick={() => handleAsignaturasClick(c)}
-                    >
-                      Asignaturas
-                    </Button>
+      <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestión de Asignaturas
+            </h1>
+            <p className="text-muted-foreground">
+              Administra las asignaturas por curso
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-muted/50">
+                <TableHead className="w-[200px] font-semibold">
+                  Nombre del Curso
+                </TableHead>
+                <TableHead className="w-[200px] font-semibold">
+                  Jefatura
+                </TableHead>
+                <TableHead className="w-[150px] font-semibold text-right">
+                  Acciones
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {funcionarioCursos.length > 0 ? (
+                funcionarioCursos.map((c: CursoApiResponseType) => (
+                  <TableRow
+                    key={c.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="font-medium">{c.nombre}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {c.jefatura}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAsignaturasClick(c)}
+                        className="hover:bg-primary/10 hover:text-primary"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4 mr-2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                          />
+                        </svg>
+                        Asignaturas
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 text-muted-foreground"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
+                      </svg>
+                      <p className="text-muted-foreground">
+                        No hay cursos disponibles
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">
-                  No hay cursos disponibles.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Modal para gestión de asignaturas */}
@@ -349,7 +401,6 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         open={isModalSubjectsOpen}
         onOpenChange={(open) => {
           if (!open) {
-            // Limpiar estados cuando se cierra el modal
             setSelectedSubject(null);
             setDataEstudiantes([]);
             setEnrolledStudents({});
@@ -359,15 +410,16 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       >
         <DialogContent className="max-w-4xl w-full">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
               Gestión de Asignaturas - {currentCurso?.nombre}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-6 py-4">
             <div className="grid gap-2">
-              <Label>Seleccionar Asignatura</Label>
-
+              <Label className="text-sm font-medium">
+                Seleccionar Asignatura
+              </Label>
               <Select
                 onValueChange={(value) => {
                   const asignatura = subjectsForCourse.find(
@@ -376,7 +428,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                   if (asignatura) handleSubjectSelect(asignatura);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Seleccione una asignatura" />
                 </SelectTrigger>
                 <SelectContent>
@@ -395,7 +447,9 @@ const AcademicoCursoAsignaturas: React.FC = () => {
             {selectedSubject && (
               <>
                 <div className="grid gap-2">
-                  <Label>Profesor Asignatura</Label>
+                  <Label className="text-sm font-medium">
+                    Profesor Asignatura
+                  </Label>
                   <Select
                     value={selectedSubject.profesor_jefe_id?.toString()}
                     onValueChange={async (value) => {
@@ -417,6 +471,18 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         if (!response.ok)
                           throw new Error("Error al actualizar profesor");
 
+                        // Actualizar el estado local de subjectsForCourse
+                        setSubjectsForCourse((prevSubjects) =>
+                          prevSubjects.map((subject) =>
+                            subject.id === selectedSubject.id
+                              ? {
+                                  ...subject,
+                                  profesor_jefe_id: parseInt(value),
+                                }
+                              : subject
+                          )
+                        );
+
                         setSelectedSubject({
                           ...selectedSubject,
                           profesor_jefe_id: parseInt(value),
@@ -436,7 +502,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       }
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione profesor jefe" />
                     </SelectTrigger>
                     <SelectContent>
@@ -455,16 +521,20 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                 </div>
 
                 {loadingEstudiantes ? (
-                  <Spinner />
+                  <div className="flex justify-center items-center py-8">
+                    <Spinner />
+                  </div>
                 ) : (
                   <div className="grid gap-2">
-                    <Label>Inscripción de Estudiantes</Label>
-                    <div className="flex justify-end mb-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">
+                        Inscripción de Estudiantes
+                      </Label>
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => {
                           if (selectedSubject) {
-                            // Verificar si ya están todos seleccionados
                             const allSelected = dataEstudiantes.every(
                               (estudiante) =>
                                 enrolledStudents[
@@ -477,16 +547,14 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                                 ...enrolledStudents,
                               };
 
-                              // Marcar todos los checkboxes
                               dataEstudiantes.forEach((estudiante) => {
                                 updatedEnrolledStudents[
                                   `${estudiante.id}-${selectedSubject.id}`
-                                ] = true; // Marcar todos
+                                ] = true;
                               });
 
                               setEnrolledStudents(updatedEnrolledStudents);
 
-                              // Ejecutar handleCheckboxChange solo para los seleccionados
                               dataEstudiantes.forEach((estudiante) => {
                                 handleCheckboxChange(
                                   estudiante.id,
@@ -498,16 +566,30 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                           }
                         }}
                       >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4 mr-2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                          />
+                        </svg>
                         Seleccionar Todos
                       </Button>
                     </div>
                     <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-64 overflow-y-auto">
-                      <ul>
+                      <ul className="space-y-2">
                         {Array.isArray(dataEstudiantes) &&
                           dataEstudiantes.map((estudiante) => (
                             <li
                               key={estudiante.id}
-                              className="flex items-center gap-2"
+                              className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                             >
                               <input
                                 type="checkbox"
@@ -526,10 +608,11 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                                     );
                                   }
                                 }}
+                                className="rounded border-gray-300 text-primary focus:ring-primary"
                               />
                               <label
                                 htmlFor={`estudiante-${estudiante.id}`}
-                                className="text-sm"
+                                className="text-sm cursor-pointer"
                               >
                                 {estudiante.nombre}
                               </label>

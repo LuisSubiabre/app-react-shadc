@@ -1,7 +1,12 @@
+const {heroui} = require('@heroui/theme');
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: ["class"],
-    content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{ts,tsx,js,jsx}",
+    "./node_modules/@heroui/theme/dist/components/badge.js"
+  ],
   theme: {
   	extend: {
   		borderRadius: {
@@ -63,5 +68,5 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"),heroui()],
 };
