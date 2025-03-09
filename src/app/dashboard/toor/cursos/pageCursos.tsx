@@ -8,6 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -54,7 +60,10 @@ import {
 } from "@/services/cursosService";
 import { CursoApiResponseType, FuncionarioType, EstudianteType } from "@/types";
 import { getFuncionarios } from "@/services/funcionariosService";
-import { estudiantesCurso } from "@/services/estudiantesService";
+import {
+  estudiantesCurso,
+  saveEditEstudiante,
+} from "@/services/estudiantesService";
 import { useToast } from "@/hooks/use-toast";
 
 const Cursos: React.FC = () => {
@@ -369,6 +378,53 @@ const Cursos: React.FC = () => {
 
     // Guardar el PDF
     doc.save(`estudiantes_${cursoSeleccionado.nombre}_${fecha}.pdf`);
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(estudiantes);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Actualizar el estado local
+    setEstudiantes(items);
+
+    // Actualizar el numlista de todos los estudiantes
+    try {
+      const updatedEstudiantes = items.map((estudiante, index) => {
+        if (!estudiante.estudiante_id) {
+          throw new Error("ID de estudiante no válido");
+        }
+        return {
+          ...estudiante,
+          id: estudiante.estudiante_id,
+          numlista: index + 1,
+        };
+      });
+
+      // Actualizar cada estudiante en el servidor
+      await Promise.all(
+        updatedEstudiantes.map((estudiante) => saveEditEstudiante(estudiante))
+      );
+
+      toast({
+        title: "Orden actualizado",
+        description:
+          "El orden de los estudiantes ha sido actualizado correctamente",
+      });
+    } catch (error) {
+      // Revertir el orden si hay un error
+      setEstudiantes(estudiantes);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar el orden de los estudiantes",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -933,38 +989,68 @@ const Cursos: React.FC = () => {
               </div>
             ) : (
               <div className="mt-4">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-background z-10">
-                    <TableRow key="header">
-                      <TableHead>N.</TableHead>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>RUT</TableHead>
-                      <TableHead>Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {estudiantes.map((estudiante) => (
-                      <TableRow key={estudiante.estudiante_id}>
-                        <TableCell>{estudiante.numlista}</TableCell>
-                        <TableCell>{estudiante.nombre}</TableCell>
-                        <TableCell>{estudiante.email}</TableCell>
-                        <TableCell>{estudiante.rut}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              estudiante.activo
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {estudiante.activo ? "Activo" : "Inactivo"}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="estudiantes">
+                    {(provided) => (
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-background z-10">
+                          <TableRow key="header">
+                            <TableHead>N.</TableHead>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>RUT</TableHead>
+                            <TableHead>Estado</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                        >
+                          {estudiantes.map((estudiante, index) => (
+                            <Draggable
+                              key={estudiante.estudiante_id}
+                              draggableId={
+                                estudiante.estudiante_id?.toString() ||
+                                index.toString()
+                              }
+                              index={index}
+                            >
+                              {(provided, snapshot) => (
+                                <TableRow
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`${
+                                    snapshot.isDragging ? "bg-muted" : ""
+                                  }`}
+                                >
+                                  <TableCell>{estudiante.numlista}</TableCell>
+                                  <TableCell>{estudiante.nombre}</TableCell>
+                                  <TableCell>{estudiante.email}</TableCell>
+                                  <TableCell>{estudiante.rut}</TableCell>
+                                  <TableCell>
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs ${
+                                        estudiante.activo
+                                          ? "bg-green-100 text-green-800"
+                                          : "bg-red-100 text-red-800"
+                                      }`}
+                                    >
+                                      {estudiante.activo
+                                        ? "Activo"
+                                        : "Inactivo"}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
             )}
           </div>
