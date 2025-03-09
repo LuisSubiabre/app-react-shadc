@@ -24,6 +24,7 @@ export interface CursoApiResponseType {
 // types.ts
 export interface EstudianteType {
   id: number;
+  estudiante_id?: number;
   nombre: string;
   estudiante_nombre?: string;
   email: string;
@@ -128,4 +129,17 @@ export interface AsignaturasResponseType {
     prev: string | null;
   };
   asignaturas: AsignaturaType[];
+}
+
+export interface TallerType {
+  taller_id: number;
+  taller_nombre: string;
+  taller_descripcion: string;
+  taller_horario: string;
+  taller_nivel: string;
+  taller_cantidad_cupos: number;
+  taller_cantidad_inscritos?: number;
+  taller_profesor_id: number;
+  profesor_nombre?: string;
+  curso_id?: number;
 }
