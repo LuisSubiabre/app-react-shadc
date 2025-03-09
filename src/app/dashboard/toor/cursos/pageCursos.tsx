@@ -8,6 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +34,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Users, FileDown } from "lucide-react";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import {
   Select,
@@ -50,8 +58,12 @@ import {
   savaEditCurso,
   saveNewCurso,
 } from "@/services/cursosService";
-import { CursoApiResponseType, FuncionarioType } from "@/types";
+import { CursoApiResponseType, FuncionarioType, EstudianteType } from "@/types";
 import { getFuncionarios } from "@/services/funcionariosService";
+import {
+  estudiantesCurso,
+  saveEditEstudiante,
+} from "@/services/estudiantesService";
 import { useToast } from "@/hooks/use-toast";
 
 const Cursos: React.FC = () => {
@@ -84,7 +96,13 @@ const Cursos: React.FC = () => {
   const [loadingFuncionario, setLoadingFuncionario] = useState<boolean>(true);
   const { toast } = useToast();
 
-  /* refactoring */
+  const [isEstudiantesModalOpen, setIsEstudiantesModalOpen] =
+    useState<boolean>(false);
+  const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState<boolean>(false);
+  const [errorEstudiantes, setErrorEstudiantes] = useState<string | null>(null);
+  const [cursoSeleccionado, setCursoSeleccionado] =
+    useState<CursoApiResponseType | null>(null);
 
   useEffect(() => {
     getCursos()
@@ -293,6 +311,122 @@ const Cursos: React.FC = () => {
     }
   };
 
+  const handleVerEstudiantes = async (curso: CursoApiResponseType) => {
+    setCursoSeleccionado(curso);
+    setIsEstudiantesModalOpen(true);
+    setLoadingEstudiantes(true);
+    setErrorEstudiantes(null);
+    setEstudiantes([]); // Reiniciamos el estado de estudiantes
+
+    try {
+      const response = await estudiantesCurso(curso.id);
+      console.log(response);
+      if (response) {
+        setEstudiantes(response);
+      } else {
+        setErrorEstudiantes(
+          "No se pudo cargar la información de los estudiantes"
+        );
+        setEstudiantes([]);
+      }
+    } catch (err) {
+      setErrorEstudiantes("Error al cargar los estudiantes. " + err);
+      setEstudiantes([]);
+    } finally {
+      setLoadingEstudiantes(false);
+    }
+  };
+
+  const exportarPDF = () => {
+    if (!cursoSeleccionado || !estudiantes.length) return;
+
+    const doc = new jsPDF();
+    const fecha = new Date().toLocaleDateString();
+
+    // Título
+    doc.setFontSize(16);
+    doc.text(`Lista de Estudiantes - ${cursoSeleccionado.nombre}`, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${fecha}`, 14, 22);
+
+    // Tabla
+    const tableData = estudiantes.map((estudiante) => [
+      estudiante.id?.toString() || "",
+      estudiante.nombre || "",
+      estudiante.email || "",
+      estudiante.rut || "",
+      estudiante.numlista?.toString() || "",
+      estudiante.activo ? "Activo" : "Inactivo",
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [["ID", "Nombre", "Email", "RUT", "N° Lista", "Estado"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: 20 }, // ID
+        1: { cellWidth: 50 }, // Nombre
+        2: { cellWidth: 50 }, // Email
+        3: { cellWidth: 30 }, // RUT
+        4: { cellWidth: 20 }, // N° Lista
+        5: { cellWidth: 20 }, // Estado
+      },
+    });
+
+    // Guardar el PDF
+    doc.save(`estudiantes_${cursoSeleccionado.nombre}_${fecha}.pdf`);
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(estudiantes);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Actualizar el estado local
+    setEstudiantes(items);
+
+    // Actualizar el numlista de todos los estudiantes
+    try {
+      const updatedEstudiantes = items.map((estudiante, index) => {
+        if (!estudiante.estudiante_id) {
+          throw new Error("ID de estudiante no válido");
+        }
+        return {
+          ...estudiante,
+          id: estudiante.estudiante_id,
+          numlista: index + 1,
+        };
+      });
+
+      // Actualizar cada estudiante en el servidor
+      await Promise.all(
+        updatedEstudiantes.map((estudiante) => saveEditEstudiante(estudiante))
+      );
+
+      toast({
+        title: "Orden actualizado",
+        description:
+          "El orden de los estudiantes ha sido actualizado correctamente",
+      });
+    } catch (error) {
+      // Revertir el orden si hay un error
+      setEstudiantes(estudiantes);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "No se pudo actualizar el orden de los estudiantes",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -365,6 +499,14 @@ const Cursos: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleVerEstudiantes(curso)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Users className="size-5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -806,6 +948,115 @@ const Cursos: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Estudiantes */}
+      <Dialog
+        open={isEstudiantesModalOpen}
+        onOpenChange={setIsEstudiantesModalOpen}
+      >
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">
+              Estudiantes del Curso {cursoSeleccionado?.nombre}
+            </DialogTitle>
+            {estudiantes.length > 0 && (
+              <Button
+                onClick={exportarPDF}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <FileDown className="h-4 w-4" />
+                Exportar PDF
+              </Button>
+            )}
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto">
+            {loadingEstudiantes ? (
+              <div className="flex justify-center items-center py-8">
+                <Spinner />
+              </div>
+            ) : errorEstudiantes ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{errorEstudiantes}</AlertDescription>
+              </Alert>
+            ) : !estudiantes || estudiantes.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay estudiantes en este curso
+              </div>
+            ) : (
+              <div className="mt-4">
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="estudiantes">
+                    {(provided) => (
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-background z-10">
+                          <TableRow key="header">
+                            <TableHead>N.</TableHead>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>RUT</TableHead>
+                            <TableHead>Estado</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                        >
+                          {estudiantes.map((estudiante, index) => (
+                            <Draggable
+                              key={estudiante.estudiante_id}
+                              draggableId={
+                                estudiante.estudiante_id?.toString() ||
+                                index.toString()
+                              }
+                              index={index}
+                            >
+                              {(provided, snapshot) => (
+                                <TableRow
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`${
+                                    snapshot.isDragging ? "bg-muted" : ""
+                                  }`}
+                                >
+                                  <TableCell>{estudiante.numlista}</TableCell>
+                                  <TableCell>{estudiante.nombre}</TableCell>
+                                  <TableCell>{estudiante.email}</TableCell>
+                                  <TableCell>{estudiante.rut}</TableCell>
+                                  <TableCell>
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs ${
+                                        estudiante.activo
+                                          ? "bg-green-100 text-green-800"
+                                          : "bg-red-100 text-red-800"
+                                      }`}
+                                    >
+                                      {estudiante.activo
+                                        ? "Activo"
+                                        : "Inactivo"}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Toaster />
     </>
   );
