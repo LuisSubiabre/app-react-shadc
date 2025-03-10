@@ -28,6 +28,12 @@ export const printAtraso = async (
               text-align: center;
               margin-bottom: 10px;
             }
+            .logo {
+              width: 40mm;
+              height: auto;
+              margin: 0 auto 10px;
+              display: block;
+            }
             .header h2 {
               margin: 0;
               font-size: 18px;
@@ -50,11 +56,16 @@ export const printAtraso = async (
               .no-print {
                 display: none;
               }
+              .logo {
+                width: 40mm;
+                height: auto;
+              }
             }
           </style>
         </head>
         <body>
           <div class="header">
+            <img src="/logo.png" alt="Logo" class="logo" />
             <h2>TICKET DE ATRASO</h2>
             <p>Fecha: ${new Date().toLocaleDateString()}</p>
             <p>Hora: ${hora}</p>
@@ -84,13 +95,27 @@ export const printAtraso = async (
 
     // Esperar a que se cargue el contenido
     printWindow.onload = () => {
-      // Abrir el diálogo de impresión
+      // Intentar imprimir inmediatamente
       printWindow.print();
+
+      // Si la impresión silenciosa falla, intentar con un pequeño retraso
+      setTimeout(() => {
+        try {
+          printWindow.print();
+        } catch {
+          console.log("Error en el primer intento de impresión");
+        }
+      }, 500);
 
       // Cerrar la ventana después de un tiempo
       setTimeout(() => {
         printWindow.close();
-      }, 1000);
+      }, 2000);
+    };
+
+    // Manejar el evento de impresión
+    printWindow.onafterprint = () => {
+      printWindow.close();
     };
 
     return true;
