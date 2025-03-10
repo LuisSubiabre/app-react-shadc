@@ -95,17 +95,8 @@ export const printAtraso = async (
 
     // Esperar a que se cargue el contenido
     printWindow.onload = () => {
-      // Intentar imprimir inmediatamente
+      // Imprimir una sola vez
       printWindow.print();
-
-      // Si la impresión silenciosa falla, intentar con un pequeño retraso
-      setTimeout(() => {
-        try {
-          printWindow.print();
-        } catch {
-          console.log("Error en el primer intento de impresión");
-        }
-      }, 500);
 
       // Cerrar la ventana después de un tiempo
       setTimeout(() => {
