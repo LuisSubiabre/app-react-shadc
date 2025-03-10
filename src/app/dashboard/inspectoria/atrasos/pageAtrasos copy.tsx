@@ -20,15 +20,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CursoApiResponseType, EstudianteType } from "@/types";
-
+import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/config/config";
 import { Clock } from "lucide-react";
 import { getCursos } from "@/services/cursosService";
-import {
-  estudiantesCurso,
-  getEstudiantes,
-} from "@/services/estudiantesService";
-import { createAtraso } from "@/services/atrasosService";
-import { printAtraso } from "@/services/printService";
+import { estudiantesCurso } from "@/services/estudiantesService";
 
 const PageAtrasos = () => {
   const [time, setTime] = useState(new Date());
@@ -36,7 +32,8 @@ const PageAtrasos = () => {
   const [selectedCurso, setSelectedCurso] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const { authToken } = useAuth();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -45,49 +42,64 @@ const PageAtrasos = () => {
 
     return () => clearInterval(timer);
   }, []);
-
   useEffect(() => {
-    const fetchCursos = async () => {
-      try {
-        const response = await getCursos();
-        if (response) {
-          setCursos(response.data);
-        }
-      } catch (error) {
-        console.error("Error al obtener cursos:", error);
+    getCursos().then((response) => {
+      if (response) {
+        setCursos(response.data);
       }
-    };
-    fetchCursos();
-  }, []);
+    });
+  }, [cursos]);
 
   useEffect(() => {
     const fetchEstudiantes = async () => {
-      setIsLoading(true);
       try {
-        if (selectedCurso === "all") {
-          const response = await getEstudiantes();
-          console.log(response.data);
-          setEstudiantes(Array.isArray(response.data) ? response.data : []);
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await estudiantesCurso(parseInt(selectedCurso));
-
+        const response = await estudiantesCurso(2);
         if (response) {
-          setEstudiantes(response);
-        } else {
-          setEstudiantes([]);
+          setEstudiantes(response.data);
         }
+
+        // let url = `${API_BASE_URL}/estudiantes/activos`;
+        // if (selectedCurso !== "all") {
+        //   url = `${API_BASE_URL}/cursos/estudiantes/${selectedCurso}`;
+        // }
+
+        // console.log("Fetching URL:", url);
+        // const response = await fetch(url, {
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //     Authorization: `Bearer ${authToken}`,
+        //   },
+        // });
+        const responseData = await response.json();
+        console.log("API Response:", responseData);
+
+        // // Verificar si la respuesta tiene la estructura esperada
+        let estudiantesData = responseData;
+        if (
+          responseData &&
+          typeof responseData === "object" &&
+          "data" in responseData
+        ) {
+          estudiantesData = responseData.data;
+        }
+
+        const mappedData = Array.isArray(estudiantesData)
+          ? estudiantesData.map((estudiante) => ({
+              ...estudiante,
+              id: estudiante.estudiante_id,
+            }))
+          : [];
+
+        console.log("Mapped Data:", mappedData);
+        setEstudiantes(mappedData);
       } catch (error) {
-        console.error("Error al obtener estudiantes:", error);
+        console.error("Error al cargar estudiantes:", error);
         setEstudiantes([]);
-      } finally {
-        setIsLoading(false);
       }
     };
+
     fetchEstudiantes();
-  }, [selectedCurso]);
+  }, [selectedCurso, authToken]);
 
   const puntaArenasTime = time.toLocaleString("es-CL", {
     timeZone: "America/Punta_Arenas",
@@ -97,42 +109,19 @@ const PageAtrasos = () => {
     second: "2-digit",
   });
 
-  const handleNewAtraso = async (estudianteId: number) => {
-    const estudiante = estudiantes.find((e) => e.id === estudianteId);
-    if (!estudiante) return;
-
-    try {
-      // Crear el atraso
-      await createAtraso({
-        estudiante_id: estudianteId,
-        fecha: new Date().toISOString(),
-        hora: puntaArenasTime,
-        hora_registro: puntaArenasTime,
-        tipo: "llegada",
-        justificado: false,
-        observaciones: "",
-        fecha_registro: new Date().toISOString(),
-      });
-
-      // Imprimir el ticket
-      const printSuccess = await printAtraso(estudiante, puntaArenasTime);
-
-      if (!printSuccess) {
-        console.error("Error al imprimir el ticket");
-        // Aquí podrías mostrar una notificación al usuario
-      }
-    } catch (error) {
-      console.error("Error al registrar el atraso:", error);
-      // Aquí podrías mostrar una notificación al usuario
-    }
+  const handleNewAtraso = (estudianteId: number) => {
+    console.log(
+      "Nuevo Atraso para estudiante:",
+      estudianteId,
+      "Hora:",
+      puntaArenasTime
+    );
   };
 
   const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const filteredEstudiantes = estudiantes.filter((estudiante) => {
-    if (!searchTerm) return true;
-
+  const filteredEstudiantes = estudiantes?.filter((estudiante) => {
     const searchTermNormalized = normalizeString(searchTerm.toLowerCase());
     const nombreNormalized = normalizeString(estudiante.nombre.toLowerCase());
     const rutNormalized = normalizeString(estudiante.rut?.toLowerCase() || "");
@@ -208,20 +197,10 @@ const PageAtrasos = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-2">
-                        <p className="text-muted-foreground">
-                          Cargando estudiantes...
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : estudiantes.length > 0 ? (
+                {filteredEstudiantes.length > 0 ? (
                   filteredEstudiantes.map((estudiante) => (
-                    <TableRow key={estudiante.estudiante_id}>
-                      <TableCell>{estudiante.estudiante_id}</TableCell>
+                    <TableRow key={estudiante.id}>
+                      <TableCell>{estudiante.id}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">
