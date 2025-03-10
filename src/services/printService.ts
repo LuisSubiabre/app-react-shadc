@@ -82,7 +82,6 @@ export const printAtraso = async (
           </div>
 
           <div class="no-print" style="text-align: center; margin-top: 20px;">
-            <button onclick="window.print()">Imprimir</button>
             <button onclick="window.close()">Cerrar</button>
           </div>
         </body>
@@ -93,7 +92,7 @@ export const printAtraso = async (
     printWindow.document.write(content);
     printWindow.document.close();
 
-    // Esperar a que se cargue el contenido
+    // Esperar a que se cargue el contenido y la imagen
     printWindow.onload = () => {
       // Imprimir una sola vez
       printWindow.print();
@@ -102,11 +101,6 @@ export const printAtraso = async (
       setTimeout(() => {
         printWindow.close();
       }, 2000);
-    };
-
-    // Manejar el evento de impresión
-    printWindow.onafterprint = () => {
-      printWindow.close();
     };
 
     return true;
