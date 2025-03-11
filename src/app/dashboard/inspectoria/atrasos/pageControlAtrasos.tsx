@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Table,
   TableBody,
@@ -40,6 +41,7 @@ const PageControlAtrasos = () => {
     useState<EstudianteType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atrasos, setAtrasos] = useState<Atraso[]>([]);
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -144,31 +146,39 @@ const PageControlAtrasos = () => {
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-4 items-center">
-            <Select value={selectedCurso} onValueChange={setSelectedCurso}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Seleccionar curso" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los cursos</SelectItem>
-                {cursos?.map((curso) => (
-                  <SelectItem key={curso.id} value={curso.id.toString()}>
-                    {curso.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="Buscar estudiante..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+          <div className="flex flex-col gap-4">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border bg-white"
             />
+
+            <div className="space-y-4">
+              <Select value={selectedCurso} onValueChange={setSelectedCurso}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los cursos</SelectItem>
+                  {cursos?.map((curso) => (
+                    <SelectItem key={curso.id} value={curso.id.toString()}>
+                      {curso.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                placeholder="Buscar estudiante..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="border rounded-lg">
+          <div className="border rounded-lg bg-white">
             <Table>
               <TableHeader>
                 <TableRow>

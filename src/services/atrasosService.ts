@@ -49,8 +49,7 @@ export const deleteAtraso = async (id: number) => {
 export const getAtrasosByEstudiante = async (estudianteId: number) => {
   try {
     const response = await api.get(`/atrasos/estudiante/${estudianteId}`);
-    console.log("Respuesta completa:", response);
-    console.log("Datos de atrasos:", response.data);
+
     return response.data || [];
   } catch (error) {
     console.error("Error al obtener atrasos:", error);
