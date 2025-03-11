@@ -28,7 +28,7 @@ export function ModalAtrasos({
   atrasos,
   onAtrasosChange,
 }: ModalAtrasosProps) {
-  const [fecha] = useState<Date>(new Date());
+  const [fecha, setFecha] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [hora, setHora] = useState(format(new Date(), "HH:mm"));
   const [observaciones, setObservaciones] = useState("");
 
@@ -46,31 +46,15 @@ export function ModalAtrasos({
     try {
       const [hours, minutes] = hora.split(":").map(Number);
 
-      // Creamos una nueva fecha con la fecha y hora seleccionadas
-      const fechaSeleccionada = new Date(fecha);
-      fechaSeleccionada.setHours(hours, minutes, 0, 0);
+      // Separamos la fecha en sus componentes
+      const [year, month, day] = fecha.split("-").map(Number);
 
-      // Ajustamos la fecha para la zona horaria local
-      const fechaLocal = new Date(
-        fechaSeleccionada.getFullYear(),
-        fechaSeleccionada.getMonth(),
-        fechaSeleccionada.getDate(),
-        hours,
-        minutes,
-        0,
-        0
-      );
+      // Creamos la fecha local directamente con los componentes
+      const fechaLocal = new Date(year, month - 1, day, hours, minutes, 0, 0);
 
-      // Convertimos a UTC manteniendo la fecha local
+      // Convertimos a UTC manteniendo los componentes de fecha y hora exactos
       const fechaUTC = new Date(
-        Date.UTC(
-          fechaLocal.getFullYear(),
-          fechaLocal.getMonth(),
-          fechaLocal.getDate(),
-          hours,
-          minutes,
-          0
-        )
+        Date.UTC(year, month - 1, day, hours, minutes, 0)
       );
 
       await createAtraso({
@@ -114,7 +98,15 @@ export function ModalAtrasos({
                 Registrar Nuevo Atraso
               </h3>
               <div className="grid gap-4">
-                <div className="grid gap-2"></div>
+                <div className="grid gap-2">
+                  <label htmlFor="fecha">Fecha</label>
+                  <Input
+                    id="fecha"
+                    type="date"
+                    value={fecha}
+                    onChange={(e) => setFecha(e.target.value)}
+                  />
+                </div>
                 <div className="grid gap-2">
                   <label htmlFor="hora">Hora</label>
                   <Input
