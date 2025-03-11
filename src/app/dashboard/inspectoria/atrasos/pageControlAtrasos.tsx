@@ -238,7 +238,7 @@ const PageControlAtrasos = () => {
                           />
                         </svg>
                         <p className="text-muted-foreground">
-                          No hay estudiantes disponibles
+                          No hay estudiantes disponibles.
                         </p>
                       </div>
                     </TableCell>
