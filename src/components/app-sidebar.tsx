@@ -127,8 +127,12 @@ const data = {
           url: "/dashboard/inspectoria/asistencia",
         },
         {
-          title: "Atrasos",
+          title: "Registro Atrasos",
           url: "/dashboard/inspectoria/atrasos",
+        },
+        {
+          title: "Control Atrasos",
+          url: "/dashboard/inspectoria/controlatrasos",
         },
       ],
     },

@@ -11,6 +11,7 @@ import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageEditarCur
 import AcademicoCursosAsignaturas from "./app/dashboard/academico/inicio/pageAsignaturas";
 import PageCalificaciones from "./app/dashboard/academico/calificaciones/pageCalificaciones";
 import PageAtrasos from "./app/dashboard/inspectoria/atrasos/pageAtrasos";
+import PageControlAtrasos from "./app/dashboard/inspectoria/atrasos/pageControlAtrasos";
 
 const Login = lazy(() => import("@/app/login/page"));
 const Logout = lazy(() => import("@/app/logout/pageLogout"));
@@ -209,6 +210,16 @@ function App() {
                   <ProtectedRoute requiredRoles={[3]}>
                     <Layout>
                       <PageAtrasos />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/inspectoria/controlatrasos"
+                element={
+                  <ProtectedRoute requiredRoles={[3]}>
+                    <Layout>
+                      <PageControlAtrasos />
                     </Layout>
                   </ProtectedRoute>
                 }
