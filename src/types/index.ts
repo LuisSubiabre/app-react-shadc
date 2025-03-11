@@ -143,3 +143,15 @@ export interface TallerType {
   profesor_nombre?: string;
   curso_id?: number;
 }
+
+export interface Atraso {
+  atraso_id: number;
+  estudiante_id: number;
+  fecha: string;
+  hora: string;
+  hora_registro: string;
+  tipo: "llegada" | "jornada";
+  justificado: boolean;
+  observaciones: string;
+  fecha_registro: string;
+}
