@@ -7,11 +7,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { EstudianteType, Atraso } from "@/types";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { createAtraso, deleteAtraso } from "@/services/atrasosService";
 import { Trash2 } from "lucide-react";
 
@@ -30,7 +28,7 @@ export function ModalAtrasos({
   atrasos,
   onAtrasosChange,
 }: ModalAtrasosProps) {
-  const [fecha, setFecha] = useState<Date>(new Date());
+  const [fecha] = useState<Date>(new Date());
   const [hora, setHora] = useState(format(new Date(), "HH:mm"));
   const [observaciones, setObservaciones] = useState("");
 
@@ -116,15 +114,7 @@ export function ModalAtrasos({
                 Registrar Nuevo Atraso
               </h3>
               <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Calendar
-                    mode="single"
-                    selected={fecha}
-                    onSelect={(date) => date && setFecha(date)}
-                    locale={es}
-                    className="rounded-md border"
-                  />
-                </div>
+                <div className="grid gap-2"></div>
                 <div className="grid gap-2">
                   <label htmlFor="hora">Hora</label>
                   <Input
