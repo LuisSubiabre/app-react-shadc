@@ -66,7 +66,7 @@ const PageAtrasos = () => {
       try {
         if (selectedCurso === "all") {
           const response = await getEstudiantes();
-          console.log(response.data);
+
           setEstudiantes(Array.isArray(response.data) ? response.data : []);
           setIsLoading(false);
           return;
@@ -118,11 +118,11 @@ const PageAtrasos = () => {
       const printSuccess = await printAtraso(estudiante, puntaArenasTime);
 
       if (!printSuccess) {
-        console.error("Error al imprimir el ticket");
+        alert("Error al imprimir el ticket");
         // Aquí podrías mostrar una notificación al usuario
       }
     } catch (error) {
-      console.error("Error al registrar el atraso:", error);
+      alert("Error al registrar el atraso:" + error);
       // Aquí podrías mostrar una notificación al usuario
     }
   };

@@ -1,9 +1,10 @@
 import api from "../config/api.ts";
 
 export interface Atraso {
-  atraso_id: number;
+  id: number;
   estudiante_id: number;
   fecha: string;
+  hora: string;
   hora_registro: string;
   tipo: "llegada" | "jornada";
   justificado: boolean;
@@ -26,17 +27,33 @@ export interface CreateAtrasoDTO {
 
 // ** Rutas Privadas (requieren autenticación) **
 export const getAtrasos = async () => {
-  return api.get("/atrasos").then((response) => response.data);
+  const response = await api.get("/atrasos");
+  return response.data.data || [];
 };
 
 export const getAtrasoById = async (id: number) => {
-  return api.get(`/atrasos/${id}`).then((response) => response.data);
+  const response = await api.get(`/atrasos/${id}`);
+  return response.data.data || null;
 };
 
 export const createAtraso = async (data: CreateAtrasoDTO) => {
-  return api.post("/atrasos", data).then((response) => response.data);
+  const response = await api.post("/atrasos", data);
+  return response.data.data;
 };
 
 export const deleteAtraso = async (id: number) => {
-  return api.delete(`/atrasos/${id}`).then((response) => response.data);
+  const response = await api.delete(`/atrasos/${id}`);
+  return response.data.data;
+};
+
+export const getAtrasosByEstudiante = async (estudianteId: number) => {
+  try {
+    const response = await api.get(`/atrasos/estudiante/${estudianteId}`);
+    console.log("Respuesta completa:", response);
+    console.log("Datos de atrasos:", response.data);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error al obtener atrasos:", error);
+    throw error;
+  }
 };

@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CursoApiResponseType, EstudianteType } from "@/types";
+import { CursoApiResponseType, EstudianteType, Atraso } from "@/types";
+import { ModalAtrasos } from "@/components/atrasos/ModalAtrasos";
 
 import { Clock } from "lucide-react";
 import { getCursos } from "@/services/cursosService";
@@ -27,24 +28,18 @@ import {
   estudiantesCurso,
   getEstudiantes,
 } from "@/services/estudiantesService";
-import { createAtraso } from "@/services/atrasosService";
-import { printAtraso } from "@/services/printService";
+import { getAtrasosByEstudiante } from "@/services/atrasosService";
 
 const PageControlAtrasos = () => {
-  const [time, setTime] = useState(new Date());
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
   const [selectedCurso, setSelectedCurso] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const [selectedEstudiante, setSelectedEstudiante] =
+    useState<EstudianteType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [atrasos, setAtrasos] = useState<Atraso[]>([]);
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -66,7 +61,6 @@ const PageControlAtrasos = () => {
       try {
         if (selectedCurso === "all") {
           const response = await getEstudiantes();
-          console.log(response.data);
           setEstudiantes(Array.isArray(response.data) ? response.data : []);
           setIsLoading(false);
           return;
@@ -89,41 +83,31 @@ const PageControlAtrasos = () => {
     fetchEstudiantes();
   }, [selectedCurso]);
 
-  const puntaArenasTime = time.toLocaleString("es-CL", {
-    timeZone: "America/Punta_Arenas",
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  const handleNewAtraso = async (estudianteId: number) => {
-    const estudiante = estudiantes.find((e) => e.id === estudianteId);
-    if (!estudiante) return;
-
+  const handleOpenModal = async (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalOpen(true);
     try {
-      // Crear el atraso
-      await createAtraso({
-        estudiante_id: estudianteId,
-        fecha: new Date().toISOString(),
-        hora: puntaArenasTime,
-        hora_registro: puntaArenasTime,
-        tipo: "llegada",
-        justificado: false,
-        observaciones: "",
-        fecha_registro: new Date().toISOString(),
-      });
-
-      // Imprimir el ticket
-      const printSuccess = await printAtraso(estudiante, puntaArenasTime);
-
-      if (!printSuccess) {
-        console.error("Error al imprimir el ticket");
-        // Aquí podrías mostrar una notificación al usuario
-      }
+      const response = await getAtrasosByEstudiante(estudiante.id);
+      setAtrasos(response);
     } catch (error) {
-      console.error("Error al registrar el atraso:", error);
-      // Aquí podrías mostrar una notificación al usuario
+      console.error("Error al cargar atrasos:", error);
+      setAtrasos([]);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEstudiante(null);
+  };
+
+  const handleAtrasosChange = async () => {
+    if (selectedEstudiante) {
+      try {
+        const response = await getAtrasosByEstudiante(selectedEstudiante.id);
+        setAtrasos(response);
+      } catch (error) {
+        console.error("Error al recargar atrasos:", error);
+      }
     }
   };
 
@@ -160,18 +144,6 @@ const PageControlAtrasos = () => {
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        {/* <div className="flex flex-col items-center justify-center">
-          <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-            <h1 className="text-3xl font-bold mb-4 text-gray-800 dark:text-white">
-              Hora Local Punta Arenas
-            </h1>
-            <div className="text-4xl font-mono text-blue-600 dark:text-blue-400">
-              {puntaArenasTime}
-            </div>
-            <p className="mt-2 text-gray-600 dark:text-white">UTC-3</p>
-          </div>
-        </div> */}
-
         <div className="flex flex-col gap-4">
           <div className="flex gap-4 items-center">
             <Select value={selectedCurso} onValueChange={setSelectedCurso}>
@@ -238,21 +210,11 @@ const PageControlAtrasos = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleNewAtraso(estudiante.id)}
+                          onClick={() => handleOpenModal(estudiante)}
                           className="flex items-center gap-2"
                         >
                           <Clock className="h-4 w-4" />
                           Gestionar Atrasos
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleNewAtraso(estudiante.id)}
-                          className="flex items-center gap-2"
-                        >
-                          <Clock className="h-4 w-4" />
-                          Imprimir Atrasos
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -287,6 +249,14 @@ const PageControlAtrasos = () => {
           </div>
         </div>
       </div>
+
+      <ModalAtrasos
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        estudiante={selectedEstudiante}
+        atrasos={atrasos}
+        onAtrasosChange={handleAtrasosChange}
+      />
     </>
   );
 };
