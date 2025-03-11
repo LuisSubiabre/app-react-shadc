@@ -6,9 +6,6 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist"
-      },
-      "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       }
     }
   ],
