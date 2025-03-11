@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Table,
   TableBody,
@@ -41,7 +40,6 @@ const PageControlAtrasos = () => {
     useState<EstudianteType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atrasos, setAtrasos] = useState<Atraso[]>([]);
-  const [date, setDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -148,13 +146,6 @@ const PageControlAtrasos = () => {
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
           <div className="flex flex-col gap-4">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border bg-white"
-            />
-
             <div className="space-y-4">
               <Select value={selectedCurso} onValueChange={setSelectedCurso}>
                 <SelectTrigger>
@@ -178,7 +169,7 @@ const PageControlAtrasos = () => {
             </div>
           </div>
 
-          <div className="border rounded-lg bg-white">
+          <div className="border rounded-lg bg-white dark:bg-gray-800">
             <Table>
               <TableHeader>
                 <TableRow>
