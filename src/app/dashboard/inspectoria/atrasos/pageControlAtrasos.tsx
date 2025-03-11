@@ -136,120 +136,172 @@ const PageControlAtrasos = () => {
   });
 
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="flex h-16 shrink-0 items-center border-b bg-white dark:bg-gray-800">
         <div className="flex items-center gap-2 px-4">
           <Breadcrumbs />
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
-          <div className="flex flex-col gap-4">
-            <div className="space-y-4">
-              <Select value={selectedCurso} onValueChange={setSelectedCurso}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar curso" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los cursos</SelectItem>
-                  {cursos?.map((curso) => (
-                    <SelectItem key={curso.id} value={curso.id.toString()}>
-                      {curso.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Input
-                placeholder="Buscar estudiante..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+      <main className="flex-1 p-6">
+        <div className="flex flex-col gap-6">
+          {/* Título y descripción */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Control de Atrasos
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Gestiona los atrasos de los estudiantes por curso
+            </p>
           </div>
 
-          <div className="border rounded-lg bg-white dark:bg-gray-800">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Curso</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-2">
-                        <p className="text-muted-foreground">
-                          Cargando estudiantes...
-                        </p>
-                      </div>
-                    </TableCell>
+          {/* Filtros en card */}
+          <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border shadow-sm">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Filtrar por curso
+                  </label>
+                  <Select
+                    value={selectedCurso}
+                    onValueChange={setSelectedCurso}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar curso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los cursos</SelectItem>
+                      {cursos?.map((curso) => (
+                        <SelectItem key={curso.id} value={curso.id.toString()}>
+                          {curso.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Buscar estudiante
+                  </label>
+                  <Input
+                    placeholder="Nombre, RUT o email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Estadísticas rápidas */}
+                <div className="pt-4 border-t mt-4">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total estudiantes: {filteredEstudiantes.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabla en card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50 dark:bg-gray-900">
+                    <TableHead className="font-medium">ID</TableHead>
+                    <TableHead className="font-medium">Nombre</TableHead>
+                    <TableHead className="font-medium">Email</TableHead>
+                    <TableHead className="font-medium">Curso</TableHead>
+                    <TableHead className="text-right font-medium">
+                      Acciones
+                    </TableHead>
                   </TableRow>
-                ) : estudiantes.length > 0 ? (
-                  filteredEstudiantes.map((estudiante) => (
-                    <TableRow key={estudiante.estudiante_id}>
-                      <TableCell>{estudiante.estudiante_id}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {estudiante.nombre}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {estudiante.rut}
-                          </span>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-10">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                          <p className="text-muted-foreground">
+                            Cargando estudiantes...
+                          </p>
                         </div>
                       </TableCell>
-                      <TableCell>{estudiante.email}</TableCell>
-                      <TableCell>{estudiante.curso_nombre}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenModal(estudiante)}
-                          className="flex items-center gap-2"
-                        >
-                          <Clock className="h-4 w-4" />
-                          Gestionar Atrasos
-                        </Button>
+                    </TableRow>
+                  ) : estudiantes.length > 0 ? (
+                    filteredEstudiantes.map((estudiante) => (
+                      <TableRow
+                        key={estudiante.estudiante_id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                      >
+                        <TableCell className="font-mono">
+                          {estudiante.estudiante_id}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {estudiante.nombre}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {estudiante.rut}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{estudiante.email}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-300">
+                            {estudiante.curso_nombre}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenModal(estudiante)}
+                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          >
+                            <Clock className="h-4 w-4 mr-2" />
+                            Gestionar Atrasos
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-10">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-3">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-8 h-8 text-muted-foreground"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                              />
+                            </svg>
+                          </div>
+                          <p className="text-muted-foreground">
+                            No hay estudiantes disponibles.
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Intenta cambiar los filtros de búsqueda
+                          </p>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-2">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-8 h-8 text-muted-foreground"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                          />
-                        </svg>
-                        <p className="text-muted-foreground">
-                          No hay estudiantes disponibles.
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
       <ModalAtrasos
         isOpen={isModalOpen}
@@ -258,7 +310,7 @@ const PageControlAtrasos = () => {
         atrasos={atrasos}
         onAtrasosChange={handleAtrasosChange}
       />
-    </>
+    </div>
   );
 };
 
