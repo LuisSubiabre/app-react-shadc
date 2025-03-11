@@ -5,9 +5,6 @@ export const printAtraso = async (
   hora: string
 ): Promise<boolean> => {
   try {
-    // Obtener la URL base
-    const baseUrl = window.location.origin;
-
     // Crear una nueva ventana para la impresión
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
@@ -68,7 +65,7 @@ export const printAtraso = async (
         </head>
         <body>
           <div class="header">
-            <img src="${baseUrl}/logo.png" alt="Logo" class="logo" />
+            <img src="https://res.cloudinary.com/dx219dazh/image/upload/v1741693182/varios/e8ublpwdsj4j2kz0h8mp.png" alt="Logo" class="logo" />
             <h2>TICKET DE ATRASO</h2>
             <p>Fecha: ${new Date().toLocaleDateString()}</p>
             <p>Hora: ${hora}</p>
