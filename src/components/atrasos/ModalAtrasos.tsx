@@ -50,7 +50,6 @@ export function ModalAtrasos({
       const [year, month, day] = fecha.split("-").map(Number);
 
       // Creamos la fecha local directamente con los componentes
-      const fechaLocal = new Date(year, month - 1, day, hours, minutes, 0, 0);
 
       // Convertimos a UTC manteniendo los componentes de fecha y hora exactos
       const fechaUTC = new Date(
