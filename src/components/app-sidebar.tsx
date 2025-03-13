@@ -96,10 +96,6 @@ const data = {
 
       items: [
         {
-          title: "Inicio",
-          url: "/dashboard/academico/inicio",
-        },
-        {
           title: "Cursos",
           url: "/dashboard/academico/cursos",
         },
