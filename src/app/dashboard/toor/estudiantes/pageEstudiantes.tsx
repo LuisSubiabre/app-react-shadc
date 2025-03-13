@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { CursoApiResponseType, EstudianteType } from "@/types";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Edit, KeySquare, Trash2 } from "lucide-react";
+import { AlertCircle, Edit, KeySquare, Trash2, Copy } from "lucide-react";
 import { useEffect } from "react";
 import {
   changePasswordEstudiante,
@@ -367,6 +367,18 @@ const Estudiantes: React.FC = () => {
     startIndex,
     startIndex + PageSize
   );
+
+  const handleCopyInfo = (estudiante: EstudianteType) => {
+    const info = `ESTUDIANTE: ${estudiante.nombre}\nCURSO: ${estudiante.curso_nombre}\nRUT: ${estudiante.rut}\nCORREO: ${estudiante.email}\nCLAVE: ${estudiante.clave_email}`;
+    navigator.clipboard.writeText(info).then(() => {
+      toast({
+        title: "Información copiada",
+        description:
+          "La información del estudiante ha sido copiada al portapapeles",
+      });
+    });
+  };
+
   return (
     <>
       <Toaster />
@@ -506,7 +518,10 @@ const Estudiantes: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
+                      <div
+                        className="flex flex-col cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => handleCopyInfo(c)}
+                      >
                         <span className="font-medium">{c.nombre}</span>
                         <span className="text-sm text-muted-foreground">
                           {c.email}
@@ -540,6 +555,14 @@ const Estudiantes: React.FC = () => {
                           className="hover:bg-primary/10 hover:text-primary"
                         >
                           <KeySquare className="size-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCopyInfo(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Copy className="size-5" />
                         </Button>
                       </div>
                     </TableCell>
