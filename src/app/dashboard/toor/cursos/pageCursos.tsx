@@ -998,6 +998,7 @@ const Cursos: React.FC = () => {
                             <TableHead>N.</TableHead>
                             <TableHead>Nombre</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Clave</TableHead>
                             <TableHead>RUT</TableHead>
                             <TableHead>Estado</TableHead>
                           </TableRow>
@@ -1027,6 +1028,9 @@ const Cursos: React.FC = () => {
                                   <TableCell>{estudiante.numlista}</TableCell>
                                   <TableCell>{estudiante.nombre}</TableCell>
                                   <TableCell>{estudiante.email}</TableCell>
+                                  <TableCell>
+                                    {estudiante.clave_email || "No disponible"}
+                                  </TableCell>
                                   <TableCell>{estudiante.rut}</TableCell>
                                   <TableCell>
                                     <span
