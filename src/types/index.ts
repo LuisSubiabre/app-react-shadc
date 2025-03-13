@@ -34,6 +34,7 @@ export interface EstudianteType {
   numlista: number;
   activo: boolean;
   fecha_actualizacion: string;
+  fecha_creacion?: Date;
   clave?: string; // Agregamos password como opcional
   curso_nombre?: string; // Agregamos curso_nombre como opcional
   calificacion1?: number | null;

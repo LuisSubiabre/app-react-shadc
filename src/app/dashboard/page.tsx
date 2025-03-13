@@ -1,4 +1,6 @@
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import UltimosIncorporados from "@/components/UltimosIncorporados";
+import TablaEstudiantes from "@/components/TablaEstudiantes";
 // import UltimosAtrasos from "@/components/UltimosAtrasos";
 // import UltimosIncorporados from "@/components/UltimosIncorporados";
 
@@ -11,11 +13,14 @@ const Dashboard = () => {
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          {/* <div className="aspect-video rounded-xl bg-muted/50 p-4">
+        <div className="grid auto-rows-min gap-4 md:grid-cols-1">
+          <div className="rounded-xl bg-muted/50 p-4">
             <UltimosIncorporados />
           </div>
-          <div className="aspect-video rounded-xl bg-muted/50 p-4">
+          <div className="rounded-xl bg-muted/50 p-4">
+            <TablaEstudiantes />
+          </div>
+          {/* <div className="aspect-video rounded-xl bg-muted/50 p-4">
             <UltimosAtrasos />
           </div> */}
         </div>
