@@ -179,7 +179,7 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Ingresa tus credenciales para acceder a tu cuenta
+            Ingresa tus credenciales para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent>
