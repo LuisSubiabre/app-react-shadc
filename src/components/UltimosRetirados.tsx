@@ -27,7 +27,6 @@ const UltimosRetirados = () => {
   useEffect(() => {
     getUltimosRetirados()
       .then((response) => {
-     
         if (Array.isArray(response)) {
           setEstudiantes(response);
         } else if (response && Array.isArray(response.data)) {
@@ -117,10 +116,9 @@ const UltimosRetirados = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50 dark:bg-gray-900">
-                    <TableHead className="font-medium">
+                    <TableHead className="font-medium text-red-500">
                       Estudiante
                     </TableHead>
-                   
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -129,19 +127,19 @@ const UltimosRetirados = () => {
                       <TableCell className="py-4">
                         <div className="space-y-1">
                           <div className="font-medium">
-                            {estudiante.estudiante_nombre || estudiante.nombre}      <Badge variant="secondary">
-                            {estudiante.curso_nombre || "Sin asignar"}</Badge>
+                            {estudiante.estudiante_nombre || estudiante.nombre}{" "}
+                            <Badge variant="secondary">
+                              {estudiante.curso_nombre || "Sin asignar"}
+                            </Badge>
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
                             {estudiante.email}
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
-                             Retiro:{formatDate(estudiante.fecha_actualizacion)}
+                            Retiro:{formatDate(estudiante.fecha_actualizacion)}
                           </div>
-           
                         </div>
                       </TableCell>
-
                     </TableRow>
                   ))}
                 </TableBody>

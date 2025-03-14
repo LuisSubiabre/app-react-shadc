@@ -117,10 +117,9 @@ const UltimosIncorporados = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50 dark:bg-gray-900">
-                    <TableHead className="font-medium w-[40%]">
+                    <TableHead className="font-medium w-[40%] text-green-500">
                       Estudiante
                     </TableHead>
-                  
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -129,9 +128,10 @@ const UltimosIncorporados = () => {
                       <TableCell className="py-4">
                         <div className="space-y-1">
                           <div className="font-medium">
-                            {estudiante.estudiante_nombre || estudiante.nombre}   <Badge variant="secondary" className="ml-auto">
-                          {estudiante.curso_nombre || "Sin asignar"}
-                        </Badge>
+                            {estudiante.estudiante_nombre || estudiante.nombre}{" "}
+                            <Badge variant="secondary" className="ml-auto">
+                              {estudiante.curso_nombre || "Sin asignar"}
+                            </Badge>
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
                             {estudiante.email}
@@ -139,10 +139,8 @@ const UltimosIncorporados = () => {
                           <div className="text-sm text-muted-foreground break-all">
                             Ingreso: {formatDate(estudiante.fecha_creacion)}
                           </div>
-                        
                         </div>
                       </TableCell>
-                     
                     </TableRow>
                   ))}
                 </TableBody>
