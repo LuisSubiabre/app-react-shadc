@@ -153,8 +153,19 @@ const TablaEstudiantes = () => {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground min-w-[100px]">
-            <span>Total: {filteredEstudiantes.length}</span>
+          <div className="flex items-center gap-3 text-sm min-w-[300px]">
+            <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+              <span className="font-medium">Total: </span>
+              <span>{filteredEstudiantes.length}</span>
+            </div>
+            <div className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full text-green-700 dark:text-green-300">
+              <span className="font-medium">Activos: </span>
+              <span>{filteredEstudiantes.filter((e) => e.activo).length}</span>
+            </div>
+            <div className="bg-red-100 dark:bg-red-900 px-3 py-1 rounded-full text-red-700 dark:text-red-300">
+              <span className="font-medium">Inactivos: </span>
+              <span>{filteredEstudiantes.filter((e) => !e.activo).length}</span>
+            </div>
           </div>
         </div>
 
@@ -203,10 +214,49 @@ const TablaEstudiantes = () => {
                     key={estudiante.estudiante_id || estudiante.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                   >
-                    <TableCell className="py-4">
+                    <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium">
-                          {estudiante.estudiante_nombre || estudiante.nombre}
+                        <span
+                          className={`inline-flex items-center gap-2 ${
+                            estudiante.activo
+                              ? "text-green-500"
+                              : "text-red-500"
+                          }`}
+                        >
+                          {estudiante.activo ? (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M6 18 18 6M6 6l12 12"
+                              />
+                            </svg>
+                          )}
+                          <span className="font-medium">
+                            {estudiante.estudiante_nombre || estudiante.nombre}
+                          </span>
                         </span>
                         {estudiante.rut && (
                           <span className="text-sm text-muted-foreground">

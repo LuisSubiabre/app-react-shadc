@@ -6,7 +6,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { getUltimosInscritos } from "@/services/infoService";
+import { getUltimosRetirados } from "@/services/infoService";
 import { EstudianteType } from "@/types";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,16 +18,15 @@ import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 5;
 
-const UltimosIncorporados = () => {
+const UltimosRetirados = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
-    getUltimosInscritos()
+    getUltimosRetirados()
       .then((response) => {
-        console.log("Respuesta de getUltimosInscritos:", response);
         if (Array.isArray(response)) {
           setEstudiantes(response);
         } else if (response && Array.isArray(response.data)) {
@@ -103,7 +102,7 @@ const UltimosIncorporados = () => {
     <Card className="w-full">
       <CardHeader className="space-y-1 pb-6">
         <CardTitle className="text-2xl">
-          Últimos estudiantes incorporados
+          Últimos estudiantes retirados
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -117,7 +116,7 @@ const UltimosIncorporados = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50 dark:bg-gray-900">
-                    <TableHead className="font-medium w-[40%] text-green-500">
+                    <TableHead className="font-medium text-red-500">
                       Estudiante
                     </TableHead>
                   </TableRow>
@@ -129,15 +128,15 @@ const UltimosIncorporados = () => {
                         <div className="space-y-1">
                           <div className="font-medium">
                             {estudiante.estudiante_nombre || estudiante.nombre}{" "}
-                            <Badge variant="secondary" className="ml-auto">
+                            <Badge variant="secondary">
                               {estudiante.curso_nombre || "Sin asignar"}
                             </Badge>
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
                             {estudiante.email}
                           </div>
-                          <div className="text-sm text-muted-foreground break-all">
-                            Ingreso: {formatDate(estudiante.fecha_creacion)}
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            Retiro:{formatDate(estudiante.fecha_actualizacion)}
                           </div>
                         </div>
                       </TableCell>
@@ -174,4 +173,4 @@ const UltimosIncorporados = () => {
   );
 };
 
-export default UltimosIncorporados;
+export default UltimosRetirados;
