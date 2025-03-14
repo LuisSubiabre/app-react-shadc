@@ -14,6 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/config/config";
 import { Link, useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function LoginForm({
   className,
@@ -22,7 +24,9 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ title: string; message: string } | null>(
+    null
+  );
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -43,7 +47,7 @@ export function LoginForm({
       });
 
       if (!checkResponse.ok) {
-        throw new Error("No se puede conectar con el servidor");
+        throw new Error("CONN_ERROR");
       }
 
       // Si el servidor está disponible, intentamos el login
@@ -63,7 +67,7 @@ export function LoginForm({
       if (response.status === 301 || response.status === 302) {
         const newUrl = response.headers.get("Location");
         if (!newUrl) {
-          throw new Error("Error de redirección del servidor");
+          throw new Error("REDIRECT_ERROR");
         }
         // Intentamos nuevamente con la nueva URL
         const redirectResponse = await fetch(newUrl, {
@@ -78,7 +82,7 @@ export function LoginForm({
           }),
         });
         if (!redirectResponse.ok) {
-          throw new Error("Error después de la redirección");
+          throw new Error("REDIRECT_FAILED");
         }
         const data = await redirectResponse.json();
         return handleLoginSuccess(data);
@@ -87,13 +91,13 @@ export function LoginForm({
       // Si no hay redirección, procesamos la respuesta normal
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error("Credenciales inválidas");
+          throw new Error("INVALID_CREDENTIALS");
         }
         if (response.status === 500) {
-          throw new Error("Error en el servidor. Por favor, intenta más tarde");
+          throw new Error("SERVER_ERROR");
         }
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Error de autenticación");
+        throw new Error(errorData.message || "AUTH_ERROR");
       }
 
       const data = await response.json();
@@ -101,11 +105,49 @@ export function LoginForm({
     } catch (err) {
       console.error("Error durante el login:", err);
       if (err instanceof Error) {
-        setError(err.message);
+        switch (err.message) {
+          case "CONN_ERROR":
+            setError({
+              title: "Error de Conexión",
+              message:
+                "No se pudo establecer conexión con el servidor. Por favor, verifica tu conexión a internet y vuelve a intentarlo.",
+            });
+            break;
+          case "INVALID_CREDENTIALS":
+            setError({
+              title: "Credenciales Incorrectas",
+              message:
+                "El email o la contraseña ingresados no son correctos. Por favor, verifica tus datos e intenta nuevamente.",
+            });
+            break;
+          case "SERVER_ERROR":
+            setError({
+              title: "Credenciales Incorrectas",
+              message:
+                "El email o la contraseña ingresados no son correctos. Por favor, verifica tus datos e intenta nuevamente.",
+            });
+            break;
+          case "REDIRECT_ERROR":
+          case "REDIRECT_FAILED":
+            setError({
+              title: "Error de Redirección",
+              message:
+                "Hubo un problema al procesar tu solicitud. Por favor, intenta nuevamente.",
+            });
+            break;
+          default:
+            setError({
+              title: "Error de Autenticación",
+              message:
+                "Ocurrió un error durante el proceso de login. Por favor, intenta nuevamente.",
+            });
+        }
       } else {
-        setError(
-          "Error al conectar con el servidor. Por favor, verifica tu conexión a internet."
-        );
+        setError({
+          title: "Error Inesperado",
+          message:
+            "Ocurrió un error inesperado. Por favor, verifica tu conexión e intenta nuevamente.",
+        });
       }
     } finally {
       setLoading(false);
@@ -152,6 +194,9 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className={cn(
+                    error && "border-red-500 focus-visible:ring-red-500"
+                  )}
                 />
               </div>
               <div className="grid gap-2">
@@ -170,13 +215,20 @@ export function LoginForm({
                   value={clave}
                   onChange={(e) => setClave(e.target.value)}
                   required
+                  className={cn(
+                    error && "border-red-500 focus-visible:ring-red-500"
+                  )}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Cargando..." : "Login"}
+                {loading ? "Verificando..." : "Iniciar Sesión"}
               </Button>
               {error && (
-                <div className="text-red-500 text-center mt-2">{error}</div>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>{error.title}</AlertTitle>
+                  <AlertDescription>{error.message}</AlertDescription>
+                </Alert>
               )}
             </div>
           </form>
