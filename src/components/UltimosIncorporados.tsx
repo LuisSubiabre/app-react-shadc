@@ -120,10 +120,7 @@ const UltimosIncorporados = () => {
                     <TableHead className="font-medium w-[40%]">
                       Estudiante
                     </TableHead>
-                    <TableHead className="font-medium w-[35%]">
-                      Registro
-                    </TableHead>
-                    <TableHead className="font-medium w-[25%]">Curso</TableHead>
+                  
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -132,25 +129,20 @@ const UltimosIncorporados = () => {
                       <TableCell className="py-4">
                         <div className="space-y-1">
                           <div className="font-medium">
-                            {estudiante.estudiante_nombre || estudiante.nombre}
+                            {estudiante.estudiante_nombre || estudiante.nombre}   <Badge variant="secondary" className="ml-auto">
+                          {estudiante.curso_nombre || "Sin asignar"}
+                        </Badge>
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
                             {estudiante.email}
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="space-y-1">
                           <div className="text-sm text-muted-foreground break-all">
-                            {formatDate(estudiante.fecha_creacion)}
+                            Ingreso: {formatDate(estudiante.fecha_creacion)}
                           </div>
+                        
                         </div>
                       </TableCell>
-                      <TableCell className="py-4">
-                        <Badge variant="secondary" className="ml-auto">
-                          {estudiante.curso_nombre || "Sin asignar"}
-                        </Badge>
-                      </TableCell>
+                     
                     </TableRow>
                   ))}
                 </TableBody>
