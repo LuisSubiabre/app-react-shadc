@@ -153,8 +153,19 @@ const TablaEstudiantes = () => {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground min-w-[100px]">
-            <span>Total: {filteredEstudiantes.length}</span>
+          <div className="flex items-center gap-3 text-sm min-w-[300px]">
+            <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+              <span className="font-medium">Total: </span>
+              <span>{filteredEstudiantes.length}</span>
+            </div>
+            <div className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full text-green-700 dark:text-green-300">
+              <span className="font-medium">Activos: </span>
+              <span>{filteredEstudiantes.filter((e) => e.activo).length}</span>
+            </div>
+            <div className="bg-red-100 dark:bg-red-900 px-3 py-1 rounded-full text-red-700 dark:text-red-300">
+              <span className="font-medium">Inactivos: </span>
+              <span>{filteredEstudiantes.filter((e) => !e.activo).length}</span>
+            </div>
           </div>
         </div>
 

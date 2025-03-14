@@ -195,9 +195,24 @@ const PageControlAtrasos = () => {
 
                 {/* Estadísticas rápidas */}
                 <div className="pt-4 border-t mt-4">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total estudiantes: {filteredEstudiantes.length}
-                  </p>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                      <span className="font-medium">Total: </span>
+                      <span>{filteredEstudiantes.length}</span>
+                    </div>
+                    <div className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full text-green-700 dark:text-green-300">
+                      <span className="font-medium">Activos: </span>
+                      <span>
+                        {filteredEstudiantes.filter((e) => e.activo).length}
+                      </span>
+                    </div>
+                    <div className="bg-red-100 dark:bg-red-900 px-3 py-1 rounded-full text-red-700 dark:text-red-300">
+                      <span className="font-medium">Inactivos: </span>
+                      <span>
+                        {filteredEstudiantes.filter((e) => !e.activo).length}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -209,7 +224,6 @@ const PageControlAtrasos = () => {
                   <TableRow className="bg-gray-50 dark:bg-gray-900">
                     <TableHead className="font-medium">ID</TableHead>
                     <TableHead className="font-medium">Nombre</TableHead>
-                    <TableHead className="font-medium">Email</TableHead>
                     <TableHead className="font-medium">Curso</TableHead>
                     <TableHead className="text-right font-medium">
                       Acciones
@@ -243,11 +257,11 @@ const PageControlAtrasos = () => {
                               {estudiante.nombre}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {estudiante.rut}
+                              {estudiante.email}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>{estudiante.email}</TableCell>
+                 
                         <TableCell>
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-300">
                             {estudiante.curso_nombre}
