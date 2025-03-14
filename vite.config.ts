@@ -12,4 +12,12 @@ export default defineConfig({
   build: {
     outDir: "dist", // Asegura que la carpeta de salida sea 'dist'
   },
+  server: {
+    watch: {
+      usePolling: true, // 👈 Activa polling para detectar cambios
+    },
+    host: "0.0.0.0", // 👈 Necesario para que el contenedor acepte conexiones
+    strictPort: true,
+    port: 5173, // Puedes cambiar el puerto si lo deseas
+  },
 });

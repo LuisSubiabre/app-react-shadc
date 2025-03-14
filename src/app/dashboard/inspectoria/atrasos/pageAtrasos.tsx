@@ -225,9 +225,24 @@ const PageAtrasos = () => {
 
                 {/* Estadísticas rápidas */}
                 <div className="pt-4 border-t mt-4">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total estudiantes: {filteredEstudiantes.length}
-                  </p>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                      <span className="font-medium">Total: </span>
+                      <span>{filteredEstudiantes.length}</span>
+                    </div>
+                    <div className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full text-green-700 dark:text-green-300">
+                      <span className="font-medium">Activos: </span>
+                      <span>
+                        {filteredEstudiantes.filter((e) => e.activo).length}
+                      </span>
+                    </div>
+                    <div className="bg-red-100 dark:bg-red-900 px-3 py-1 rounded-full text-red-700 dark:text-red-300">
+                      <span className="font-medium">Retirados: </span>
+                      <span>
+                        {filteredEstudiantes.filter((e) => !e.activo).length}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -239,7 +254,7 @@ const PageAtrasos = () => {
                   <TableRow className="bg-gray-50 dark:bg-gray-900">
                     <TableHead className="font-medium">ID</TableHead>
                     <TableHead className="font-medium">Nombre</TableHead>
-                    <TableHead className="font-medium">Email</TableHead>
+
                     <TableHead className="font-medium">Curso</TableHead>
                     <TableHead className="text-right font-medium">
                       Acciones
@@ -265,7 +280,46 @@ const PageAtrasos = () => {
                         className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                       >
                         <TableCell className="font-mono">
-                          {estudiante.estudiante_id}
+                          <span
+                            className={`inline-flex items-center gap-2 ${
+                              estudiante.activo
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {estudiante.activo ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-4 h-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-4 h-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M6 18 18 6M6 6l12 12"
+                                />
+                              </svg>
+                            )}
+                            {estudiante.estudiante_id}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
@@ -273,11 +327,11 @@ const PageAtrasos = () => {
                               {estudiante.nombre}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {estudiante.rut}
+                              {estudiante.email}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>{estudiante.email}</TableCell>
+
                         <TableCell>
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-300">
                             {estudiante.curso_nombre}
