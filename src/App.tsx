@@ -47,6 +47,8 @@ const AclesInscritos = lazy(
   () => import("@/app/dashboard/acles/talleres/pageInscritos")
 );
 const Jefatura = lazy(() => import("@/app/dashboard/jefatura/pageJefatura"));
+const PasswordResetRequest = lazy(() => import("@/app/password-reset/request"));
+const PasswordReset = lazy(() => import("@/app/password-reset/reset"));
 
 function App() {
   return (
@@ -67,10 +69,17 @@ function App() {
           >
             <Routes>
               {/* Public Routes */}
-
               <Route path="/login" element={<Login />} />
               <Route path="/logout" element={<Logout />} />
               <Route path="/unauthorized" element={<UnauthorizedComponent />} />
+              <Route
+                path="/recuperar-contrasena"
+                element={<PasswordResetRequest />}
+              />
+              <Route
+                path="/reset-password/:token"
+                element={<PasswordReset />}
+              />
 
               {/* Protected Routes */}
               <Route
@@ -258,7 +267,7 @@ function App() {
               />
 
               {/* Redirect to login if not authenticated */}
-              <Route path="*" element={<Navigate to="/login" />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>
