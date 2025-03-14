@@ -1,11 +1,11 @@
 export interface LoginResponse {
   token: string;
   usuario: {
-    id: number;
+    id: string;
     nombre: string;
     email: string;
     roles: number[];
-    cursos: any[];
+    cursos: number[];
   };
 }
 

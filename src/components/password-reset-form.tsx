@@ -61,7 +61,7 @@ export function PasswordResetForm({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
+          accept: "application/json",
         },
         body: JSON.stringify({ token, newPassword }),
       });

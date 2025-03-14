@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { API_BASE_URL } from "@/config/config";
-import type { ServerResponse } from "@/types/auth";
 
 export function PasswordResetRequestForm({
   className,
@@ -39,8 +38,6 @@ export function PasswordResetRequestForm({
         },
         body: JSON.stringify({ email, rut }),
       });
-
-      const data = (await response.json()) as ServerResponse;
 
       if (response.ok) {
         setSuccess(

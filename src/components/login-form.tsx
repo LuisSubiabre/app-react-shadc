@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/config/config";
 import { Link, useNavigate } from "react-router-dom";
+import type { LoginResponse } from "@/types/auth";
 
 export function LoginForm({
   className,
@@ -111,7 +112,7 @@ export function LoginForm({
     }
   };
 
-  const handleLoginSuccess = (data: any) => {
+  const handleLoginSuccess = (data: LoginResponse) => {
     const { token, usuario } = data;
 
     if (!token || !usuario) {
