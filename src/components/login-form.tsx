@@ -9,71 +9,125 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/config/config";
+import { Link, useNavigate } from "react-router-dom";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
-  const [clave, setClave] = useState(""); // Cambié el nombre de `password` a `clave`
+  const [clave, setClave] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
-
-  const { login } = useAuth(); // Usamos directamente el hook useAuth
-  console.log(authToken);
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setAuthToken(token);
-    }
-  }, []);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
-    setError(null); // Limpiar posibles errores previos
+    setError(null);
 
     try {
+      console.log("Intentando login con:", API_BASE_URL);
+
+      // Primero verificamos que el servidor esté disponible
+      const checkResponse = await fetch(`${API_BASE_URL}/`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!checkResponse.ok) {
+        throw new Error("No se puede conectar con el servidor");
+      }
+
+      // Si el servidor está disponible, intentamos el login
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           email,
-          clave, // Enviamos 'clave' en lugar de 'password'
+          clave,
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Al recibir respuesta exitosa, guardamos el token y los datos del usuario
-        const { token, usuario } = data;
-
-        localStorage.setItem("token", token); // Guardar token en localStorage
-        login(token, {
-          id: usuario.id,
-          nombre: usuario.nombre,
-          email: usuario.email,
-          roles: usuario.roles,
-          cursos: usuario.cursos,
-        }); // Usamos el login del contexto para actualizar el estado
-        // Redirigir a la página de dashboard
-      } else {
-        setError(data.message || "Error de autenticación"); // Mostrar mensaje de error
+      // Manejamos las redirecciones manualmente si es necesario
+      if (response.status === 301 || response.status === 302) {
+        const newUrl = response.headers.get("Location");
+        if (!newUrl) {
+          throw new Error("Error de redirección del servidor");
+        }
+        // Intentamos nuevamente con la nueva URL
+        const redirectResponse = await fetch(newUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            clave,
+          }),
+        });
+        if (!redirectResponse.ok) {
+          throw new Error("Error después de la redirección");
+        }
+        const data = await redirectResponse.json();
+        return handleLoginSuccess(data);
       }
-    } catch (error) {
-      setError("Error al hacer la solicitud al servidor");
-      console.error(error);
+
+      // Si no hay redirección, procesamos la respuesta normal
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Credenciales inválidas");
+        }
+        if (response.status === 500) {
+          throw new Error("Error en el servidor. Por favor, intenta más tarde");
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Error de autenticación");
+      }
+
+      const data = await response.json();
+      return handleLoginSuccess(data);
+    } catch (err) {
+      console.error("Error durante el login:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(
+          "Error al conectar con el servidor. Por favor, verifica tu conexión a internet."
+        );
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoginSuccess = (data: any) => {
+    const { token, usuario } = data;
+
+    if (!token || !usuario) {
+      throw new Error("Respuesta del servidor inválida");
+    }
+
+    localStorage.setItem("token", token);
+    login(token, {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      roles: usuario.roles,
+      cursos: usuario.cursos,
+    });
+
+    navigate("/dashboard");
   };
 
   return (
@@ -95,26 +149,25 @@ export function LoginForm({
                   type="email"
                   placeholder="tucorreo@liceoexperimental.cl"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)} // Actualizamos el estado del email
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="clave">Password</Label>{" "}
-                  {/* Cambié 'password' a 'clave' */}
-                  <a
-                    href="#"
+                  <Label htmlFor="clave">Password</Label>
+                  <Link
+                    to="/recuperar-contrasena"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     ¿Olvidaste tu contraseña?
-                  </a>
+                  </Link>
                 </div>
                 <Input
                   id="clave"
                   type="password"
-                  value={clave} // Actualizamos el estado de 'clave'
-                  onChange={(e) => setClave(e.target.value)} // Actualizamos el estado de 'clave'
+                  value={clave}
+                  onChange={(e) => setClave(e.target.value)}
                   required
                 />
               </div>
@@ -124,17 +177,7 @@ export function LoginForm({
               {error && (
                 <div className="text-red-500 text-center mt-2">{error}</div>
               )}
-
-              {/* <Button variant="outline" className="w-full">
-                Login with Google
-              </Button> */}
             </div>
-            {/* <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
-                Sign up
-              </a>
-            </div> */}
           </form>
         </CardContent>
       </Card>
