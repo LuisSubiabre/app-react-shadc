@@ -149,30 +149,26 @@ const AcleTalleres: React.FC = () => {
     }
 
     try {
-      const createTaller = await saveNewTaller(newTaller as TallerType);
-      const newTallerWithId = {
-        ...newTaller,
-        taller_id: createTaller.taller_id,
-      };
-      setTalleres((curr) => [
-        ...curr,
-        {
-          ...newTallerWithId,
-          taller_nombre: newTallerWithId.taller_nombre || "",
-          taller_descripcion: newTallerWithId.taller_descripcion || "",
-          taller_horario: newTallerWithId.taller_horario || "",
-          taller_nivel: newTallerWithId.taller_nivel || "pre-basica",
-          taller_cantidad_cupos: newTallerWithId.taller_cantidad_cupos || 10,
-          taller_profesor_id: newTallerWithId.taller_profesor_id || 1,
-        },
-      ]);
-      toast({
-        title: "Éxito",
-        description: "Taller creado correctamente",
-      });
-
-      handleCloseNewModal();
+      console.log("Enviando nuevo taller:", newTaller);
+      const response = await saveNewTaller(newTaller as TallerType);
+      console.log("Respuesta del servidor:", response);
+      
+      if (response) {
+        const talleresResponse = await getTalleres();
+        if (talleresResponse) {
+          setTalleres(talleresResponse.data);
+        }
+        
+        toast({
+          title: "Éxito",
+          description: "Taller creado correctamente",
+        });
+        handleCloseNewModal();
+      } else {
+        throw new Error("No se recibió respuesta válida del servidor");
+      }
     } catch (error) {
+      console.error("Error al crear taller:", error);
       setErrorMessage(
         error instanceof Error ? error.message : "Error desconocido"
       );
@@ -414,6 +410,7 @@ const AcleTalleres: React.FC = () => {
               }}
               newTaller={newTaller}
               handleInputChange={handleInputChange}
+              isEditMode={false}
             />
             {errorMessage && (
               <div className="text-red-500 text-sm">{errorMessage}</div>
@@ -452,6 +449,7 @@ const AcleTalleres: React.FC = () => {
               }}
               newTaller={currentTaller || newTaller}
               handleInputChange={handleInputChange}
+              isEditMode={true}
             />
             {errorMessage && (
               <div className="text-red-500 text-sm">{errorMessage}</div>
