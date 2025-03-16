@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.1.0...v1.1.1) (2025-03-16)
+
+
+### Bug Fixes
+
+* icon Info delete ([9b64b4f](https://github.com/LuisSubiabre/app-react-shadc/commit/9b64b4f08291bad701c78eedb7ec7d459fa88a7c))
+
 ## [1.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.0.1...v1.1.0) (2025-03-16)
 
 
