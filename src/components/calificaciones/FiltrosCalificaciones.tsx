@@ -32,7 +32,7 @@ export const FiltrosCalificaciones: React.FC<FiltrosCalificacionesProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="grid gap-2">
+      <div className="grid gap-2 m-4">
         <Label>Seleccionar Curso: </Label>
         <Select
           value={cursoSeleccionado?.toString() || ""}
