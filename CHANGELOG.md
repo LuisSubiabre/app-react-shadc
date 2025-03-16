@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.0.1...v1.1.0) (2025-03-16)
+
+
+### Features
+
+* mejora diseño de modulo talleres ([07deee0](https://github.com/LuisSubiabre/app-react-shadc/commit/07deee0b155b4a0492a07d5cbb7fe543314dba47))
+* radio por botones para notas conceptuales ([9d1b091](https://github.com/LuisSubiabre/app-react-shadc/commit/9d1b091a23743792710b83d966a02108883e682a))
+* spinner de carga al abrir modal ([5d0b558](https://github.com/LuisSubiabre/app-react-shadc/commit/5d0b558abb1b1f7db67cb93530830ab24424acdb))
+
 ### [1.0.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.0.0...v1.0.1) (2025-03-16)
 
 ## 1.0.0 (2025-03-16)
