@@ -57,6 +57,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
   const [isModalSubjectsOpen, setIsModalSubjectsOpen] =
     useState<boolean>(false);
+  const [isLoadingModal, setIsLoadingModal] = useState<boolean>(false);
 
   const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
   const [selectedSubject, setSelectedSubject] =
@@ -124,6 +125,8 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     ); // Mensaje de error al cargar los datos de la API
 
   const handleAsignaturasClick = async (curso: Curso) => {
+    setIsModalSubjectsOpen(true);
+    setIsLoadingModal(true);
     try {
       // Cargar estudiantes
       const estudiantesResponse = await fetch(
@@ -195,12 +198,12 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       }
       setEnrolledStudents(enrollments);
       setSubjectsForCourse(mappedSubjects);
-
       setCurrentCurso(curso);
-      setIsModalSubjectsOpen(true);
     } catch (error) {
       console.error("Error:", error);
       setSubjectsForCourse([]);
+    } finally {
+      setIsLoadingModal(false);
     }
   };
 
@@ -451,6 +454,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
             setSelectedSubject(null);
             setDataEstudiantes([]);
             setEnrolledStudents({});
+            setIsLoadingModal(false);
           }
           setIsModalSubjectsOpen(open);
         }}
@@ -463,269 +467,275 @@ const AcademicoCursoAsignaturas: React.FC = () => {
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  Seleccionar Asignatura
-                </Label>
-                <span className="text-sm text-muted-foreground">
-                  {subjectsForCourse.length} asignaturas disponibles
-                </span>
+            {isLoadingModal ? (
+              <div className="flex justify-center items-center py-8">
+                <Spinner />
               </div>
-              <Select
-                onValueChange={(value) => {
-                  const asignatura = subjectsForCourse.find(
-                    (a) => a.id.toString() === value
-                  );
-                  if (asignatura) handleSubjectSelect(asignatura);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccione una asignatura" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjectsForCourse.map((asignatura) => (
-                    <SelectItem
-                      key={asignatura.id}
-                      value={asignatura.id.toString()}
-                      className="flex flex-col items-start"
-                    >
-                      <span className="font-medium">{asignatura.nombre}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {asignatura.inscritos} inscritos • {dataEstudiantes.length - (asignatura.inscritos || 0)} no inscritos
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedSubject && (
-              <>
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">
-                      Profesor Asignatura
-                    </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {dataEstudiantes.length} estudiantes en el curso
-                    </span>
-                  </div>
-                  <Select
-                    value={selectedSubject.profesor_jefe_id?.toString()}
-                    onValueChange={async (value) => {
-                      try {
-                        const response = await fetch(
-                          `${API_BASE_URL}/asignaturascursos/${selectedSubject.id}/${selectedSubject.curso_id}`,
-                          {
-                            method: "PUT",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                              profesor_id: parseInt(value),
-                            }),
-                          }
-                        );
-
-                        if (!response.ok)
-                          throw new Error("Error al actualizar profesor");
-
-                        setSubjectsForCourse((prevSubjects) =>
-                          prevSubjects.map((subject) =>
-                            subject.id === selectedSubject.id
-                              ? {
-                                  ...subject,
-                                  profesor_jefe_id: parseInt(value),
-                                }
-                              : subject
-                          )
-                        );
-
-                        setSelectedSubject({
-                          ...selectedSubject,
-                          profesor_jefe_id: parseInt(value),
-                        });
-
-                        toast({
-                          title: "Éxito",
-                          description: "Profesor actualizado correctamente",
-                        });
-                      } catch (error) {
-                        console.error("Error:", error);
-                        toast({
-                          title: "Error",
-                          description: "Error al actualizar profesor",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccione profesor jefe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dataUsuarios
-                        ?.filter((user) => user.activo)
-                        .map((profesor) => (
-                          <SelectItem
-                            key={profesor.id}
-                            value={profesor.id.toString()}
-                            className="flex flex-col items-start"
-                          >
-                            <span className="font-medium">{profesor.nombre}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {profesor.email}
-                            </span>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+            ) : (
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">
+                    Seleccionar Asignatura
+                  </Label>
+                  <span className="text-sm text-muted-foreground">
+                    {subjectsForCourse.length} asignaturas disponibles
+                  </span>
                 </div>
+                <Select
+                  onValueChange={(value) => {
+                    const asignatura = subjectsForCourse.find(
+                      (a) => a.id.toString() === value
+                    );
+                    if (asignatura) handleSubjectSelect(asignatura);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione una asignatura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjectsForCourse.map((asignatura) => (
+                      <SelectItem
+                        key={asignatura.id}
+                        value={asignatura.id.toString()}
+                        className="flex flex-col items-start"
+                      >
+                        <span className="font-medium">{asignatura.nombre}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {asignatura.inscritos} inscritos • {dataEstudiantes.length - (asignatura.inscritos || 0)} no inscritos
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                {loadingEstudiantes ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Spinner />
-                  </div>
-                ) : (
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">
-                        Inscripción de Estudiantes
-                      </Label>
-                      <DialogFooter className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (selectedSubject) {
-                                const allSelected = dataEstudiantes.every(
-                                  (estudiante) =>
-                                    enrolledStudents[
-                                      `${estudiante.id}-${selectedSubject.id}`
-                                    ]
-                                );
-
-                                if (!allSelected) {
-                                  const updatedEnrolledStudents = {
-                                    ...enrolledStudents,
-                                  };
-
-                                  dataEstudiantes.forEach((estudiante) => {
-                                    updatedEnrolledStudents[
-                                      `${estudiante.id}-${selectedSubject.id}`
-                                    ] = true;
-                                  });
-
-                                  setEnrolledStudents(updatedEnrolledStudents);
-
-                                  dataEstudiantes.forEach((estudiante) => {
-                                    handleCheckboxChange(
-                                      estudiante.id,
-                                      selectedSubject.id,
-                                      true
-                                    );
-                                  });
-                                }
-                              }
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={1.5}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                              />
-                            </svg>
-                            Seleccionar Todos
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setIsModalSubjectsOpen(false);
-                              setSelectedSubject(null);
-                              setDataEstudiantes([]);
-                              setEnrolledStudents({});
-                            }}
-                          >
-                            Cerrar
-                          </Button>
-                        </div>
-                      </DialogFooter>
-                    </div>
-                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-96 overflow-y-auto">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Array.isArray(dataEstudiantes) &&
-                          dataEstudiantes.map((estudiante) => (
-                            <div
-                              key={estudiante.id}
-                              className="flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                            >
-                              <div className="flex-shrink-0">
-                                <input
-                                  type="checkbox"
-                                  id={`estudiante-${estudiante.id}`}
-                                  checked={
-                                    enrolledStudents[
-                                      `${estudiante.id}-${selectedSubject?.id}`
-                                    ] || false
-                                  }
-                                  onChange={(e) => {
-                                    if (selectedSubject) {
-                                      handleCheckboxChange(
-                                        estudiante.id,
-                                        selectedSubject.id,
-                                        e.target.checked
-                                      );
-                                    }
-                                  }}
-                                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                />
-                              </div>
-                              <div className="flex-grow">
-                                <label
-                                  htmlFor={`estudiante-${estudiante.id}`}
-                                  className="flex flex-col cursor-pointer"
-                                >
-                                  <span className="font-medium text-sm">
-                                    {estudiante.nombre}
-                                  </span>
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                                    RUT: {estudiante.rut}
-                                  </span>
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                                    Lista: {estudiante.numlista}
-                                  </span>
-                                </label>
-                              </div>
-                              <div className="flex-shrink-0">
-                                {enrolledStudents[
-                                  `${estudiante.id}-${selectedSubject?.id}`
-                                ] && (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    Inscrito
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                {selectedSubject && (
+                  <>
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">
+                          Profesor Asignatura
+                        </Label>
+                        <span className="text-sm text-muted-foreground">
+                          {dataEstudiantes.length} estudiantes en el curso
+                        </span>
                       </div>
+                      <Select
+                        value={selectedSubject.profesor_jefe_id?.toString()}
+                        onValueChange={async (value) => {
+                          try {
+                            const response = await fetch(
+                              `${API_BASE_URL}/asignaturascursos/${selectedSubject.id}/${selectedSubject.curso_id}`,
+                              {
+                                method: "PUT",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${token}`,
+                                },
+                                body: JSON.stringify({
+                                  profesor_id: parseInt(value),
+                                }),
+                              }
+                            );
+
+                            if (!response.ok)
+                              throw new Error("Error al actualizar profesor");
+
+                            setSubjectsForCourse((prevSubjects) =>
+                              prevSubjects.map((subject) =>
+                                subject.id === selectedSubject.id
+                                  ? {
+                                      ...subject,
+                                      profesor_jefe_id: parseInt(value),
+                                    }
+                                  : subject
+                              )
+                            );
+
+                            setSelectedSubject({
+                              ...selectedSubject,
+                              profesor_jefe_id: parseInt(value),
+                            });
+
+                            toast({
+                              title: "Éxito",
+                              description: "Profesor actualizado correctamente",
+                            });
+                          } catch (error) {
+                            console.error("Error:", error);
+                            toast({
+                              title: "Error",
+                              description: "Error al actualizar profesor",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Seleccione profesor jefe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dataUsuarios
+                            ?.filter((user) => user.activo)
+                            .map((profesor) => (
+                              <SelectItem
+                                key={profesor.id}
+                                value={profesor.id.toString()}
+                                className="flex flex-col items-start"
+                              >
+                                <span className="font-medium">{profesor.nombre}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {profesor.email}
+                                </span>
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
+
+                    {loadingEstudiantes ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Spinner />
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">
+                            Inscripción de Estudiantes
+                          </Label>
+                          <DialogFooter className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (selectedSubject) {
+                                    const allSelected = dataEstudiantes.every(
+                                      (estudiante) =>
+                                        enrolledStudents[
+                                          `${estudiante.id}-${selectedSubject.id}`
+                                        ]
+                                    );
+
+                                    if (!allSelected) {
+                                      const updatedEnrolledStudents = {
+                                        ...enrolledStudents,
+                                      };
+
+                                      dataEstudiantes.forEach((estudiante) => {
+                                        updatedEnrolledStudents[
+                                          `${estudiante.id}-${selectedSubject.id}`
+                                        ] = true;
+                                      });
+
+                                      setEnrolledStudents(updatedEnrolledStudents);
+
+                                      dataEstudiantes.forEach((estudiante) => {
+                                        handleCheckboxChange(
+                                          estudiante.id,
+                                          selectedSubject.id,
+                                          true
+                                        );
+                                      });
+                                    }
+                                  }
+                                }}
+                                className="flex items-center gap-2"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth={1.5}
+                                  stroke="currentColor"
+                                  className="w-4 h-4"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                  />
+                                </svg>
+                                Seleccionar Todos
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setIsModalSubjectsOpen(false);
+                                  setSelectedSubject(null);
+                                  setDataEstudiantes([]);
+                                  setEnrolledStudents({});
+                                }}
+                              >
+                                Cerrar
+                              </Button>
+                            </div>
+                          </DialogFooter>
+                        </div>
+                        <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-96 overflow-y-auto">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Array.isArray(dataEstudiantes) &&
+                              dataEstudiantes.map((estudiante) => (
+                                <div
+                                  key={estudiante.id}
+                                  className="flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  <div className="flex-shrink-0">
+                                    <input
+                                      type="checkbox"
+                                      id={`estudiante-${estudiante.id}`}
+                                      checked={
+                                        enrolledStudents[
+                                          `${estudiante.id}-${selectedSubject?.id}`
+                                        ] || false
+                                      }
+                                      onChange={(e) => {
+                                        if (selectedSubject) {
+                                          handleCheckboxChange(
+                                            estudiante.id,
+                                            selectedSubject.id,
+                                            e.target.checked
+                                          );
+                                        }
+                                      }}
+                                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                    />
+                                  </div>
+                                  <div className="flex-grow">
+                                    <label
+                                      htmlFor={`estudiante-${estudiante.id}`}
+                                      className="flex flex-col cursor-pointer"
+                                    >
+                                      <span className="font-medium text-sm">
+                                        {estudiante.nombre}
+                                      </span>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        RUT: {estudiante.rut}
+                                      </span>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        Lista: {estudiante.numlista}
+                                      </span>
+                                    </label>
+                                  </div>
+                                  <div className="flex-shrink-0">
+                                    {enrolledStudents[
+                                      `${estudiante.id}-${selectedSubject?.id}`
+                                    ] && (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                        Inscrito
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
             )}
           </div>
         </DialogContent>
