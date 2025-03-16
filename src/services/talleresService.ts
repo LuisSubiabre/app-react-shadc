@@ -14,7 +14,15 @@ export const getTallerById = async (taller_id: number) => {
 };
 
 export const saveNewTaller = async (taller: TallerType) => {
-  return api.post(`/talleres`, taller).then((response) => response.data);
+  try {
+    console.log("Enviando taller al servidor:", taller);
+    const response = await api.post(`/talleres`, taller);
+    console.log("Respuesta completa del servidor:", response);
+    return response.data;
+  } catch (error) {
+    console.error("Error en saveNewTaller:", error);
+    throw error;
+  }
 };
 
 export const saveEditTaller = async (taller: TallerType) => {

@@ -51,7 +51,7 @@ export const FiltrosCalificaciones: React.FC<FiltrosCalificacionesProps> = ({
         </Select>
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid gap-2 m-4">
         <Label>Seleccionar Asignatura:</Label>
         <Select
           disabled={asignaturas.length === 0}
