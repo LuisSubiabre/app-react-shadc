@@ -308,22 +308,35 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
                             numericValue
                           );
                         }}
-                        className="flex flex-col space-y-1"
+                        className="flex flex-col gap-0.5"
                       >
                         {Object.entries(CONCEPT_MAP).map(([concept, value]) => (
                           <div
                             key={concept}
-                            className="flex items-center space-x-2"
+                            className="flex items-center group relative"
                           >
                             <RadioGroupItem
                               value={value === null ? "null" : String(value)}
                               id={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${concept}`}
+                              className="peer sr-only"
                             />
                             <Label
                               htmlFor={`${estudiante.id}-${asignaturaSeleccionada}-${index}-${concept}`}
+                              className="w-full px-2 py-0.5 text-xs font-medium cursor-pointer transition-colors bg-muted hover:bg-muted/80 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground rounded-sm"
                             >
                               {concept}
                             </Label>
+                            {/* <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-0.5 bg-popover text-popover-foreground text-xs rounded-sm border opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm">
+                              {concept === "MB"
+                                ? "Muy Bueno (70)"
+                                : concept === "B"
+                                ? "Bueno (50)"
+                                : concept === "S"
+                                ? "Suficiente (40)"
+                                : concept === "I"
+                                ? "Insuficiente (30)"
+                                : "Quitar calificación"}
+                            </div> */}
                           </div>
                         ))}
                       </RadioGroup>
