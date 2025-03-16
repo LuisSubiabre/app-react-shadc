@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
