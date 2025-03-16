@@ -12,7 +12,6 @@ import { CursoApiResponseType } from "@/types/index.ts";
 import Spinner from "@/components/Spinner";
 import { TallerType } from "@/types/index.ts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
 
 interface ModalCursosProps {
   isOpen: boolean;
