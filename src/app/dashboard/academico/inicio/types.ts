@@ -12,8 +12,8 @@ export interface Curso {
 export interface AsignaturaCurso {
   id: number;
   nombre: string;
-  descripcion?: string;
-  profesor_jefe_id?: number;
+  descripcion: string;
   curso_id: number;
-  asignatura_concepto: boolean;
+  profesor_jefe_id?: number;
+  inscritos?: number;
 }

@@ -34,9 +34,7 @@ const Asignaturas = lazy(
 const AcademicoInicio = lazy(
   () => import("@/app/dashboard/academico/inicio/pageInicio")
 );
-const Calificaciones = lazy(
-  () => import("@/app/dashboard/academico/calificaciones/pageCalificaciones2")
-);
+
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
 );
@@ -193,16 +191,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/dashboard/academico/calificaciones/:id"
-                element={
-                  <ProtectedRoute requiredRoles={[2]}>
-                    <Layout>
-                      <Calificaciones />
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
+
               <Route
                 path="/dashboard/inspectoria/asistencia"
                 element={

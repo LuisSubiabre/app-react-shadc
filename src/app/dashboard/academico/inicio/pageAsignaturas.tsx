@@ -123,10 +123,11 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       </div>
     ); // Mensaje de error al cargar los datos de la API
 
-  const estudiantesCurso = async (curso_id: number) => {
+  const handleAsignaturasClick = async (curso: Curso) => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/cursos/estudiantes/${curso_id}`,
+      // Cargar estudiantes
+      const estudiantesResponse = await fetch(
+        `${API_BASE_URL}/cursos/estudiantes/${curso.id}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -134,25 +135,16 @@ const AcademicoCursoAsignaturas: React.FC = () => {
           },
         }
       );
-      const responseData = await response.json();
-      // Mapear los datos para adaptar estudiante_id a id
-      const mappedData = Array.isArray(responseData)
-        ? responseData.map((estudiante) => ({
+      const estudiantesData = await estudiantesResponse.json();
+      const estudiantes = Array.isArray(estudiantesData)
+        ? estudiantesData.map((estudiante) => ({
             ...estudiante,
-            id: estudiante.estudiante_id, // Mantener estudiante_id como id para compatibilidad
+            id: estudiante.estudiante_id,
           }))
         : [];
-      setDataEstudiantes(mappedData);
-      // console.log(mappedData);
-    } catch (error) {
-      console.error("Error fetching students:", error);
-      setDataEstudiantes([]);
-    }
-  };
+      setDataEstudiantes(estudiantes);
 
-  const handleAsignaturasClick = async (curso: Curso) => {
-    estudiantesCurso(curso.id);
-    try {
+      // Cargar asignaturas
       const response = await fetch(
         `${API_BASE_URL}/asignaturascursos/curso/${curso.id}`,
         {
@@ -164,7 +156,6 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       if (!response.ok) throw new Error("Error al cargar asignaturas");
       const data = await response.json();
 
-      // Mapear los datos recibidos al formato esperado
       const mappedSubjects = data.data.map(
         (item: {
           asignatura_id: number;
@@ -178,20 +169,61 @@ const AcademicoCursoAsignaturas: React.FC = () => {
           descripcion: item.asignatura_descripcion,
           curso_id: item.curso_id,
           profesor_jefe_id: item.profesor_id,
+          inscritos: 0,
         })
       );
-      setSubjectsForCourse(mappedSubjects || []);
-      // console.log(subjectsForCourse);
+
+      // Cargar inscripciones para todas las asignaturas
+      const enrollments: { [key: string]: boolean } = {};
+      for (const estudiante of estudiantes) {
+        for (const asignatura of mappedSubjects) {
+          const isEnrolled = await checkStudentEnrollment(
+            estudiante.id,
+            asignatura.id
+          );
+          enrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
+          if (isEnrolled) {
+            // Actualizar el contador de inscritos
+            const asignaturaIndex = mappedSubjects.findIndex(
+              (s: AsignaturaCurso) => s.id === asignatura.id
+            );
+            if (asignaturaIndex !== -1) {
+              mappedSubjects[asignaturaIndex].inscritos = (mappedSubjects[asignaturaIndex].inscritos || 0) + 1;
+            }
+          }
+        }
+      }
+      setEnrolledStudents(enrollments);
+      setSubjectsForCourse(mappedSubjects);
+
       setCurrentCurso(curso);
       setIsModalSubjectsOpen(true);
     } catch (error) {
       console.error("Error:", error);
-      setSubjectsForCourse([]); // Asegúrate de que sea un array vacío en caso de error
+      setSubjectsForCourse([]);
     }
   };
 
-  const handleSubjectSelect = (asignatura: AsignaturaCurso) => {
+  const handleSubjectSelect = async (asignatura: AsignaturaCurso) => {
     setSelectedSubject(asignatura);
+    
+    // Verificar si ya tenemos las inscripciones para esta asignatura
+    const hasEnrollments = dataEstudiantes.some(
+      (estudiante) => `${estudiante.id}-${asignatura.id}` in enrolledStudents
+    );
+
+    // Si no tenemos las inscripciones, cargarlas
+    if (!hasEnrollments) {
+      const newEnrollments = { ...enrolledStudents };
+      for (const estudiante of dataEstudiantes) {
+        const isEnrolled = await checkStudentEnrollment(
+          estudiante.id,
+          asignatura.id
+        );
+        newEnrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
+      }
+      setEnrolledStudents(newEnrollments);
+    }
   };
 
   const checkStudentEnrollment = async (
@@ -254,10 +286,25 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         if (!response.ok) throw new Error("Error al desinscribir estudiante");
       }
 
+      // Actualizar el estado manteniendo las inscripciones existentes
       setEnrolledStudents((prev) => ({
         ...prev,
         [`${estudiante_id}-${asignatura_id}`]: isChecked,
       }));
+
+      // Actualizar el contador de inscritos en subjectsForCourse
+      setSubjectsForCourse((prevSubjects) =>
+        prevSubjects.map((subject) =>
+          subject.id === asignatura_id
+            ? {
+                ...subject,
+                inscritos: isChecked
+                  ? (subject.inscritos || 0) + 1
+                  : (subject.inscritos || 1) - 1,
+              }
+            : subject
+        )
+      );
 
       toast({
         title: isChecked ? "Estudiante inscrito" : "Estudiante desinscrito",
@@ -416,10 +463,15 @@ const AcademicoCursoAsignaturas: React.FC = () => {
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
-            <div className="grid gap-2">
-              <Label className="text-sm font-medium">
-                Seleccionar Asignatura
-              </Label>
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  Seleccionar Asignatura
+                </Label>
+                <span className="text-sm text-muted-foreground">
+                  {subjectsForCourse.length} asignaturas disponibles
+                </span>
+              </div>
               <Select
                 onValueChange={(value) => {
                   const asignatura = subjectsForCourse.find(
@@ -436,8 +488,12 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                     <SelectItem
                       key={asignatura.id}
                       value={asignatura.id.toString()}
+                      className="flex flex-col items-start"
                     >
-                      {asignatura.nombre}
+                      <span className="font-medium">{asignatura.nombre}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {asignatura.inscritos} inscritos • {dataEstudiantes.length - (asignatura.inscritos || 0)} no inscritos
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -446,10 +502,15 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
             {selectedSubject && (
               <>
-                <div className="grid gap-2">
-                  <Label className="text-sm font-medium">
-                    Profesor Asignatura
-                  </Label>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">
+                      Profesor Asignatura
+                    </Label>
+                    <span className="text-sm text-muted-foreground">
+                      {dataEstudiantes.length} estudiantes en el curso
+                    </span>
+                  </div>
                   <Select
                     value={selectedSubject.profesor_jefe_id?.toString()}
                     onValueChange={async (value) => {
@@ -471,7 +532,6 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         if (!response.ok)
                           throw new Error("Error al actualizar profesor");
 
-                        // Actualizar el estado local de subjectsForCourse
                         setSubjectsForCourse((prevSubjects) =>
                           prevSubjects.map((subject) =>
                             subject.id === selectedSubject.id
@@ -512,8 +572,12 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                           <SelectItem
                             key={profesor.id}
                             value={profesor.id.toString()}
+                            className="flex flex-col items-start"
                           >
-                            {profesor.nombre}
+                            <span className="font-medium">{profesor.nombre}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {profesor.email}
+                            </span>
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -530,115 +594,140 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       <Label className="text-sm font-medium">
                         Inscripción de Estudiantes
                       </Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (selectedSubject) {
-                            const allSelected = dataEstudiantes.every(
-                              (estudiante) =>
-                                enrolledStudents[
-                                  `${estudiante.id}-${selectedSubject.id}`
-                                ]
-                            );
-
-                            if (!allSelected) {
-                              const updatedEnrolledStudents = {
-                                ...enrolledStudents,
-                              };
-
-                              dataEstudiantes.forEach((estudiante) => {
-                                updatedEnrolledStudents[
-                                  `${estudiante.id}-${selectedSubject.id}`
-                                ] = true;
-                              });
-
-                              setEnrolledStudents(updatedEnrolledStudents);
-
-                              dataEstudiantes.forEach((estudiante) => {
-                                handleCheckboxChange(
-                                  estudiante.id,
-                                  selectedSubject.id,
-                                  true
+                      <DialogFooter className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedSubject) {
+                                const allSelected = dataEstudiantes.every(
+                                  (estudiante) =>
+                                    enrolledStudents[
+                                      `${estudiante.id}-${selectedSubject.id}`
+                                    ]
                                 );
-                              });
-                            }
-                          }
-                        }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-4 h-4 mr-2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                          />
-                        </svg>
-                        Seleccionar Todos
-                      </Button>
-                    </div>
-                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-64 overflow-y-auto">
-                      <ul className="space-y-2">
-                        {Array.isArray(dataEstudiantes) &&
-                          dataEstudiantes.map((estudiante) => (
-                            <li
-                              key={estudiante.id}
-                              className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            >
-                              <input
-                                type="checkbox"
-                                id={`estudiante-${estudiante.id}`}
-                                checked={
-                                  enrolledStudents[
-                                    `${estudiante.id}-${selectedSubject?.id}`
-                                  ] || false
-                                }
-                                onChange={(e) => {
-                                  if (selectedSubject) {
+
+                                if (!allSelected) {
+                                  const updatedEnrolledStudents = {
+                                    ...enrolledStudents,
+                                  };
+
+                                  dataEstudiantes.forEach((estudiante) => {
+                                    updatedEnrolledStudents[
+                                      `${estudiante.id}-${selectedSubject.id}`
+                                    ] = true;
+                                  });
+
+                                  setEnrolledStudents(updatedEnrolledStudents);
+
+                                  dataEstudiantes.forEach((estudiante) => {
                                     handleCheckboxChange(
                                       estudiante.id,
                                       selectedSubject.id,
-                                      e.target.checked
+                                      true
                                     );
-                                  }
-                                }}
-                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                                  });
+                                }
+                              }
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                               />
-                              <label
-                                htmlFor={`estudiante-${estudiante.id}`}
-                                className="text-sm cursor-pointer"
-                              >
-                                {estudiante.nombre}
-                              </label>
-                            </li>
+                            </svg>
+                            Seleccionar Todos
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsModalSubjectsOpen(false);
+                              setSelectedSubject(null);
+                              setDataEstudiantes([]);
+                              setEnrolledStudents({});
+                            }}
+                          >
+                            Cerrar
+                          </Button>
+                        </div>
+                      </DialogFooter>
+                    </div>
+                    <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-96 overflow-y-auto">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.isArray(dataEstudiantes) &&
+                          dataEstudiantes.map((estudiante) => (
+                            <div
+                              key={estudiante.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                            >
+                              <div className="flex-shrink-0">
+                                <input
+                                  type="checkbox"
+                                  id={`estudiante-${estudiante.id}`}
+                                  checked={
+                                    enrolledStudents[
+                                      `${estudiante.id}-${selectedSubject?.id}`
+                                    ] || false
+                                  }
+                                  onChange={(e) => {
+                                    if (selectedSubject) {
+                                      handleCheckboxChange(
+                                        estudiante.id,
+                                        selectedSubject.id,
+                                        e.target.checked
+                                      );
+                                    }
+                                  }}
+                                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                              </div>
+                              <div className="flex-grow">
+                                <label
+                                  htmlFor={`estudiante-${estudiante.id}`}
+                                  className="flex flex-col cursor-pointer"
+                                >
+                                  <span className="font-medium text-sm">
+                                    {estudiante.nombre}
+                                  </span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    RUT: {estudiante.rut}
+                                  </span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    Lista: {estudiante.numlista}
+                                  </span>
+                                </label>
+                              </div>
+                              <div className="flex-shrink-0">
+                                {enrolledStudents[
+                                  `${estudiante.id}-${selectedSubject?.id}`
+                                ] && (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    Inscrito
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           ))}
-                      </ul>
+                      </div>
                     </div>
                   </div>
                 )}
               </>
             )}
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsModalSubjectsOpen(false);
-                setSelectedSubject(null);
-                setDataEstudiantes([]);
-                setEnrolledStudents({});
-              }}
-            >
-              Cerrar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
       {/* Modal de confirmación para desinscribir */}
