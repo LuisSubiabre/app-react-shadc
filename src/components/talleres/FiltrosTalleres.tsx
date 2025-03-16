@@ -23,6 +23,7 @@ interface FiltrosTalleresProps {
     e: React.ChangeEvent<HTMLInputElement>,
     form: "new" | "edit"
   ) => void;
+  isEditMode?: boolean;
 }
 
 export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
@@ -32,6 +33,7 @@ export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
   onFuncionarioChange,
   newTaller,
   handleInputChange,
+  isEditMode = false,
 }) => {
   return (
     <div className="grid gap-4 py-4">
@@ -41,7 +43,7 @@ export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
           id="taller_nombre"
           name="taller_nombre"
           value={newTaller.taller_nombre}
-          onChange={(e) => handleInputChange(e, "new")}
+          onChange={(e) => handleInputChange(e, isEditMode ? "edit" : "new")}
         />
       </div>
       <div className="grid gap-2">
@@ -50,7 +52,7 @@ export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
           id="taller_descripcion"
           name="taller_descripcion"
           value={newTaller.taller_descripcion}
-          onChange={(e) => handleInputChange(e, "new")}
+          onChange={(e) => handleInputChange(e, isEditMode ? "edit" : "new")}
         />
       </div>
       <div className="grid gap-2">
@@ -60,65 +62,75 @@ export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
           id="taller_horario"
           name="taller_horario"
           value={newTaller.taller_horario}
-          onChange={(e) => handleInputChange(e, "new")}
+          onChange={(e) => handleInputChange(e, isEditMode ? "edit" : "new")}
         />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="nivel">Nivel</Label>
         <Select
-          name="nivel"
-          defaultValue="pre-basica"
-          value={newTaller.taller_nivel?.toString()}
+          value={newTaller.taller_nivel}
           onValueChange={(value) =>
             handleInputChange(
               {
                 target: {
                   name: "taller_nivel",
-                  value,
-                  type: "select-one",
+                  value: value,
                 },
               } as React.ChangeEvent<HTMLInputElement>,
-              "new"
+              isEditMode ? "edit" : "new"
             )
           }
         >
           <SelectTrigger>
-            <SelectValue placeholder="Seleccionar nivel" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pre-basica">Pre-Básica</SelectItem>
-            <SelectItem value="basica">Básica</SelectItem>
-            <SelectItem value="media">Media</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        {loadingFuncionario && <Spinner />}
-        {errorFuncionario && (
-          <div className="text-red-500 text-sm">{errorFuncionario}</div>
-        )}
-        <Label htmlFor="descripcion">Monitor:</Label>
-        <Select onValueChange={onFuncionarioChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Seleccione Monitor" />
+            <SelectValue placeholder="Seleccione un nivel" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>Funcionarios</SelectLabel>
-              {funcionarios?.map((user) => (
-                <SelectItem
-                  key={user.id}
-                  value={JSON.stringify({
-                    id: user.id,
-                    nombre: user.nombre,
-                  })}
-                >
-                  {user.nombre}
-                </SelectItem>
-              ))}
+              <SelectLabel>Niveles</SelectLabel>
+              <SelectItem value="pre-basica">Pre-básica</SelectItem>
+              <SelectItem value="basica">Básica</SelectItem>
+              <SelectItem value="media">Media</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="profesor">Profesor</Label>
+        {loadingFuncionario ? (
+          <Spinner />
+        ) : errorFuncionario ? (
+          <div className="text-red-500">{errorFuncionario}</div>
+        ) : (
+          <Select
+            value={JSON.stringify({
+              id: newTaller.taller_profesor_id,
+              nombre: funcionarios.find(
+                (f) => f.id === newTaller.taller_profesor_id
+              )?.nombre,
+            })}
+            onValueChange={onFuncionarioChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccione un profesor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Profesores</SelectLabel>
+                {funcionarios.map((funcionario) => (
+                  <SelectItem
+                    key={funcionario.id}
+                    value={JSON.stringify({
+                      id: funcionario.id,
+                      nombre: funcionario.nombre,
+                    })}
+                  >
+                    {funcionario.nombre}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )}
       </div>
       <div className="grid gap-2">
         <Label htmlFor="cupos">Cantidad de cupos</Label>
@@ -127,7 +139,7 @@ export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
           id="taller_cantidad_cupos"
           name="taller_cantidad_cupos"
           value={newTaller.taller_cantidad_cupos}
-          onChange={(e) => handleInputChange(e, "new")}
+          onChange={(e) => handleInputChange(e, isEditMode ? "edit" : "new")}
         />
       </div>
     </div>
