@@ -184,7 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return user?.roles?.includes(3); // Mostrar "Models" solo si el usuario tiene el rol 2
       }
       if (menu.title === "Acles") {
-        return user?.roles?.includes(1); // Mostrar "Models" solo si el usuario tiene el rol 2
+        return user?.roles?.includes(4); // Mostrar "Models" solo si el usuario tiene el rol 2
       }
       if (menu.title == "Jefatura") {
         return !user?.roles?.includes(3); // No mostrar "Jefatura" si el usuario tiene el rol 3, Inspectoria
