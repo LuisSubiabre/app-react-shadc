@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom"; // Importar useLocation para obtener la ruta actual
+import packageJson from "../../package.json";
 
 import {
   AudioWaveform,
@@ -206,12 +207,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <ModeToggle />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser
-          user={{
-            name: user?.nombre || "Invitado",
-            email: user?.email || "N/A",
-          }}
-        />
+        <div className="flex flex-col gap-2">
+          <div className="text-xs text-muted-foreground text-center">
+            Versión {packageJson.version}
+          </div>
+          <NavUser
+            user={{
+              name: user?.nombre || "Invitado",
+              email: user?.email || "N/A",
+            }}
+          />
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
