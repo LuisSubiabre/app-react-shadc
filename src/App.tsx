@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
 import Spinner from "./components/Spinner";
 import ErrorBoundary from "@/components/ErrorBoundary"; // Importa el ErrorBoundary
+import { Toaster } from "@/components/ui/toaster";
 import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageEditarCurso";
 import AcademicoCursosAsignaturas from "./app/dashboard/academico/inicio/pageAsignaturas";
 import PageCalificaciones from "./app/dashboard/academico/calificaciones/pageCalificaciones";
@@ -34,6 +35,7 @@ const Asignaturas = lazy(
 const AcademicoInicio = lazy(
   () => import("@/app/dashboard/academico/inicio/pageInicio")
 );
+const Calendarios = lazy(() => import("@/app/dashboard/calendarios/pageCalendarios"));
 
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
@@ -96,6 +98,16 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Dashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/calendarios"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Calendarios />
                     </Layout>
                   </ProtectedRoute>
                 }
@@ -258,6 +270,7 @@ function App() {
               {/* Redirect to login if not authenticated */}
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
+            <Toaster />
           </Suspense>
         </ErrorBoundary>
       </AuthProvider>

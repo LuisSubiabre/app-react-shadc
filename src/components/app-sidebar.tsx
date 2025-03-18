@@ -10,9 +10,9 @@ import {
   Frame,
   GalleryVerticalEnd,
   PieChart,
-  Settings2,
   SquareTerminal,
   BookDashed,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
@@ -41,6 +41,11 @@ const data = {
       name: "Reglamentos",
       url: "#",
       icon: PieChart,
+    },
+    {
+      name: "Calendarios",
+      url: "/calendarios",
+      icon: Calendar,
     },
   ],
   teams: [
@@ -94,7 +99,6 @@ const data = {
       url: "#",
       icon: Bot,
       isActive: false,
-
       items: [
         {
           title: "Cursos",
@@ -108,47 +112,33 @@ const data = {
           title: "Calificaciones",
           url: "/dashboard/academico/notas",
         },
-        // {
-        //   title: "Libretas",
-        //   url: "#",
-        // },
       ],
     },
     {
       title: "Inspectoria",
       url: "#",
       icon: BookOpen,
+      isActive: false,
       items: [
         {
           title: "Asistencia",
           url: "/dashboard/inspectoria/asistencia",
         },
         {
-          title: "Registro Atrasos",
+          title: "Atrasos",
           url: "/dashboard/inspectoria/atrasos",
         },
         {
-          title: "Control Atrasos",
+          title: "Control de Atrasos",
           url: "/dashboard/inspectoria/controlatrasos",
         },
       ],
     },
     {
-      title: "Jefatura",
-      url: "#",
-      icon: BookDashed,
-      items: [
-        {
-          title: "Mi Curso",
-          url: "/dashboard/jefatura",
-        },
-      ],
-    },
-
-    {
       title: "Acles",
       url: "#",
-      icon: Settings2,
+      icon: BookDashed,
+      isActive: false,
       items: [
         {
           title: "Talleres",
@@ -156,6 +146,7 @@ const data = {
         },
       ],
     },
+
   ],
 };
 
