@@ -124,7 +124,7 @@ export function LoginForm({
             setError({
               title: "Credenciales Incorrectas",
               message:
-                "El email o la contraseña ingresados no son correctos. Por favor, verifica tus datos e intenta nuevamente.",
+                "El email o la contraseña ingresados no son correctos o el usuario no se encuentra ativo. Por favor, contacte con el administrador del sistemaa.",
             });
             break;
           case "REDIRECT_ERROR":
