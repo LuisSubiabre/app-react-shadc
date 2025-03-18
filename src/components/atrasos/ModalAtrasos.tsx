@@ -12,6 +12,13 @@ import { EstudianteType, Atraso } from "@/types";
 import { format } from "date-fns";
 import { createAtraso, deleteAtraso } from "@/services/atrasosService";
 import { Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ModalAtrasosProps {
   isOpen: boolean;
@@ -31,6 +38,7 @@ export function ModalAtrasos({
   const [fecha, setFecha] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [hora, setHora] = useState(format(new Date(), "HH:mm"));
   const [observaciones, setObservaciones] = useState("");
+  const [tipo, setTipo] = useState<"llegada" | "jornada">("llegada");
 
   const formatearFecha = (fechaStr: string) => {
     // Crear una fecha desde el string, asumiendo que es UTC
@@ -61,7 +69,7 @@ export function ModalAtrasos({
         fecha: fechaUTC.toISOString(),
         hora: hora,
         hora_registro: format(new Date(), "HH:mm:ss"),
-        tipo: "llegada",
+        tipo: tipo,
         justificado: false,
         observaciones: observaciones,
         fecha_registro: new Date().toISOString(),
@@ -116,6 +124,18 @@ export function ModalAtrasos({
                   />
                 </div>
                 <div className="grid gap-2">
+                  <label htmlFor="tipo">Tipo de Atraso</label>
+                  <Select value={tipo} onValueChange={(value: "llegada" | "jornada") => setTipo(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="llegada">Atraso Llegada</SelectItem>
+                      <SelectItem value="jornada">Atraso Jornada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
                   <label htmlFor="observaciones">Observaciones</label>
                   <Input
                     id="observaciones"
@@ -141,7 +161,7 @@ export function ModalAtrasos({
                         {formatearFecha(atraso.fecha)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Hora: {atraso.hora} - {atraso.atraso_id}
+                        Hora: {atraso.hora} - Tipo: {atraso.tipo === "llegada" ? "Llegada" : "Jornada"}
                       </p>
                       {atraso.observaciones && (
                         <p className="text-sm text-muted-foreground mt-1">

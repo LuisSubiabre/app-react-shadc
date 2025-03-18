@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { CursoApiResponseType, EstudianteType } from "@/types";
 
-import { Clock } from "lucide-react";
+import { Clock, Calendar } from "lucide-react";
 import { getCursos } from "@/services/cursosService";
 import {
   estudiantesCurso,
@@ -97,7 +97,7 @@ const PageAtrasos = () => {
     second: "2-digit",
   });
 
-  const handleNewAtraso = async (estudianteId: number) => {
+  const handleNewAtraso = async (estudianteId: number, tipo: "llegada" | "jornada") => {
     const estudiante = estudiantes.find((e) => e.id === estudianteId);
     if (!estudiante) return;
 
@@ -108,48 +108,78 @@ const PageAtrasos = () => {
         fecha: new Date().toISOString(),
         hora: puntaArenasTime,
         hora_registro: puntaArenasTime,
-        tipo: "llegada",
+        tipo: tipo,
         justificado: false,
         observaciones: "",
         fecha_registro: new Date().toISOString(),
       });
 
       // Imprimir el ticket
-      const printSuccess = await printAtraso(estudiante, puntaArenasTime);
+      const printSuccess = await printAtraso(estudiante, puntaArenasTime, tipo);
 
       if (!printSuccess) {
         alert("Error al imprimir el ticket");
-        // Aquí podrías mostrar una notificación al usuario
       }
     } catch (error) {
       alert("Error al registrar el atraso:" + error);
-      // Aquí podrías mostrar una notificación al usuario
     }
   };
 
   const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const filteredEstudiantes = estudiantes.filter((estudiante) => {
-    if (!searchTerm) return true;
+  const filteredEstudiantes = estudiantes
+    .filter((estudiante) => {
+      if (!searchTerm) return true;
 
-    const searchTermNormalized = normalizeString(searchTerm.toLowerCase());
-    const nombreNormalized = normalizeString(estudiante.nombre.toLowerCase());
-    const rutNormalized = normalizeString(estudiante.rut?.toLowerCase() || "");
-    const emailNormalized = normalizeString(
-      estudiante.email?.toLowerCase() || ""
-    );
-    const cursoNormalized = normalizeString(
-      estudiante.curso_nombre?.toLowerCase() || ""
-    );
+      // Normalizar el término de búsqueda eliminando espacios múltiples
+      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const nombreNormalized = normalizeString(estudiante.nombre.toLowerCase());
+      const rutNormalized = normalizeString(estudiante.rut?.toLowerCase() || "");
+      const emailNormalized = normalizeString(
+        estudiante.email?.toLowerCase() || ""
+      );
+      const cursoNormalized = normalizeString(
+        estudiante.curso_nombre?.toLowerCase() || ""
+      );
 
-    return (
-      nombreNormalized.includes(searchTermNormalized) ||
-      rutNormalized.includes(searchTermNormalized) ||
-      emailNormalized.includes(searchTermNormalized) ||
-      cursoNormalized.includes(searchTermNormalized)
-    );
-  });
+      // Si el término de búsqueda contiene espacios, buscar coincidencias exactas de palabras
+      if (searchTermNormalized.includes(' ')) {
+        const searchWords = searchTermNormalized.split(' ');
+        return searchWords.every(word => 
+          nombreNormalized.includes(word) ||
+          rutNormalized.includes(word) ||
+          emailNormalized.includes(word) ||
+          cursoNormalized.includes(word)
+        );
+      }
+
+      return (
+        nombreNormalized.includes(searchTermNormalized) ||
+        rutNormalized.includes(searchTermNormalized) ||
+        emailNormalized.includes(searchTermNormalized) ||
+        cursoNormalized.includes(searchTermNormalized)
+      );
+    })
+    .sort((a, b) => {
+      if (!searchTerm) return 0;
+      
+      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const nombreANormalized = normalizeString(a.nombre.toLowerCase());
+      const nombreBNormalized = normalizeString(b.nombre.toLowerCase());
+      
+      // Obtener la posición del término en cada nombre
+      const posA = nombreANormalized.indexOf(searchTermNormalized);
+      const posB = nombreBNormalized.indexOf(searchTermNormalized);
+      
+      // Si el término está en diferentes posiciones, ordenar por posición
+      if (posA !== posB) {
+        return posA - posB;
+      }
+      
+      // Si el término está en la misma posición, ordenar alfabéticamente
+      return nombreANormalized.localeCompare(nombreBNormalized);
+    });
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -338,15 +368,26 @@ const PageAtrasos = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleNewAtraso(estudiante.id)}
-                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                          >
-                            <Clock className="h-4 w-4 mr-2" />
-                            Añadir Atraso
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleNewAtraso(estudiante.id, "llegada")}
+                              className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                            >
+                              <Clock className="h-4 w-4 mr-2" />
+                              Atraso Llegada
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleNewAtraso(estudiante.id, "jornada")}
+                              className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300"
+                            >
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Atraso Jornada
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

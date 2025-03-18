@@ -11,7 +11,8 @@ import { EstudianteType } from "@/types";
 import { useState, useEffect } from "react";
 import { getEstudiantes } from "@/services/estudiantesService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Search, Clock, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createAtraso } from "@/services/atrasosService";
+import { printAtraso } from "@/services/printService";
 
 const TablaEstudiantes = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
@@ -62,33 +65,100 @@ const TablaEstudiantes = () => {
     )
   ).sort();
 
-  const filteredEstudiantes = estudiantes.filter((estudiante) => {
-    // Primero aplicar filtro de curso
-    if (
-      cursoSeleccionado !== "todos" &&
-      estudiante.curso_nombre !== cursoSeleccionado
-    ) {
-      return false;
+  const handleNewAtraso = async (estudianteId: number, tipo: "llegada" | "jornada") => {
+    const estudiante = estudiantes.find((e) => e.id === estudianteId);
+    if (!estudiante) return;
+
+    const horaActual = new Date().toLocaleString("es-CL", {
+      timeZone: "America/Punta_Arenas",
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    try {
+      // Crear el atraso
+      await createAtraso({
+        estudiante_id: estudianteId,
+        fecha: new Date().toISOString(),
+        hora: horaActual,
+        hora_registro: horaActual,
+        tipo: tipo,
+        justificado: false,
+        observaciones: "",
+        fecha_registro: new Date().toISOString(),
+      });
+
+      // Imprimir el ticket
+      const printSuccess = await printAtraso(estudiante, horaActual, tipo);
+
+      if (!printSuccess) {
+        alert("Error al imprimir el ticket");
+      }
+    } catch (error) {
+      alert("Error al registrar el atraso:" + error);
     }
+  };
 
-    // Luego aplicar filtro de búsqueda
-    if (!searchTerm) return true;
+  const filteredEstudiantes = estudiantes
+    .filter((estudiante) => {
+      // Primero aplicar filtro de curso
+      if (
+        cursoSeleccionado !== "todos" &&
+        estudiante.curso_nombre !== cursoSeleccionado
+      ) {
+        return false;
+      }
 
-    const searchTermNormalized = normalizeString(searchTerm.toLowerCase());
-    const nombreNormalized = normalizeString(
-      (estudiante.estudiante_nombre || estudiante.nombre || "").toLowerCase()
-    );
-    const rutNormalized = normalizeString((estudiante.rut || "").toLowerCase());
-    const emailNormalized = normalizeString(
-      (estudiante.email || "").toLowerCase()
-    );
+      // Luego aplicar filtro de búsqueda
+      if (!searchTerm) return true;
 
-    return (
-      nombreNormalized.includes(searchTermNormalized) ||
-      rutNormalized.includes(searchTermNormalized) ||
-      emailNormalized.includes(searchTermNormalized)
-    );
-  });
+      // Normalizar el término de búsqueda eliminando espacios múltiples
+      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const nombreNormalized = normalizeString(
+        (estudiante.estudiante_nombre || estudiante.nombre || "").toLowerCase()
+      );
+      const rutNormalized = normalizeString((estudiante.rut || "").toLowerCase());
+      const emailNormalized = normalizeString(
+        (estudiante.email || "").toLowerCase()
+      );
+
+      // Si el término de búsqueda contiene espacios, buscar coincidencias exactas de palabras
+      if (searchTermNormalized.includes(' ')) {
+        const searchWords = searchTermNormalized.split(' ');
+        return searchWords.every(word => 
+          nombreNormalized.includes(word) ||
+          rutNormalized.includes(word) ||
+          emailNormalized.includes(word)
+        );
+      }
+
+      return (
+        nombreNormalized.includes(searchTermNormalized) ||
+        rutNormalized.includes(searchTermNormalized) ||
+        emailNormalized.includes(searchTermNormalized)
+      );
+    })
+    .sort((a, b) => {
+      if (!searchTerm) return 0;
+      
+      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const nombreANormalized = normalizeString((a.estudiante_nombre || a.nombre || "").toLowerCase());
+      const nombreBNormalized = normalizeString((b.estudiante_nombre || b.nombre || "").toLowerCase());
+      
+      // Obtener la posición del término en cada nombre
+      const posA = nombreANormalized.indexOf(searchTermNormalized);
+      const posB = nombreBNormalized.indexOf(searchTermNormalized);
+      
+      // Si el término está en diferentes posiciones, ordenar por posición
+      if (posA !== posB) {
+        return posA - posB;
+      }
+      
+      // Si el término está en la misma posición, ordenar alfabéticamente
+      return nombreANormalized.localeCompare(nombreBNormalized);
+    });
 
   if (loading) {
     return (
@@ -176,12 +246,13 @@ const TablaEstudiantes = () => {
                 <TableHead className="font-medium">Estudiante</TableHead>
                 <TableHead className="font-medium">Email</TableHead>
                 <TableHead className="font-medium">Curso</TableHead>
+                <TableHead className="text-right font-medium">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEstudiantes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-3">
                         <svg
@@ -274,6 +345,28 @@ const TablaEstudiantes = () => {
                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-300">
                         {estudiante.curso_nombre || "Sin asignar"}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleNewAtraso(estudiante.id, "llegada")}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          Atraso Llegada
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleNewAtraso(estudiante.id, "jornada")}
+                          className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300"
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Atraso Jornada
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

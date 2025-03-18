@@ -226,7 +226,7 @@ function App() {
               <Route
                 path="/dashboard/acles/talleres"
                 element={
-                  <ProtectedRoute requiredRoles={[1]}>
+                  <ProtectedRoute requiredRoles={[4]}>
                     <Layout>
                       <AcleTalleres />
                     </Layout>
@@ -236,7 +236,7 @@ function App() {
               <Route
                 path="/dashboard/acles/talleres/inscritos/:id"
                 element={
-                  <ProtectedRoute requiredRoles={[1]}>
+                  <ProtectedRoute requiredRoles={[4]}>
                     <Layout>
                       <AclesInscritos />
                     </Layout>
