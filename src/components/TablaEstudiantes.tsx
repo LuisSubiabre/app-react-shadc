@@ -62,33 +62,64 @@ const TablaEstudiantes = () => {
     )
   ).sort();
 
-  const filteredEstudiantes = estudiantes.filter((estudiante) => {
-    // Primero aplicar filtro de curso
-    if (
-      cursoSeleccionado !== "todos" &&
-      estudiante.curso_nombre !== cursoSeleccionado
-    ) {
-      return false;
-    }
+  const filteredEstudiantes = estudiantes
+    .filter((estudiante) => {
+      // Primero aplicar filtro de curso
+      if (
+        cursoSeleccionado !== "todos" &&
+        estudiante.curso_nombre !== cursoSeleccionado
+      ) {
+        return false;
+      }
 
-    // Luego aplicar filtro de búsqueda
-    if (!searchTerm) return true;
+      // Luego aplicar filtro de búsqueda
+      if (!searchTerm) return true;
 
-    const searchTermNormalized = normalizeString(searchTerm.toLowerCase());
-    const nombreNormalized = normalizeString(
-      (estudiante.estudiante_nombre || estudiante.nombre || "").toLowerCase()
-    );
-    const rutNormalized = normalizeString((estudiante.rut || "").toLowerCase());
-    const emailNormalized = normalizeString(
-      (estudiante.email || "").toLowerCase()
-    );
+      // Normalizar el término de búsqueda eliminando espacios múltiples
+      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const nombreNormalized = normalizeString(
+        (estudiante.estudiante_nombre || estudiante.nombre || "").toLowerCase()
+      );
+      const rutNormalized = normalizeString((estudiante.rut || "").toLowerCase());
+      const emailNormalized = normalizeString(
+        (estudiante.email || "").toLowerCase()
+      );
 
-    return (
-      nombreNormalized.includes(searchTermNormalized) ||
-      rutNormalized.includes(searchTermNormalized) ||
-      emailNormalized.includes(searchTermNormalized)
-    );
-  });
+      // Si el término de búsqueda contiene espacios, buscar coincidencias exactas de palabras
+      if (searchTermNormalized.includes(' ')) {
+        const searchWords = searchTermNormalized.split(' ');
+        return searchWords.every(word => 
+          nombreNormalized.includes(word) ||
+          rutNormalized.includes(word) ||
+          emailNormalized.includes(word)
+        );
+      }
+
+      return (
+        nombreNormalized.includes(searchTermNormalized) ||
+        rutNormalized.includes(searchTermNormalized) ||
+        emailNormalized.includes(searchTermNormalized)
+      );
+    })
+    .sort((a, b) => {
+      if (!searchTerm) return 0;
+      
+      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const nombreANormalized = normalizeString((a.estudiante_nombre || a.nombre || "").toLowerCase());
+      const nombreBNormalized = normalizeString((b.estudiante_nombre || b.nombre || "").toLowerCase());
+      
+      // Obtener la posición del término en cada nombre
+      const posA = nombreANormalized.indexOf(searchTermNormalized);
+      const posB = nombreBNormalized.indexOf(searchTermNormalized);
+      
+      // Si el término está en diferentes posiciones, ordenar por posición
+      if (posA !== posB) {
+        return posA - posB;
+      }
+      
+      // Si el término está en la misma posición, ordenar alfabéticamente
+      return nombreANormalized.localeCompare(nombreBNormalized);
+    });
 
   if (loading) {
     return (
