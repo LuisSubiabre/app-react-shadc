@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.1.1...v1.2.0) (2025-03-18)
+
+
+### Features
+
+* se añade tipo de atraso jornada o llegada ([e93bfc5](https://github.com/LuisSubiabre/app-react-shadc/commit/e93bfc568025acdab3c61daaae290f3066b97bc0))
+
+
+### Bug Fixes
+
+* busqueda por apellido paterno ([7d77d07](https://github.com/LuisSubiabre/app-react-shadc/commit/7d77d07ab94fbc95ea14b76dbd150147b5fac54d))
+* orden y busqueda de estudiantes por apellido paterno ([a7d1cd7](https://github.com/LuisSubiabre/app-react-shadc/commit/a7d1cd7d1c8ec69b3da978df46e28d2159085d29))
+* rol talleres acle ([bc4ad0d](https://github.com/LuisSubiabre/app-react-shadc/commit/bc4ad0d4ed4c079eb4a03daddd7805fe196f44f2))
+
 ### [1.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.1.0...v1.1.1) (2025-03-16)
 
 
