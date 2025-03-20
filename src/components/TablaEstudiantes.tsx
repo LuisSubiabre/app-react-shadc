@@ -23,7 +23,11 @@ import {
 import { createAtraso } from "@/services/atrasosService";
 import { printAtraso } from "@/services/printService";
 
-const TablaEstudiantes = () => {
+interface TablaEstudiantesProps {
+  showAtrasosButtons?: boolean;
+}
+
+const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,7 +250,9 @@ const TablaEstudiantes = () => {
                 <TableHead className="font-medium">Estudiante</TableHead>
                 <TableHead className="font-medium">Email</TableHead>
                 <TableHead className="font-medium">Curso</TableHead>
-                <TableHead className="text-right font-medium">Acciones</TableHead>
+                {showAtrasosButtons && (
+                  <TableHead className="text-right font-medium">Acciones</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -346,28 +352,30 @@ const TablaEstudiantes = () => {
                         {estudiante.curso_nombre || "Sin asignar"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleNewAtraso(estudiante.id, "llegada")}
-                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                        >
-                          <Clock className="h-4 w-4 mr-2" />
-                          Atraso Llegada
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleNewAtraso(estudiante.id, "jornada")}
-                          className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300"
-                        >
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Atraso Jornada
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {showAtrasosButtons && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNewAtraso(estudiante.id, "llegada")}
+                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          >
+                            <Clock className="h-4 w-4 mr-2" />
+                            Atraso Llegada
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleNewAtraso(estudiante.id, "jornada")}
+                            className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300"
+                          >
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Atraso Jornada
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
