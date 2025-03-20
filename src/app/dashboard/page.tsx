@@ -25,7 +25,7 @@ const Dashboard = () => {
             </div>
             </div>
           <div className="rounded-xl bg-muted/50 p-4">
-            <TablaEstudiantes />
+            <TablaEstudiantes showAtrasosButtons={false} />
           </div>
          
         </div>

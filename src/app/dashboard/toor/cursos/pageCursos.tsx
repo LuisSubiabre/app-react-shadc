@@ -351,28 +351,28 @@ const Cursos: React.FC = () => {
 
     // Tabla
     const tableData = estudiantes.map((estudiante) => [
-      estudiante.id?.toString() || "",
-      estudiante.nombre || "",
-      estudiante.email || "",
-      estudiante.rut || "",
       estudiante.numlista?.toString() || "",
+      estudiante.nombre || "",
+      estudiante.rut || "",
+      estudiante.email || "",
+      estudiante.clave_email || "",
       estudiante.activo ? "Activo" : "Inactivo",
     ]);
 
     autoTable(doc, {
       startY: 30,
-      head: [["ID", "Nombre", "Email", "RUT", "N° Lista", "Estado"]],
+      head: [["N", "Nombre",  "RUT", "Email", "Clave", "Estado"]],
       body: tableData,
       theme: "grid",
       headStyles: { fillColor: [41, 128, 185] },
       styles: { fontSize: 8 },
       columnStyles: {
-        0: { cellWidth: 20 }, // ID
-        1: { cellWidth: 50 }, // Nombre
-        2: { cellWidth: 50 }, // Email
-        3: { cellWidth: 30 }, // RUT
-        4: { cellWidth: 20 }, // N° Lista
-        5: { cellWidth: 20 }, // Estado
+        0: { cellWidth: 8 }, // ID
+        1: { cellWidth: 40 }, // Nombre
+        2: { cellWidth: 20 }, // RUT
+        3: { cellWidth: 75 }, // Email
+        4: { cellWidth: 20 }, // Clave
+        5: { cellWidth: 15 }, // Estado
       },
     });
 
