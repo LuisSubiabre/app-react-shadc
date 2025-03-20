@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.1...v1.2.2) (2025-03-20)
+
+
+### Features
+
+* calendario ([021a703](https://github.com/LuisSubiabre/app-react-shadc/commit/021a703c584778fc9ddd82227c7ac1441c7a4490))
+* **dashboard:** ocultar botones de atraso en TablaEstudiantes ([df2141f](https://github.com/LuisSubiabre/app-react-shadc/commit/df2141ff50273f08de0462638e2a0c1019d803b7))
+* **login:** mensaje usuario inactivo ([2ebba53](https://github.com/LuisSubiabre/app-react-shadc/commit/2ebba531e62d1457b0a18c57ce9a310e4d5134c4))
+
+
+### Bug Fixes
+
+* a to Link ([437f336](https://github.com/LuisSubiabre/app-react-shadc/commit/437f33617a04e9546f7e10527aaa6c35b5e69154))
+
 ### [1.2.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.0...v1.2.1) (2025-03-18)
 
 
