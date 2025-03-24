@@ -62,10 +62,12 @@ const AcademicoCursoAsignaturas: React.FC = () => {
   const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
   const [selectedSubject, setSelectedSubject] =
     useState<AsignaturaCurso | null>(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [subjectsForCourse, setSubjectsForCourse] = useState<AsignaturaCurso[]>(
     []
   );
   const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
+  const [totalEstudiantes, setTotalEstudiantes] = useState<number>(0);
   const [enrolledStudents, setEnrolledStudents] = useState<{
     [key: string]: boolean;
   }>({});
@@ -128,25 +130,6 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     setIsModalSubjectsOpen(true);
     setIsLoadingModal(true);
     try {
-      // Cargar estudiantes
-      const estudiantesResponse = await fetch(
-        `${API_BASE_URL}/cursos/estudiantes/${curso.id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const estudiantesData = await estudiantesResponse.json();
-      const estudiantes = Array.isArray(estudiantesData)
-        ? estudiantesData.map((estudiante) => ({
-            ...estudiante,
-            id: estudiante.estudiante_id,
-          }))
-        : [];
-      setDataEstudiantes(estudiantes);
-
       // Cargar asignaturas
       const response = await fetch(
         `${API_BASE_URL}/asignaturascursos/curso/${curso.id}`,
@@ -176,28 +159,45 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         })
       );
 
-      // Cargar inscripciones para todas las asignaturas
-      const enrollments: { [key: string]: boolean } = {};
-      for (const estudiante of estudiantes) {
-        for (const asignatura of mappedSubjects) {
-          const isEnrolled = await checkStudentEnrollment(
-            estudiante.id,
-            asignatura.id
-          );
-          enrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
-          if (isEnrolled) {
-            // Actualizar el contador de inscritos
-            const asignaturaIndex = mappedSubjects.findIndex(
-              (s: AsignaturaCurso) => s.id === asignatura.id
-            );
-            if (asignaturaIndex !== -1) {
-              mappedSubjects[asignaturaIndex].inscritos = (mappedSubjects[asignaturaIndex].inscritos || 0) + 1;
-            }
-          }
+      // Cargar estudiantes para contar inscritos
+      const estudiantesResponse = await fetch(
+        `${API_BASE_URL}/cursos/estudiantes/${curso.id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-      }
-      setEnrolledStudents(enrollments);
-      setSubjectsForCourse(mappedSubjects);
+      );
+      const estudiantesData = await estudiantesResponse.json();
+      const estudiantes = Array.isArray(estudiantesData)
+        ? estudiantesData.map((estudiante) => ({
+            ...estudiante,
+            id: estudiante.estudiante_id,
+          }))
+        : [];
+      
+      setTotalEstudiantes(estudiantes.length);
+
+      // Contar inscritos para cada asignatura
+      const subjectsWithCount = await Promise.all(
+        mappedSubjects.map(async (subject: AsignaturaCurso) => {
+          let inscritosCount = 0;
+          for (const estudiante of estudiantes) {
+            const isEnrolled = await checkStudentEnrollment(
+              estudiante.id,
+              subject.id
+            );
+            if (isEnrolled) inscritosCount++;
+          }
+          return {
+            ...subject,
+            inscritos: inscritosCount,
+          };
+        })
+      );
+
+      setSubjectsForCourse(subjectsWithCount);
       setCurrentCurso(curso);
     } catch (error) {
       console.error("Error:", error);
@@ -208,24 +208,59 @@ const AcademicoCursoAsignaturas: React.FC = () => {
   };
 
   const handleSubjectSelect = async (asignatura: AsignaturaCurso) => {
+    setIsLoadingModal(true);
     setSelectedSubject(asignatura);
+    setSelectedSubjectId(asignatura.id.toString());
     
-    // Verificar si ya tenemos las inscripciones para esta asignatura
-    const hasEnrollments = dataEstudiantes.some(
-      (estudiante) => `${estudiante.id}-${asignatura.id}` in enrolledStudents
-    );
+    try {
+      // Cargar estudiantes solo cuando se selecciona una asignatura
+      const estudiantesResponse = await fetch(
+        `${API_BASE_URL}/cursos/estudiantes/${asignatura.curso_id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const estudiantesData = await estudiantesResponse.json();
+      const estudiantes = Array.isArray(estudiantesData)
+        ? estudiantesData.map((estudiante) => ({
+            ...estudiante,
+            id: estudiante.estudiante_id,
+          }))
+        : [];
+      setDataEstudiantes(estudiantes);
 
-    // Si no tenemos las inscripciones, cargarlas
-    if (!hasEnrollments) {
-      const newEnrollments = { ...enrolledStudents };
-      for (const estudiante of dataEstudiantes) {
+      // Cargar inscripciones para la asignatura seleccionada
+      const enrollments: { [key: string]: boolean } = {};
+      for (const estudiante of estudiantes) {
         const isEnrolled = await checkStudentEnrollment(
           estudiante.id,
           asignatura.id
         );
-        newEnrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
+        enrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
+        if (isEnrolled) {
+          // Actualizar el contador de inscritos
+          setSubjectsForCourse((prevSubjects) =>
+            prevSubjects.map((subject) =>
+              subject.id === asignatura.id
+                ? { ...subject, inscritos: (subject.inscritos || 0) + 1 }
+                : subject
+            )
+          );
+        }
       }
-      setEnrolledStudents(newEnrollments);
+      setEnrolledStudents(enrollments);
+    } catch (error) {
+      console.error("Error al cargar estudiantes:", error);
+      toast({
+        title: "Error",
+        description: "Error al cargar los estudiantes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingModal(false);
     }
   };
 
@@ -452,8 +487,10 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         onOpenChange={(open) => {
           if (!open) {
             setSelectedSubject(null);
+            setSelectedSubjectId("");
             setDataEstudiantes([]);
             setEnrolledStudents({});
+            setTotalEstudiantes(0);
             setIsLoadingModal(false);
           }
           setIsModalSubjectsOpen(open);
@@ -482,7 +519,9 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                   </span>
                 </div>
                 <Select
+                  value={selectedSubjectId}
                   onValueChange={(value) => {
+                    setSelectedSubjectId(value);
                     const asignatura = subjectsForCourse.find(
                       (a) => a.id.toString() === value
                     );
@@ -499,9 +538,9 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         value={asignatura.id.toString()}
                         className="flex flex-col items-start"
                       >
-                        <span className="font-medium">{asignatura.nombre}</span>
+                        <span className="font-medium">{asignatura.nombre} </span>
                         <span className="text-xs text-muted-foreground">
-                          {asignatura.inscritos} inscritos • {dataEstudiantes.length - (asignatura.inscritos || 0)} no inscritos
+                          {asignatura.inscritos} inscritos • {totalEstudiantes - (asignatura.inscritos || 0)} no inscritos
                         </span>
                       </SelectItem>
                     ))}
