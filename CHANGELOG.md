@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.5](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.4...v1.2.5) (2025-03-24)
+
+
+### Features
+
+* cursos asignados ([521102a](https://github.com/LuisSubiabre/app-react-shadc/commit/521102a466b77a1c9a332b3e65d62b8594209c5d))
+* mejora carga de estudiantes inscritos ([cc3be20](https://github.com/LuisSubiabre/app-react-shadc/commit/cc3be200b25497b3482d1354a8afa1e18dc2dc0b))
+
 ### [1.2.4](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.3...v1.2.4) (2025-03-24)
 
 
