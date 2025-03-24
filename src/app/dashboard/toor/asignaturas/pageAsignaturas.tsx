@@ -582,9 +582,7 @@ const Asignaturas: React.FC = () => {
                 <TableHead className="w-[150px] font-semibold">
                   Código SIGE
                 </TableHead>
-                <TableHead className="w-[150px] font-semibold">
-                  Nivel Educativo
-                </TableHead>
+
                 <TableHead className="w-[100px] font-semibold">
                   Concepto
                 </TableHead>
@@ -616,13 +614,7 @@ const Asignaturas: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>{asignatura.codigo_sige}</TableCell>
-                    <TableCell>
-                      {asignatura.nivel_educativo === 1
-                        ? "Básica"
-                        : asignatura.nivel_educativo === 2
-                        ? "Media"
-                        : asignatura.nivel_educativo}
-                    </TableCell>
+      
                     <TableCell>{asignatura.concepto ? "Sí" : "No"}</TableCell>
                     <TableCell>{asignatura.es_comun ? "Sí" : "No"}</TableCell>
                     <TableCell>
