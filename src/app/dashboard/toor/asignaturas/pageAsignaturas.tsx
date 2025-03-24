@@ -58,6 +58,8 @@ import {
 } from "@/services/asignaturasService";
 import { Toaster } from "@/components/ui/toaster";
 import { getCursos } from "@/services/cursosService";
+import { User } from "@/app/dashboard/toor/usuarios/types";
+import { getFuncionarios } from "@/services/funcionariosService";
 
 const Asignaturas: React.FC = () => {
   const [asignaturas, setAsignaturas] = useState<AsignaturaType[]>([]);
@@ -66,6 +68,9 @@ const Asignaturas: React.FC = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
   const [errorCursos, setErrorCursos] = useState<string | null>(null);
+  const [funcionarios, setFuncionarios] = useState<User[]>([]);
+  const [loadingFuncionarios, setLoadingFuncionarios] = useState<boolean>(true);
+  const [errorFuncionarios, setErrorFuncionarios] = useState<string | null>(null);
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [currentAsignatura, setCurrentAsignatura] = useState<AsignaturaType | null>(null);
   const [asignacionesActuales, setAsignacionesActuales] = useState<Map<number, number[]>>(new Map());
@@ -133,6 +138,23 @@ const Asignaturas: React.FC = () => {
       })
       .finally(() => {
         setLoadingCursos(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    getFuncionarios()
+      .then((response) => {
+        if (response) {
+          setFuncionarios(response.data);
+        } else {
+          setErrorFuncionarios("No se pudo cargar la información");
+        }
+      })
+      .catch(() => {
+        setErrorFuncionarios("No se pudo cargar la información");
+      })
+      .finally(() => {
+        setLoadingFuncionarios(false);
       });
   }, []);
 
@@ -1032,11 +1054,42 @@ const Asignaturas: React.FC = () => {
                               </span>
                             </Label>
                           </div>
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 space-y-2">
                             {isSelected && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                Asignado
-                              </span>
+                              <>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  Asignado
+                                </span>
+                                {loadingFuncionarios ? (
+                                  <Spinner className="w-4 h-4" />
+                                ) : errorFuncionarios ? (
+                                  <span className="text-xs text-destructive">
+                                    Error al cargar usuarios
+                                  </span>
+                                ) : (
+                                  <Select
+                                    value={currentUserId}
+                                    onValueChange={(value) =>
+                                      handleUsuariosChange(curso.id, value)
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[180px] h-8 text-xs">
+                                      <SelectValue placeholder="Seleccionar usuario" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {funcionarios?.map((usuario) => (
+                                        <SelectItem
+                                          key={usuario.id}
+                                          value={usuario.id.toString()}
+                                          className="text-sm"
+                                        >
+                                          {usuario.nombre}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
