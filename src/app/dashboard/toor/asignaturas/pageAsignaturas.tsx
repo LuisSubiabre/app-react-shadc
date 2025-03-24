@@ -74,6 +74,7 @@ const Asignaturas: React.FC = () => {
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [currentAsignatura, setCurrentAsignatura] = useState<AsignaturaType | null>(null);
   const [asignacionesActuales, setAsignacionesActuales] = useState<Map<number, number[]>>(new Map());
+  const [asignacionesCursos, setAsignacionesCursos] = useState<Map<number, string[]>>(new Map());
   const { toast } = useToast();
 
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -157,6 +158,38 @@ const Asignaturas: React.FC = () => {
         setLoadingFuncionarios(false);
       });
   }, []);
+
+  useEffect(() => {
+    const cargarAsignacionesIniciales = async () => {
+      try {
+        const asignacionesPromises = asignaturas.map(async (asignatura) => {
+          const response = await obtenerAsignacionesPorAsignatura(asignatura.asignatura_id, token);
+          const cursosAsignados = response.data.map((asignacion: AsignaturaCursoResponseType) => {
+            const curso = cursos.find(c => c.id === asignacion.curso_id);
+            return curso ? curso.nombre : '';
+          }).filter(Boolean);
+          
+          return {
+            asignaturaId: asignatura.asignatura_id,
+            cursos: cursosAsignados
+          };
+        });
+
+        const resultados = await Promise.all(asignacionesPromises);
+        const nuevoMapa = new Map();
+        resultados.forEach(({ asignaturaId, cursos }) => {
+          nuevoMapa.set(asignaturaId, cursos);
+        });
+        setAsignacionesCursos(nuevoMapa);
+      } catch (error) {
+        console.error('Error al cargar asignaciones:', error);
+      }
+    };
+
+    if (asignaturas.length > 0 && cursos.length > 0) {
+      cargarAsignacionesIniciales();
+    }
+  }, [asignaturas, cursos, token]);
 
   if (loading)
     return (
@@ -418,6 +451,16 @@ const Asignaturas: React.FC = () => {
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.set(cursoId, [1]);
         setAsignacionesActuales(newAsignaciones);
+
+        // Actualizar asignacionesCursos
+        const curso = cursos.find(c => c.id === cursoId);
+        if (curso) {
+          const asignaturaCursos = asignacionesCursos.get(currentAsignatura.asignatura_id) || [];
+          setAsignacionesCursos(new Map(asignacionesCursos).set(
+            currentAsignatura.asignatura_id,
+            [...asignaturaCursos, curso.nombre]
+          ));
+        }
       } else {
         await eliminarAsignacion(
           currentAsignatura.asignatura_id,
@@ -428,6 +471,16 @@ const Asignaturas: React.FC = () => {
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.delete(cursoId);
         setAsignacionesActuales(newAsignaciones);
+
+        // Actualizar asignacionesCursos
+        const curso = cursos.find(c => c.id === cursoId);
+        if (curso) {
+          const asignaturaCursos = asignacionesCursos.get(currentAsignatura.asignatura_id) || [];
+          setAsignacionesCursos(new Map(asignacionesCursos).set(
+            currentAsignatura.asignatura_id,
+            asignaturaCursos.filter(c => c !== curso.nombre)
+          ));
+        }
       }
 
       toast({
@@ -538,6 +591,7 @@ const Asignaturas: React.FC = () => {
                 <TableHead className="w-[100px] font-semibold">
                   Es Común
                 </TableHead>
+                <TableHead className="w-[200px] font-semibold">Cursos Asignados</TableHead>
                 <TableHead className="w-[150px] font-semibold text-right">
                   Acciones
                 </TableHead>
@@ -571,6 +625,22 @@ const Asignaturas: React.FC = () => {
                     </TableCell>
                     <TableCell>{asignatura.concepto ? "Sí" : "No"}</TableCell>
                     <TableCell>{asignatura.es_comun ? "Sí" : "No"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {asignacionesCursos.get(asignatura.asignatura_id)?.map((curso, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+                          >
+                            {curso}
+                          </span>
+                        )) || (
+                          <span className="text-xs text-muted-foreground">
+                            Sin cursos asignados
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
