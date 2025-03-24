@@ -409,13 +409,6 @@ const Asignaturas: React.FC = () => {
     }
   };
 
-  const handleCloseCursosModal = () => {
-    setIsModalCursosOpen(false);
-    setCurrentAsignatura(null);
-    //setAsignacionesPendientes([]);
-    setAsignacionesActuales(new Map());
-  };
-
   const handleCursoChange = async (cursoId: number, checked: boolean) => {
     if (!currentAsignatura) return;
 
@@ -1061,7 +1054,9 @@ const Asignaturas: React.FC = () => {
                                   Asignado
                                 </span>
                                 {loadingFuncionarios ? (
-                                  <Spinner className="w-4 h-4" />
+                                  <div className="flex items-center justify-center w-4 h-4">
+                                    <Spinner />
+                                  </div>
                                 ) : errorFuncionarios ? (
                                   <span className="text-xs text-destructive">
                                     Error al cargar usuarios
