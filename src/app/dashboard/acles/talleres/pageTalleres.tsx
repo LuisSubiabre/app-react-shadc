@@ -79,11 +79,31 @@ const AcleTalleres: React.FC = () => {
   const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
   const [errorCursos, setErrorCursos] = useState<string | null>(null);
 
+  const ordenarTalleresPorNivel = (talleres: TallerType[]) => {
+    const ordenNiveles = {
+      'pre-basica': 1,
+      'basica': 2,
+      'media': 3
+    };
+
+    return [...talleres].sort((a, b) => {
+      // Primero ordenamos por nivel
+      const ordenPorNivel = ordenNiveles[a.taller_nivel as keyof typeof ordenNiveles] - ordenNiveles[b.taller_nivel as keyof typeof ordenNiveles];
+      
+      // Si son del mismo nivel, ordenamos por nombre
+      if (ordenPorNivel === 0) {
+        return a.taller_nombre.localeCompare(b.taller_nombre, 'es', { sensitivity: 'base' });
+      }
+      
+      return ordenPorNivel;
+    });
+  };
+
   useEffect(() => {
     getTalleres()
       .then((response) => {
         if (response) {
-          setTalleres(response.data);
+          setTalleres(ordenarTalleresPorNivel(response.data));
         } else {
           setError("No se pudo cargar la información");
         }
@@ -156,7 +176,7 @@ const AcleTalleres: React.FC = () => {
       if (response) {
         const talleresResponse = await getTalleres();
         if (talleresResponse) {
-          setTalleres(talleresResponse.data);
+          setTalleres(ordenarTalleresPorNivel(talleresResponse.data));
         }
         
         toast({
@@ -246,20 +266,22 @@ const AcleTalleres: React.FC = () => {
     try {
       await saveEditTaller(currentTaller);
 
-      setTalleres((curr) =>
-        curr.map((taller) =>
-          taller.taller_id === currentTaller.taller_id
-            ? {
-                ...currentTaller,
-                taller_nombre: currentTaller.taller_nombre || "",
-                taller_descripcion: currentTaller.taller_descripcion || "",
-                taller_horario: currentTaller.taller_horario || "",
-                taller_nivel: currentTaller.taller_nivel || "pre-basica",
-                taller_cantidad_cupos:
-                  currentTaller.taller_cantidad_cupos || 10,
-                taller_profesor_id: currentTaller.taller_profesor_id || 1,
-              }
-            : taller
+      setTalleres((curr) => 
+        ordenarTalleresPorNivel(
+          curr.map((taller) =>
+            taller.taller_id === currentTaller.taller_id
+              ? {
+                  ...currentTaller,
+                  taller_nombre: currentTaller.taller_nombre || "",
+                  taller_descripcion: currentTaller.taller_descripcion || "",
+                  taller_horario: currentTaller.taller_horario || "",
+                  taller_nivel: currentTaller.taller_nivel || "pre-basica",
+                  taller_cantidad_cupos:
+                    currentTaller.taller_cantidad_cupos || 10,
+                  taller_profesor_id: currentTaller.taller_profesor_id || 1,
+                }
+              : taller
+          )
         )
       );
       handleCloseEditModal();

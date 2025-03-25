@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { TallerType } from "@/types/index.ts";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface TablaTalleresProps {
   talleres: TallerType[];
@@ -24,6 +25,19 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
   onDeleteClick,
   onOpenCursosModal,
 }) => {
+  const getBgColorByNivel = (nivel: string): string => {
+    switch (nivel) {
+      case 'pre-basica':
+        return 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50';
+      case 'basica':
+        return 'bg-green-50 hover:bg-green-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50';
+      case 'media':
+        return 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50';
+      default:
+        return '';
+    }
+  };
+
   return (
     <Table>
       <TableCaption>Lista de talleres</TableCaption>
@@ -39,7 +53,13 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
       </TableHeader>
       <TableBody>
         {talleres?.map((taller) => (
-          <TableRow key={taller.taller_id}>
+          <TableRow 
+            key={taller.taller_id}
+            className={cn(
+              'transition-colors duration-200',
+              getBgColorByNivel(taller.taller_nivel)
+            )}
+          >
             <TableCell>
               <strong>{taller.taller_nombre}</strong>
               <br />

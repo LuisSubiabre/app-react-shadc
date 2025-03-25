@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,6 +70,7 @@ const Usuarios: React.FC = () => {
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [userCursos, setUserCursos] = useState<number[]>([]); // Estado para cursos del usuario actual
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTermCursos, setSearchTermCursos] = useState<string>("");
 
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -1110,67 +1110,163 @@ const Usuarios: React.FC = () => {
               </DialogTitle>
             </DialogHeader>
 
-            <Alert className="mb-4">
-              <AlertTitle>Atención</AlertTitle>
-              <AlertDescription>
-                La información de los cursos se actualiza automáticamente al dar
-                click.
-              </AlertDescription>
-            </Alert>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5 text-muted-foreground"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                  />
+                </svg>
+                <span className="font-medium">{currentUser?.nombre}</span>
+              </div>
 
-            <div className="space-y-4 py-4">
-              <div className="font-medium">{currentUser?.nombre}</div>
-              <Separator />
+              <div className="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+                <Input
+                  placeholder="Buscar cursos..."
+                  className="pl-9"
+                  value={searchTermCursos}
+                  onChange={(e) => setSearchTermCursos(e.target.value)}
+                />
+              </div>
 
               {loadingCursos && (
-                <div className="flex justify-center py-4">
-                  <Spinner />
-                </div>
-              )}
-              {errorCursos && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                  {errorCursos}
-                </div>
-              )}
-              {messageCursos && (
-                <div className="bg-green-50 text-green-700 text-sm p-3 rounded-md">
-                  {messageCursos}
+                <div className="flex justify-center items-center py-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <Spinner />
+                    <p className="text-sm text-muted-foreground">Cargando cursos...</p>
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-2">
-                {cursos?.map((curso) => (
-                  <div key={curso.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`curso-${curso.id}`}
-                      value={JSON.stringify({
-                        id: curso.id,
-                        nombre: curso.nombre,
-                      })}
-                      checked={userCursos.includes(curso.id)}
-                      onClick={() => {
-                        if (userCursos.includes(curso.id)) {
-                          setUserCursos((prevCursos) =>
-                            prevCursos.filter((id) => id !== curso.id)
-                          );
-                          asignarCurso(curso.id, false);
-                        } else {
-                          setUserCursos((prevCursos) => [
-                            ...prevCursos,
-                            curso.id,
-                          ]);
-                          asignarCurso(curso.id, true);
-                        }
-                      }}
+              {errorCursos && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{errorCursos}</AlertDescription>
+                </Alert>
+              )}
+
+              {messageCursos && (
+                <Alert className="bg-green-50 border-green-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4 text-green-600"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                     />
-                    <Label
-                      htmlFor={`curso-${curso.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {curso.nombre}
-                    </Label>
+                  </svg>
+                  <AlertTitle className="text-green-800">Éxito</AlertTitle>
+                  <AlertDescription className="text-green-700">{messageCursos}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="border rounded-lg">
+                <div className="p-3 bg-muted border-b">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Lista de Cursos</h3>
+                    <span className="text-sm text-muted-foreground">
+                      {cursos?.length} cursos disponibles
+                    </span>
                   </div>
-                ))}
+                </div>
+
+                <div className="divide-y max-h-[300px] overflow-y-auto">
+                  {cursos
+                    ?.filter((curso) =>
+                      curso.nombre.toLowerCase().includes(searchTermCursos.toLowerCase())
+                    )
+                    .map((curso) => (
+                      <div
+                        key={curso.id}
+                        className="flex items-center space-x-2 p-3 hover:bg-muted/50 transition-colors"
+                      >
+                        <Checkbox
+                          id={`curso-${curso.id}`}
+                          value={JSON.stringify({
+                            id: curso.id,
+                            nombre: curso.nombre,
+                          })}
+                          checked={userCursos.includes(curso.id)}
+                          onCheckedChange={() => {
+                            if (userCursos.includes(curso.id)) {
+                              setUserCursos((prevCursos) =>
+                                prevCursos.filter((id) => id !== curso.id)
+                              );
+                              asignarCurso(curso.id, false);
+                            } else {
+                              setUserCursos((prevCursos) => [...prevCursos, curso.id]);
+                              asignarCurso(curso.id, true);
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <Label
+                            htmlFor={`curso-${curso.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {curso.nombre}
+                          </Label>
+                          <span className="text-xs text-muted-foreground">
+                            ID: {curso.id}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                  {cursos?.filter((curso) =>
+                    curso.nombre.toLowerCase().includes(searchTermCursos.toLowerCase())
+                  ).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-8 h-8 text-muted-foreground mb-2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                        />
+                      </svg>
+                      <p className="text-sm text-muted-foreground">
+                        No se encontraron cursos
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
