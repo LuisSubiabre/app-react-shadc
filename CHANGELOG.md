@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.5...v) (2025-03-25)
+
+
+### Features
+
+* orden talleres acles y colores ([5517c1d](https://github.com/LuisSubiabre/app-react-shadc/commit/5517c1dc17001732cf31a1db0fce55c00a3957f1))
+* **usuarios:** mejora la interfaz del modal de asignación de cursos ([e8c7294](https://github.com/LuisSubiabre/app-react-shadc/commit/e8c729467fd3369979df9fe2b73d2fbb1a24bf03))
+
 ### [1.2.5](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.4...v1.2.5) (2025-03-24)
 
 
