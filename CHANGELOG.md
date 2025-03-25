@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.5...v) (2025-03-25)
+### [1.2.6](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.5...v1.2.6) (2025-03-25)
 
 
 ### Features
