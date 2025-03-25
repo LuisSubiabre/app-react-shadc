@@ -46,7 +46,6 @@ import {
   obtenerAsignacionesPorAsignatura,
 } from "./asignaturaService";
 import { useToast } from "@/hooks/use-toast";
-import { User } from "@/app/dashboard/toor/usuarios/types";
 import { CursoApiResponseType } from "@/types";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -59,10 +58,10 @@ import {
 } from "@/services/asignaturasService";
 import { Toaster } from "@/components/ui/toaster";
 import { getCursos } from "@/services/cursosService";
+import { User } from "@/app/dashboard/toor/usuarios/types";
 import { getFuncionarios } from "@/services/funcionariosService";
 
 const Asignaturas: React.FC = () => {
-  /* refactirng */
   const [asignaturas, setAsignaturas] = useState<AsignaturaType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,15 +70,15 @@ const Asignaturas: React.FC = () => {
   const [errorCursos, setErrorCursos] = useState<string | null>(null);
   const [funcionarios, setFuncionarios] = useState<User[]>([]);
   const [loadingFuncionarios, setLoadingFuncionarios] = useState<boolean>(true);
-  const [errorFuncionarios, setErrorFuncionarios] = useState<string | null>(
-    null
-  );
-
-  /* refactirng */
+  const [errorFuncionarios, setErrorFuncionarios] = useState<string | null>(null);
+  const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
+  const [currentAsignatura, setCurrentAsignatura] = useState<AsignaturaType | null>(null);
+  const [asignacionesActuales, setAsignacionesActuales] = useState<Map<number, number[]>>(new Map());
+  const [asignacionesCursos, setAsignacionesCursos] = useState<Map<number, string[]>>(new Map());
+  const { toast } = useToast();
 
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
-  const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newAsignatura, setNewAsignatura] = useState<{
@@ -99,16 +98,9 @@ const Asignaturas: React.FC = () => {
     nivel_educativo: 0,
     es_comun: false,
   });
-  const [currentAsignatura, setCurrentAsignatura] =
-    useState<AsignaturaType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [asignaturaToDelete, setAsignaturaToDelete] =
     useState<AsignaturaType | null>(null);
-
-  const [asignacionesActuales, setAsignacionesActuales] = useState<
-    Map<number, number[]>
-  >(new Map());
-  const { toast } = useToast();
 
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -166,6 +158,38 @@ const Asignaturas: React.FC = () => {
         setLoadingFuncionarios(false);
       });
   }, []);
+
+  useEffect(() => {
+    const cargarAsignacionesIniciales = async () => {
+      try {
+        const asignacionesPromises = asignaturas.map(async (asignatura) => {
+          const response = await obtenerAsignacionesPorAsignatura(asignatura.asignatura_id, token);
+          const cursosAsignados = response.data.map((asignacion: AsignaturaCursoResponseType) => {
+            const curso = cursos.find(c => c.id === asignacion.curso_id);
+            return curso ? curso.nombre : '';
+          }).filter(Boolean);
+          
+          return {
+            asignaturaId: asignatura.asignatura_id,
+            cursos: cursosAsignados
+          };
+        });
+
+        const resultados = await Promise.all(asignacionesPromises);
+        const nuevoMapa = new Map();
+        resultados.forEach(({ asignaturaId, cursos }) => {
+          nuevoMapa.set(asignaturaId, cursos);
+        });
+        setAsignacionesCursos(nuevoMapa);
+      } catch (error) {
+        console.error('Error al cargar asignaciones:', error);
+      }
+    };
+
+    if (asignaturas.length > 0 && cursos.length > 0) {
+      cargarAsignacionesIniciales();
+    }
+  }, [asignaturas, cursos, token]);
 
   if (loading)
     return (
@@ -418,23 +442,25 @@ const Asignaturas: React.FC = () => {
     }
   };
 
-  const handleCloseCursosModal = () => {
-    setIsModalCursosOpen(false);
-    setCurrentAsignatura(null);
-    //setAsignacionesPendientes([]);
-    setAsignacionesActuales(new Map());
-  };
-
   const handleCursoChange = async (cursoId: number, checked: boolean) => {
     if (!currentAsignatura) return;
 
     try {
       if (checked) {
         await asignarCurso(currentAsignatura.asignatura_id, cursoId, 1, token);
-        // Actualizar estado local
         const newAsignaciones = new Map(asignacionesActuales);
-        newAsignaciones.set(cursoId, [1]); // usuario_id 1 por defecto
+        newAsignaciones.set(cursoId, [1]);
         setAsignacionesActuales(newAsignaciones);
+
+        // Actualizar asignacionesCursos
+        const curso = cursos.find(c => c.id === cursoId);
+        if (curso) {
+          const asignaturaCursos = asignacionesCursos.get(currentAsignatura.asignatura_id) || [];
+          setAsignacionesCursos(new Map(asignacionesCursos).set(
+            currentAsignatura.asignatura_id,
+            [...asignaturaCursos, curso.nombre]
+          ));
+        }
       } else {
         await eliminarAsignacion(
           currentAsignatura.asignatura_id,
@@ -442,10 +468,19 @@ const Asignaturas: React.FC = () => {
           1,
           token
         );
-        // Actualizar estado local
         const newAsignaciones = new Map(asignacionesActuales);
         newAsignaciones.delete(cursoId);
         setAsignacionesActuales(newAsignaciones);
+
+        // Actualizar asignacionesCursos
+        const curso = cursos.find(c => c.id === cursoId);
+        if (curso) {
+          const asignaturaCursos = asignacionesCursos.get(currentAsignatura.asignatura_id) || [];
+          setAsignacionesCursos(new Map(asignacionesCursos).set(
+            currentAsignatura.asignatura_id,
+            asignaturaCursos.filter(c => c !== curso.nombre)
+          ));
+        }
       }
 
       toast({
@@ -547,15 +582,14 @@ const Asignaturas: React.FC = () => {
                 <TableHead className="w-[150px] font-semibold">
                   Código SIGE
                 </TableHead>
-                <TableHead className="w-[150px] font-semibold">
-                  Nivel Educativo
-                </TableHead>
+
                 <TableHead className="w-[100px] font-semibold">
                   Concepto
                 </TableHead>
                 <TableHead className="w-[100px] font-semibold">
                   Es Común
                 </TableHead>
+                <TableHead className="w-[200px] font-semibold">Cursos Asignados</TableHead>
                 <TableHead className="w-[150px] font-semibold text-right">
                   Acciones
                 </TableHead>
@@ -580,15 +614,25 @@ const Asignaturas: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>{asignatura.codigo_sige}</TableCell>
-                    <TableCell>
-                      {asignatura.nivel_educativo === 1
-                        ? "Básica"
-                        : asignatura.nivel_educativo === 2
-                        ? "Media"
-                        : asignatura.nivel_educativo}
-                    </TableCell>
+      
                     <TableCell>{asignatura.concepto ? "Sí" : "No"}</TableCell>
                     <TableCell>{asignatura.es_comun ? "Sí" : "No"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {asignacionesCursos.get(asignatura.asignatura_id)?.map((curso, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+                          >
+                            {curso}
+                          </span>
+                        )) || (
+                          <span className="text-xs text-muted-foreground">
+                            Sin cursos asignados
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -999,107 +1043,120 @@ const Asignaturas: React.FC = () => {
 
       {/* Modal para asignar cursos */}
       <Dialog open={isModalCursosOpen} onOpenChange={setIsModalCursosOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              Asignar Cursos - {currentAsignatura?.nombre}
+            <DialogTitle className="text-2xl font-semibold tracking-tight">
+              Asignar Cursos
             </DialogTitle>
+            <p className="text-muted-foreground">
+              {currentAsignatura?.nombre}
+            </p>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {loadingCursos && <Spinner />}
-            {errorCursos && (
-              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                {errorCursos}
+          
+          <div className="space-y-6 py-4">
+            {loadingCursos ? (
+              <div className="flex justify-center items-center py-8">
+                <Spinner />
+              </div>
+            ) : errorCursos ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{errorCursos}</AlertDescription>
+              </Alert>
+            ) : (
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">
+                    Asignación de Cursos
+                  </Label>
+                  <span className="text-sm text-muted-foreground">
+                    {cursos?.length} cursos disponibles
+                  </span>
+                </div>
+
+                <div className="p-4 border rounded-lg bg-muted/50 dark:bg-muted/20 max-h-[60vh] overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {cursos?.map((curso) => {
+                      const usuariosAsignados = asignacionesActuales.get(curso.id) || [];
+                      const isSelected = usuariosAsignados.length > 0;
+                      const currentUserId = usuariosAsignados[0]?.toString();
+
+                      return (
+                        <div
+                          key={curso.id}
+                          className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex-shrink-0">
+                            <Checkbox
+                              id={`curso-${curso.id}`}
+                              checked={isSelected}
+                              onCheckedChange={(checked) =>
+                                handleCursoChange(curso.id, checked as boolean)
+                              }
+                              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                          </div>
+                          <div className="flex-grow">
+                            <Label
+                              htmlFor={`curso-${curso.id}`}
+                              className="flex flex-col cursor-pointer"
+                            >
+                              <span className="font-medium text-sm">
+                                {curso.nombre}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Jefatura: {curso.jefatura}
+                              </span>
+                            </Label>
+                          </div>
+                          <div className="flex-shrink-0 space-y-2">
+                            {isSelected && (
+                              <>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  Asignado
+                                </span>
+                                {loadingFuncionarios ? (
+                                  <div className="flex items-center justify-center w-4 h-4">
+                                    <Spinner />
+                                  </div>
+                                ) : errorFuncionarios ? (
+                                  <span className="text-xs text-destructive">
+                                    Error al cargar usuarios
+                                  </span>
+                                ) : (
+                                  <Select
+                                    value={currentUserId}
+                                    onValueChange={(value) =>
+                                      handleUsuariosChange(curso.id, value)
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[180px] h-8 text-xs">
+                                      <SelectValue placeholder="Seleccionar usuario" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {funcionarios?.map((usuario) => (
+                                        <SelectItem
+                                          key={usuario.id}
+                                          value={usuario.id.toString()}
+                                          className="text-sm"
+                                        >
+                                          {usuario.nombre}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
-            {cursos?.map((curso) => {
-              const usuariosAsignados =
-                asignacionesActuales.get(curso.id) || [];
-              const isSelected = usuariosAsignados.length > 0;
-              const currentUserId = usuariosAsignados[0]?.toString();
-
-              return (
-                <div
-                  key={curso.id}
-                  className="space-y-3 border-b pb-3 last:border-0"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`curso-${curso.id}`}
-                        checked={isSelected}
-                        onCheckedChange={(checked) =>
-                          handleCursoChange(curso.id, checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor={`curso-${curso.id}`}
-                        className="font-medium"
-                      >
-                        {curso.nombre}
-                      </Label>
-                    </div>
-                    {loadingFuncionarios && <Spinner />}
-                    {errorFuncionarios && (
-                      <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                        {errorFuncionarios}
-                      </div>
-                    )}
-
-                    {isSelected && (
-                      <Select
-                        value={currentUserId}
-                        onValueChange={(value) =>
-                          handleUsuariosChange(curso.id, value)
-                        }
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Seleccionar usuario" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {funcionarios?.map((usuario) => (
-                            <SelectItem
-                              key={usuario.id}
-                              value={usuario.id.toString()}
-                            >
-                              {usuario.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-
-                  {isSelected && (
-                    <div className="ml-6">
-                      <div className="flex flex-wrap gap-2">
-                        {usuariosAsignados.map((userId) => {
-                          const usuario = funcionarios?.find(
-                            (u) => u.id === userId
-                          );
-                          return (
-                            usuario && (
-                              <div
-                                key={usuario.id}
-                                className="flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded text-sm"
-                              >
-                                <span>{usuario.nombre}</span>
-                              </div>
-                            )
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseCursosModal}>
-              Cerrar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -11,7 +11,7 @@ import {
   GalleryVerticalEnd,
   PieChart,
   SquareTerminal,
-  BookDashed,
+  LandPlot,
   Calendar,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
@@ -137,7 +137,7 @@ const data = {
     {
       title: "Acles",
       url: "#",
-      icon: BookDashed,
+      icon: LandPlot,
       isActive: false,
       items: [
         {
