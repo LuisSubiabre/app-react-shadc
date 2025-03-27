@@ -146,6 +146,22 @@ const data = {
         },
       ],
     },
+    {
+      title: "Monitor ACLE",
+      url: "#",
+      icon: AudioWaveform,
+      isActive: false,
+      items: [
+        {
+          title: "Mis Talleres",
+          url: "/dashboard/monitor/mis-talleres",
+        },
+        {
+          title: "Informes",
+          url: "/dashboard/monitor/informes",
+        }
+      ],
+    }
 
   ],
 };

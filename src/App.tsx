@@ -49,6 +49,9 @@ const AclesInscritos = lazy(
 const Jefatura = lazy(() => import("@/app/dashboard/jefatura/pageJefatura"));
 const PasswordResetRequest = lazy(() => import("@/app/password-reset/request"));
 const PasswordReset = lazy(() => import("@/app/password-reset/reset"));
+const MisTalleres = lazy(
+  () => import("./app/dashboard/monitor/pageMisTalleres")
+);
 
 function App() {
   return (
@@ -262,6 +265,16 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Jefatura />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/acles/talleres/mis-talleres"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <MisTalleres />
                     </Layout>
                   </ProtectedRoute>
                 }
