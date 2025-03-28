@@ -50,7 +50,7 @@ const Jefatura = lazy(() => import("@/app/dashboard/jefatura/pageJefatura"));
 const PasswordResetRequest = lazy(() => import("@/app/password-reset/request"));
 const PasswordReset = lazy(() => import("@/app/password-reset/reset"));
 const MisTalleres = lazy(
-  () => import("./app/dashboard/monitor/pageMisTalleres")
+  () => import("@/app/dashboard/monitor/pageMisTalleres")
 );
 
 function App() {
@@ -272,7 +272,7 @@ function App() {
               <Route
                 path="/dashboard/acles/talleres/mis-talleres"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRoles={[4, 5]}>
                     <Layout>
                       <MisTalleres />
                     </Layout>

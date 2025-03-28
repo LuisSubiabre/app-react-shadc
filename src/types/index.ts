@@ -141,6 +141,7 @@ export interface TallerType {
   taller_cantidad_cupos: number;
   taller_cantidad_inscritos?: number;
   taller_profesor_id: number;
+  taller_ubicacion?: string;
   profesor_nombre?: string;
   curso_id?: number;
 }
