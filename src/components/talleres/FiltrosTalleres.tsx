@@ -66,6 +66,16 @@ export const FiltrosTalleres: React.FC<FiltrosTalleresProps> = ({
         />
       </div>
       <div className="grid gap-2">
+        <Label htmlFor="ubicacion">Ubicación</Label>
+        <Input
+          type="text"
+          id="taller_ubicacion"
+          name="taller_ubicacion"
+          value={newTaller.taller_ubicacion}
+          onChange={(e) => handleInputChange(e, isEditMode ? "edit" : "new")}
+        />
+      </div>
+      <div className="grid gap-2">
         <Label htmlFor="nivel">Nivel</Label>
         <Select
           value={newTaller.taller_nivel}

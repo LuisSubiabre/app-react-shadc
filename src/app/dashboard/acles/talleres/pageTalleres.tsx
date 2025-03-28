@@ -53,6 +53,7 @@ const AcleTalleres: React.FC = () => {
     taller_nivel: "pre-basica",
     taller_cantidad_cupos: 10,
     taller_profesor_id: 1,
+    taller_ubicacion: "sin ubicación",
   });
 
   const [currentTaller, setCurrentTaller] = useState<TallerType | null>(null);
