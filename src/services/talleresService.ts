@@ -96,3 +96,9 @@ export const desinscribirEstudianteTaller = async (
     .delete(`/talleres/inscripcion/${taller_id}/${estudiante_id}`)
     .then((response) => response.data);
 };
+
+export const getTalleresByMonitor = async (monitor_id: number) => {
+  return api
+    .get(`/talleres/monitor/${monitor_id}`)
+    .then((response) => response.data);
+}

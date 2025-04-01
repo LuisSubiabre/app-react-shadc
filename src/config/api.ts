@@ -22,4 +22,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Agregar interceptor de respuesta
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Limpiar el token
+      localStorage.removeItem("token");
+      // Redirigir al login
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

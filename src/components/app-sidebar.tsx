@@ -147,7 +147,7 @@ const data = {
       ],
     },
     {
-      title: ".",
+      title: "Monitor ACLE",
       url: "#",
       icon: AudioWaveform,
       isActive: false,
@@ -182,6 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           return true;
         });
       }
+      // Codigo Hardcodeado para mostrar los menus segun el rol del usuario
       if (menu.title === "Administrador") {
         return user?.roles?.includes(1); // Mostrar "Administrador" solo si el usuario tiene el rol 1
       }
@@ -196,6 +197,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       if (menu.title == "Jefatura") {
         return !user?.roles?.includes(3); // No mostrar "Jefatura" si el usuario tiene el rol 3, Inspectoria
+      }
+      if (menu.title == "Monitor ACLE") {
+        return user?.roles?.includes(11); // Mostrar "Monitor ACLE" solo si el usuario tiene el rol 11
       }
       return true; // Mostrar otros menús sin restricciones
     });
