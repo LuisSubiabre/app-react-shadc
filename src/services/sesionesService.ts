@@ -14,6 +14,7 @@ export const obtenerSesiones = async (taller_id: number) => {
 };
 
 export const crearSesion = async (taller_id: number, profesor_id: number, fecha: string, hora: string, estado: string) => {
+  //console.log(taller_id, profesor_id, fecha, hora, estado);
   return api.post(`talleres-sesiones`, { taller_id, profesor_id, fecha, hora, estado }).then((response) => response.data);
 }
 

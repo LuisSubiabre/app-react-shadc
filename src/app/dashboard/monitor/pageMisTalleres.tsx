@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTalleresByMonitor } from "@/services/talleresService";
-import { obtenerSesiones, eliminarSesion } from "@/services/sesionesService";
+import { obtenerSesiones, eliminarSesion, crearSesion } from "@/services/sesionesService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,7 @@ const MisTalleres: React.FC = () => {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [loadingSesiones, setLoadingSesiones] = useState(false);
   const [sesionToDelete, setSesionToDelete] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchTalleres = async () => {
@@ -127,6 +128,55 @@ const MisTalleres: React.FC = () => {
         description: "No se pudo eliminar la sesión. Por favor, intente nuevamente.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleAgregarSesion = async () => {
+    if (!expandedTaller) return;
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No hay token de autenticación");
+      }
+
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const profesor_id = payload.id;
+
+      // Obtener la hora actual
+      const hora = format(new Date(), "HH:mm:ss");
+
+      await crearSesion(
+        expandedTaller,
+        profesor_id,
+        fecha,
+        hora,
+        estado
+      );
+
+      // Recargar las sesiones
+      const response = await obtenerSesiones(expandedTaller);
+      setSesiones(response);
+
+      toast({
+        title: "Sesión creada",
+        description: "La sesión ha sido creada exitosamente",
+        variant: "default",
+      });
+
+      // Resetear el formulario
+      setFecha(format(new Date(), "yyyy-MM-dd"));
+      setEstado("realizado");
+    } catch (error) {
+      console.error("Error al crear sesión:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la sesión. Por favor, intente nuevamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -221,13 +271,43 @@ const MisTalleres: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="realizado">Realizado</SelectItem>
-                          <SelectItem value="no_realizado">No Realizado</SelectItem>
+                          <SelectItem value="no realizado">No Realizado</SelectItem>
                           <SelectItem value="suspendido">Suspendido</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button className="w-full sm:w-auto">
-                      Agregar Sesión
+                    <Button 
+                      className="w-full sm:w-auto"
+                      onClick={handleAgregarSesion}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Guardando...
+                        </>
+                      ) : (
+                        "Agregar Sesión"
+                      )}
                     </Button>
                   </div>
 
