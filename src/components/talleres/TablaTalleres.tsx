@@ -1,3 +1,4 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,12 +12,14 @@ import {
 import { TallerType } from "@/types/index.ts";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Pencil, Trash2, BookOpen, Calendar } from "lucide-react";
 
 interface TablaTalleresProps {
   talleres: TallerType[];
   onEditClick: (taller: TallerType) => void;
   onDeleteClick: (taller: TallerType) => void;
   onOpenCursosModal: (taller: TallerType) => void;
+  onOpenSesionesModal: (taller: TallerType) => void;
 }
 
 export const TablaTalleres: React.FC<TablaTalleresProps> = ({
@@ -24,6 +27,7 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
   onEditClick,
   onDeleteClick,
   onOpenCursosModal,
+  onOpenSesionesModal,
 }) => {
   const getBgColorByNivel = (nivel: string): string => {
     switch (nivel) {
@@ -73,32 +77,32 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => onEditClick(taller)}
                 >
-                  Editar
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onDeleteClick(taller)}
-                >
-                  Eliminar
+                  <Pencil className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => onOpenCursosModal(taller)}
                 >
-                  Cursos
+                  <BookOpen className="h-4 w-4" />
                 </Button>
-                <Link
-                  to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onOpenSesionesModal(taller)}
                 >
-                  <Button variant="outline" size="sm">
-                    Inscritos
-                  </Button>
-                </Link>
+                  <Calendar className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onDeleteClick(taller)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </TableCell>
           </TableRow>
