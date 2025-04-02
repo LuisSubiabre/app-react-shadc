@@ -355,7 +355,7 @@ const MisTalleres: React.FC = () => {
                                 Eliminar
                               </Button>
                               <Button variant="outline" size="sm" className="h-8">
-                                Ver
+                                Asistencia
                               </Button>
                             </div>
                           </div>
