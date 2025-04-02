@@ -1,4 +1,6 @@
-import { API_BASE_URL } from "@/config/config";
+//import { CursoType } from "@/types/index.ts";
+import api from "../config/api.ts";
+
 
 export interface Sesion {
   sesion_id: number;
@@ -7,33 +9,15 @@ export interface Sesion {
   estado: string;
 }
 
-export const guardarSesion = async (
-  taller_id: number,
-  fecha: Date,
-  token: string
-): Promise<Sesion> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/sesiones`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        taller_id,
-        fecha: fecha.toISOString(),
-      }),
-    });
+export const obtenerSesiones = async (taller_id: number) => {
+  return api.get(`talleres-sesiones/taller/${taller_id}`).then((response) => response.data);
+};
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Error al guardar la sesión");
-    }
+export const crearSesion = async (taller_id: number, profesor_id: number, fecha: string, hora: string, estado: string) => {
+  return api.post(`talleres-sesiones`, { taller_id, profesor_id, fecha, hora, estado }).then((response) => response.data);
+}
 
-    return await response.json();
-  } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : "Error desconocido"
-    );
-  }
-}; 
+export const eliminarSesion = async (sesion_id: number) => {
+  return api.delete(`talleres-sesiones/${sesion_id}`).then((response) => response.data);
+
+}
