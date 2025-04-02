@@ -4,7 +4,7 @@ import { obtenerSesiones, eliminarSesion, crearSesion } from "@/services/sesione
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -104,8 +104,17 @@ const MisTalleres: React.FC = () => {
   }, [expandedTaller]);
 
   const formatearFecha = (fechaStr: string) => {
-    const fecha = new Date(fechaStr);
-    return format(fecha, "dd/MM/yyyy");
+    try {
+      // Convertir la fecha UTC a fecha local
+      const fecha = new Date(fechaStr);
+      // Ajustar la fecha sumando el offset de la zona horaria
+      const offset = fecha.getTimezoneOffset();
+      fecha.setMinutes(fecha.getMinutes() + offset);
+      return format(fecha, "dd/MM/yyyy");
+    } catch (error) {
+      console.error("Error al formatear fecha:", error);
+      return "Fecha inválida";
+    }
   };
 
   const handleEliminarSesion = async (sesionId: number) => {
@@ -147,10 +156,13 @@ const MisTalleres: React.FC = () => {
       // Obtener la hora actual
       const hora = format(new Date(), "HH:mm:ss");
 
+      // Ajustar la fecha para mantener el día correcto
+      const fechaAjustada = format(parseISO(fecha + "T00:00:00"), "yyyy-MM-dd");
+
       await crearSesion(
         expandedTaller,
         profesor_id,
-        fecha,
+        fechaAjustada,
         hora,
         estado
       );
@@ -324,14 +336,11 @@ const MisTalleres: React.FC = () => {
                           >
                             <div>
                               <p className="font-medium">
-                                {formatearFecha(sesion.fecha)} - {sesion.hora}
+                                {formatearFecha(sesion.fecha)}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 Estado: {sesion.estado.charAt(0).toUpperCase() + sesion.estado.slice(1)}
                               </p>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {format(new Date(sesion.fecha_creacion), "dd/MM/yyyy HH:mm")}
                             </div>
                             <div className="flex items-center gap-2">
                               <Button variant="outline" size="sm" className="h-8">
