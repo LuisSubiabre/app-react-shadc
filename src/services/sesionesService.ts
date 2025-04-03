@@ -22,3 +22,11 @@ export const eliminarSesion = async (sesion_id: number) => {
   return api.delete(`talleres-sesiones/${sesion_id}`).then((response) => response.data);
 
 }
+
+export const obtenerEstudiantesSesion = async (sesion_id: number) => {
+  return api.get(`talleres-sesiones/asistencia/${sesion_id}`).then((response) => response.data);
+}
+
+export const modificarAsistencia = async (asistencia_id: number, asistio: boolean) => {
+  return api.put(`talleres-sesiones/asistencia/${asistencia_id}`, { asistio }).then((response) => response.data);
+}
