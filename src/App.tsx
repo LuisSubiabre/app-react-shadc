@@ -269,10 +269,11 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/dashboard/acles/talleres/mis-talleres"
+  
+               <Route
+                path="/dashboard/monitor/mis-talleres"
                 element={
-                  <ProtectedRoute requiredRoles={[4, 5]}>
+                  <ProtectedRoute requiredRoles={[11]}>
                     <Layout>
                       <MisTalleres />
                     </Layout>
