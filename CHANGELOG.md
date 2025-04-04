@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.6...v2.0.0) (2025-04-04)
+
+
+### Features
+
+* asistencia a talleres ([d70d4a7](https://github.com/LuisSubiabre/app-react-shadc/commit/d70d4a780356842e5e3cff2deaeaa9ef3b43fdf3))
+* asistencia sesiones acles ([f99619e](https://github.com/LuisSubiabre/app-react-shadc/commit/f99619e1c948833d7caf9529ccb89e13bdf6a928))
+* link monitor acle ([c849dfa](https://github.com/LuisSubiabre/app-react-shadc/commit/c849dfa0dd11bad8df5f1c80650fd91c54d617ac))
+* mostrar y eliminar sesiones de talleres ([17334a2](https://github.com/LuisSubiabre/app-react-shadc/commit/17334a2315a59813a3b5747b13c48fe3ebe9f064))
+* sesiones token ([3493003](https://github.com/LuisSubiabre/app-react-shadc/commit/3493003311a6037c5153cbfa70c2443187b34fad))
+* talleres monitores + login token expirado ([ac45022](https://github.com/LuisSubiabre/app-react-shadc/commit/ac45022c9b3ca6ee3d768a7d4acfbc4df57c743d))
+* ubicacion talleres ([e48c4e8](https://github.com/LuisSubiabre/app-react-shadc/commit/e48c4e8d8c6c219419874c9e7f86d24bdc12ba72))
+
+
+### Bug Fixes
+
+* arreglo DB estado ([a015aa5](https://github.com/LuisSubiabre/app-react-shadc/commit/a015aa574c5360a7414772df302e6e8da41dd1b8))
+* fecha ([9342107](https://github.com/LuisSubiabre/app-react-shadc/commit/9342107a0491c9f7ebd31ffb2a3afc0585665594))
+* restore code ([b44ca8d](https://github.com/LuisSubiabre/app-react-shadc/commit/b44ca8dcc1148426d35aca33b2015fed01d416eb))
+
 ### [1.2.6](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.5...v1.2.6) (2025-03-25)
 
 
