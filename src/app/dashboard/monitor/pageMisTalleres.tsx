@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTalleresByMonitor } from "@/services/talleresService";
-import { obtenerSesiones, eliminarSesion, crearSesion, obtenerEstudiantesSesion } from "@/services/sesionesService";
+import { obtenerSesiones, eliminarSesion, crearSesion, obtenerEstudiantesSesion, modificarAsistencia } from "@/services/sesionesService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -229,6 +229,33 @@ const MisTalleres: React.FC = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCambiarAsistencia = async (asistencia_id: number, asistio: boolean) => {
+    try {
+      const response = await modificarAsistencia(asistencia_id, asistio);
+      if (response) {
+        setEstudiantes(estudiantes.map(e => 
+          e.asistencia_id === asistencia_id 
+            ? { ...e, asistio }
+            : e
+        ));
+        toast({
+          title: "Asistencia actualizada",
+          description: "El estado de asistencia ha sido actualizado correctamente",
+          variant: "default",
+        });
+      } else {
+        throw new Error("No se recibió respuesta del servidor");
+      }
+    } catch (error) {
+      console.error("Error al modificar asistencia:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la asistencia. Por favor, intente nuevamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -476,11 +503,7 @@ const MisTalleres: React.FC = () => {
                       <Switch
                         checked={estudiante.asistio}
                         onCheckedChange={(checked) => {
-                          setEstudiantes(estudiantes.map(e => 
-                            e.asistencia_id === estudiante.asistencia_id 
-                              ? { ...e, asistio: checked }
-                              : e
-                          ));
+                          handleCambiarAsistencia(estudiante.asistencia_id, checked);
                         }}
                         className={`${
                           estudiante.asistio ? 'bg-green-500' : 'bg-red-500'
