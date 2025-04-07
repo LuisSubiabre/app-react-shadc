@@ -101,4 +101,10 @@ export const getTalleresByMonitor = async (monitor_id: number) => {
   return api
     .get(`/talleres/monitor/${monitor_id}`)
     .then((response) => response.data);
-}
+};
+
+export const getTalleresByCursoJefatura = async (curso_id: number) => {
+  return api
+    .get(`/talleres/curso/${curso_id}`)
+    .then((response) => response.data);
+};
