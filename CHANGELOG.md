@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.0.0...v2.1.0) (2025-04-07)
+
+
+### Bug Fixes
+
+* profesor jefe ([3b74e6d](https://github.com/LuisSubiabre/app-react-shadc/commit/3b74e6d8dca2b3d92ea2e628cecef7dc2374f71d))
+
 ## [2.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v1.2.6...v2.0.0) (2025-04-04)
 
 
