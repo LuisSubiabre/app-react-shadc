@@ -140,7 +140,8 @@ const AclesInscritos = () => {
     doc.setFontSize(12);
     doc.text(`Taller: ${taller.taller_nombre}`, 14, 25);
     doc.text(`Horario: ${taller.taller_horario}`, 14, 32);
-    doc.text(`Total Inscritos: ${totalInscritos}`, 14, 39);
+    doc.text(`Lugar: ${taller.taller_ubicacion}`, 14, 39);
+    doc.text(`Total Inscritos: ${totalInscritos}`, 14, 46);
 
     // Tabla
     const tableData = estudiantesInscritos.map((estudiante) => [
@@ -149,7 +150,7 @@ const AclesInscritos = () => {
     ]);
 
     autoTable(doc, {
-      startY: 45,
+      startY: 51,
       head: [["Estudiante", "Curso"]],
       body: tableData,
       theme: "grid",
