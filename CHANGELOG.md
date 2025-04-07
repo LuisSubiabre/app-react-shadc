@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.1.0...v2.1.1) (2025-04-07)
+
+
+### Features
+
+* ubicacion pdf ([c468d91](https://github.com/LuisSubiabre/app-react-shadc/commit/c468d916151ac34e40bf0544f7ec4ca5798f1860))
+
+
+### Bug Fixes
+
+* curso_id jefatura ([edac947](https://github.com/LuisSubiabre/app-react-shadc/commit/edac9477004c171cacf78d0ceadf7b9c89ebd02d))
+
 ## [2.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.0.0...v2.1.0) (2025-04-07)
 
 
