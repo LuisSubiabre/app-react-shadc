@@ -29,6 +29,7 @@ const PageJefatura = () => {
       .then((response) => {
         if (response) {
           setCurso(response);
+          console.log("Curso: ", response);
         } else {
           setError("No se pudo cargar la información");
         }
@@ -42,19 +43,21 @@ const PageJefatura = () => {
   }, []);
 
   useEffect(() => {
-    estudiantesCurso(6)
-      .then((response) => {
-        setEstudiantes(response);
-      })
-      .catch(() => {
-        setErrorEstudiantes(
-          "No se pudo cargar la información de los estudiantes"
-        );
-      })
-      .finally(() => {
-        setLoadingEstudiantes(false);
-      });
-  }, []);
+    if (curso) {
+      estudiantesCurso(curso.curso_id)
+        .then((response) => {
+          setEstudiantes(response);
+        })
+        .catch(() => {
+          setErrorEstudiantes(
+            "No se pudo cargar la información de los estudiantes"
+          );
+        })
+        .finally(() => {
+          setLoadingEstudiantes(false);
+        });
+    }
+  }, [curso]);
 
   if (loading) return <div>Cargando...</div>;
 
