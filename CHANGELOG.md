@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.1.1...v2.2.0) (2025-04-07)
+
+
+### Features
+
+* pdf talleres acle jefatura ([fdf68ea](https://github.com/LuisSubiabre/app-react-shadc/commit/fdf68ea791a51546478c2cbb7da1f85e35fbdca1))
+
 ### [2.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.1.0...v2.1.1) (2025-04-07)
 
 
