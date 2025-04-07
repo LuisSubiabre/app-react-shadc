@@ -97,10 +97,10 @@ const PageJefatura = () => {
               <TableRow>
                 <TableHead>N°</TableHead>
                 <TableHead>Estudiante</TableHead>
-                <TableHead>Notas</TableHead>
-                <TableHead>Atrasos</TableHead>
-                <TableHead>Asistencia</TableHead>
-                <TableHead>Informe</TableHead>
+                <TableHead></TableHead>
+                <TableHead></TableHead>
+                <TableHead></TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
