@@ -147,6 +147,18 @@ const data = {
       ],
     },
     {
+      title: "Jefatura",
+      url: "#",
+      icon: BookOpen,
+      isActive: false,
+      items: [
+        {
+          title: "Inicio",
+          url: "/dashboard/jefatura",
+        },
+      ],
+    },
+    {
       title: "Monitor ACLE",
       url: "#",
       icon: AudioWaveform,
@@ -155,10 +167,6 @@ const data = {
         {
           title: "Mis Talleres",
           url: "/dashboard/monitor/mis-talleres",
-        },
-        {
-          title: "Informes",
-          url: "/dashboard/monitor/informes",
         }
       ],
     }
@@ -196,7 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return user?.roles?.includes(4); // Mostrar "Models" solo si el usuario tiene el rol 2
       }
       if (menu.title == "Jefatura") {
-        return !user?.roles?.includes(3); // No mostrar "Jefatura" si el usuario tiene el rol 3, Inspectoria
+        return user?.roles?.includes(12); 
       }
       if (menu.title == "Monitor ACLE") {
         return user?.roles?.includes(11); // Mostrar "Monitor ACLE" solo si el usuario tiene el rol 11
