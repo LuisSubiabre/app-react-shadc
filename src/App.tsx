@@ -262,7 +262,7 @@ function App() {
               <Route
                 path="/dashboard/jefatura"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRoles={[12]}>
                     <Layout>
                       <Jefatura />
                     </Layout>
