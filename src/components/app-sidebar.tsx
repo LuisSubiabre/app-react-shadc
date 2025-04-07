@@ -167,10 +167,6 @@ const data = {
         {
           title: "Mis Talleres",
           url: "/dashboard/monitor/mis-talleres",
-        },
-        {
-          title: "Informes",
-          url: "/dashboard/monitor/informes",
         }
       ],
     }
