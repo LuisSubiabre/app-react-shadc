@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.2.0...v2.3.0) (2025-04-08)
+
+
+### Features
+
+* boton pdf inscritos ([b1108d5](https://github.com/LuisSubiabre/app-react-shadc/commit/b1108d5faae8c0f2d92f6eee416ccbb98390e314))
+* copy emails ([5d9fa98](https://github.com/LuisSubiabre/app-react-shadc/commit/5d9fa98118a3f62b989bcf9e615efeb16052e14e))
+* tabla talleres ([215c506](https://github.com/LuisSubiabre/app-react-shadc/commit/215c5067d451c8642e8bd720c5b870bcaf2ebde5))
+* tabla talleres ([f170e2a](https://github.com/LuisSubiabre/app-react-shadc/commit/f170e2afcd6a2cc836b796f3a6789d50f983f730))
+
 ## [2.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.1.1...v2.2.0) (2025-04-07)
 
 
