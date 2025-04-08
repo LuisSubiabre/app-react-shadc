@@ -18,7 +18,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, MapPin, Users, UserPlus } from "lucide-react";
+import { CalendarDays, MapPin, Users, UserPlus, Download } from "lucide-react";
+import { getEstudiantesInscritos } from "@/services/talleresService";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: typeof autoTable;
+}
 
 interface TablaTalleresProps {
   talleres: TallerType[];
@@ -74,6 +81,67 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
           className:
             "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800",
         };
+    }
+  };
+
+  const exportarPDF = async (taller: TallerType) => {
+    try {
+      // Obtener los estudiantes inscritos para este taller
+      const response = await getEstudiantesInscritos(taller.taller_id);
+      const estudiantesInscritos = response.estudiantes || [];
+
+      if (!estudiantesInscritos || estudiantesInscritos.length === 0) {
+        alert("No hay estudiantes inscritos en este taller para exportar.");
+        return;
+      }
+
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+
+      // Título
+      doc.setFontSize(16);
+      doc.text("Lista de Estudiantes Inscritos", 14, 15);
+      doc.setFontSize(12);
+      doc.text(`Taller: ${taller.taller_nombre}`, 14, 25);
+      doc.text(`Horario: ${taller.taller_horario}`, 14, 32);
+      doc.text(
+        `Lugar: ${taller.taller_ubicacion || "No especificado"}`,
+        14,
+        39
+      );
+      doc.text(`Total Inscritos: ${estudiantesInscritos.length}`, 14, 46);
+
+      // Tabla
+      const tableData = estudiantesInscritos.map(
+        (estudiante: { estudiante_nombre: string; curso_nombre: string }) => [
+          estudiante.estudiante_nombre,
+          estudiante.curso_nombre,
+        ]
+      );
+
+      autoTable(doc, {
+        startY: 51,
+        head: [["Estudiante", "Curso"]],
+        body: tableData,
+        theme: "grid",
+        headStyles: { fillColor: [41, 128, 185] },
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 80 },
+        },
+      });
+
+      // Guardar el PDF
+      doc.save(
+        `estudiantes-inscritos-${taller.taller_nombre
+          .toLowerCase()
+          .replace(/\s+/g, "-")}.pdf`
+      );
+    } catch (error) {
+      console.error("Error al exportar PDF:", error);
+      alert(
+        "Ocurrió un error al exportar el PDF. Por favor, intente nuevamente."
+      );
     }
   };
 
@@ -154,70 +222,99 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
             </TableCell>
             <TableCell>
               <div className="flex flex-wrap gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEditClick(taller)}
-                      >
-                        Editar
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Modificar información del taller</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onDeleteClick(taller)}
-                      >
-                        Eliminar
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Eliminar taller</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onOpenCursosModal(taller)}
-                      >
-                        Cursos
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Ver cursos asociados</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
-                      >
-                        <Button variant="outline" size="sm">
-                          Inscritos
+                <div className="flex flex-wrap gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEditClick(taller)}
+                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        >
+                          Editar
                         </Button>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Ver lista de inscritos</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Modificar información del taller</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => onDeleteClick(taller)}
+                          className="hover:bg-red-600"
+                        >
+                          Eliminar
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Eliminar taller</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onOpenCursosModal(taller)}
+                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        >
+                          Cursos
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ver cursos asociados</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                          >
+                            Inscritos
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ver lista de inscritos</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => exportarPDF(taller)}
+                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Exportar lista de inscritos en PDF</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
             </TableCell>
           </TableRow>
