@@ -27,14 +27,14 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
 }) => {
   const getBgColorByNivel = (nivel: string): string => {
     switch (nivel) {
-      case 'pre-basica':
-        return 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50';
-      case 'basica':
-        return 'bg-green-50 hover:bg-green-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50';
-      case 'media':
-        return 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50';
+      case "pre-basica":
+        return "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-950/50";
+      case "basica":
+        return "bg-green-50 hover:bg-green-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50";
+      case "media":
+        return "bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -43,20 +43,18 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
       <TableCaption>Lista de talleres</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead>Nombre</TableHead>
-          <TableHead>Horario</TableHead>
-          <TableHead>Nivel</TableHead>
+          <TableHead>Información del Taller</TableHead>
+          <TableHead>Detalles</TableHead>
           <TableHead>Cupos</TableHead>
-          <TableHead>Inscritos</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {talleres?.map((taller) => (
-          <TableRow 
+          <TableRow
             key={taller.taller_id}
             className={cn(
-              'transition-colors duration-200',
+              "transition-colors duration-200",
               getBgColorByNivel(taller.taller_nivel)
             )}
           >
@@ -65,10 +63,34 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
               <br />
               <small>{taller.profesor_nombre}</small>
             </TableCell>
-            <TableCell>{taller.taller_horario}</TableCell>
-            <TableCell>{taller.taller_nivel}</TableCell>
-            <TableCell>{taller.taller_cantidad_cupos}</TableCell>
-            <TableCell>{taller.taller_cantidad_inscritos}</TableCell>
+            <TableCell>
+              <div className="space-y-1">
+                <div>
+                  <span className="font-medium">Nivel:</span>{" "}
+                  {taller.taller_nivel}
+                </div>
+                <div>
+                  <span className="font-medium">Horario:</span>{" "}
+                  {taller.taller_horario}
+                </div>
+                <div>
+                  <span className="font-medium">Ubicación:</span>{" "}
+                  {taller.taller_ubicacion}
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="space-y-1">
+                <div>
+                  <span className="font-medium">Disponibles:</span>{" "}
+                  {taller.taller_cantidad_cupos}
+                </div>
+                <div>
+                  <span className="font-medium">Inscritos:</span>{" "}
+                  {taller.taller_cantidad_inscritos}
+                </div>
+              </div>
+            </TableCell>
             <TableCell>
               <div className="flex gap-2">
                 <Button
