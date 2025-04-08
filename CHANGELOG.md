@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.4.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.4.0...v2.4.1) (2025-04-08)
+
+
+### Bug Fixes
+
+* obtenerTalleresPorEstudiante ([d1568a5](https://github.com/LuisSubiabre/app-react-shadc/commit/d1568a57e7497ac50c19e499dda852ce6e7f8560))
+
 ## [2.4.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.3.0...v2.4.0) (2025-04-08)
 
 
