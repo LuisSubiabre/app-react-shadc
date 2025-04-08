@@ -22,12 +22,15 @@ import {
 } from "@/components/ui/select";
 import { createAtraso } from "@/services/atrasosService";
 import { printAtraso } from "@/services/printService";
+import TalleresInscritosButton from "./TalleresInscritosButton";
 
 interface TablaEstudiantesProps {
   showAtrasosButtons?: boolean;
 }
 
-const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) => {
+const TablaEstudiantes = ({
+  showAtrasosButtons = true,
+}: TablaEstudiantesProps) => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +72,10 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
     )
   ).sort();
 
-  const handleNewAtraso = async (estudianteId: number, tipo: "llegada" | "jornada") => {
+  const handleNewAtraso = async (
+    estudianteId: number,
+    tipo: "llegada" | "jornada"
+  ) => {
     const estudiante = estudiantes.find((e) => e.id === estudianteId);
     if (!estudiante) return;
 
@@ -119,22 +125,27 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
       if (!searchTerm) return true;
 
       // Normalizar el término de búsqueda eliminando espacios múltiples
-      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const searchTermNormalized = normalizeString(
+        searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
+      );
       const nombreNormalized = normalizeString(
         (estudiante.estudiante_nombre || estudiante.nombre || "").toLowerCase()
       );
-      const rutNormalized = normalizeString((estudiante.rut || "").toLowerCase());
+      const rutNormalized = normalizeString(
+        (estudiante.rut || "").toLowerCase()
+      );
       const emailNormalized = normalizeString(
         (estudiante.email || "").toLowerCase()
       );
 
       // Si el término de búsqueda contiene espacios, buscar coincidencias exactas de palabras
-      if (searchTermNormalized.includes(' ')) {
-        const searchWords = searchTermNormalized.split(' ');
-        return searchWords.every(word => 
-          nombreNormalized.includes(word) ||
-          rutNormalized.includes(word) ||
-          emailNormalized.includes(word)
+      if (searchTermNormalized.includes(" ")) {
+        const searchWords = searchTermNormalized.split(" ");
+        return searchWords.every(
+          (word) =>
+            nombreNormalized.includes(word) ||
+            rutNormalized.includes(word) ||
+            emailNormalized.includes(word)
         );
       }
 
@@ -146,20 +157,26 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
     })
     .sort((a, b) => {
       if (!searchTerm) return 0;
-      
-      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
-      const nombreANormalized = normalizeString((a.estudiante_nombre || a.nombre || "").toLowerCase());
-      const nombreBNormalized = normalizeString((b.estudiante_nombre || b.nombre || "").toLowerCase());
-      
+
+      const searchTermNormalized = normalizeString(
+        searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
+      );
+      const nombreANormalized = normalizeString(
+        (a.estudiante_nombre || a.nombre || "").toLowerCase()
+      );
+      const nombreBNormalized = normalizeString(
+        (b.estudiante_nombre || b.nombre || "").toLowerCase()
+      );
+
       // Obtener la posición del término en cada nombre
       const posA = nombreANormalized.indexOf(searchTermNormalized);
       const posB = nombreBNormalized.indexOf(searchTermNormalized);
-      
+
       // Si el término está en diferentes posiciones, ordenar por posición
       if (posA !== posB) {
         return posA - posB;
       }
-      
+
       // Si el término está en la misma posición, ordenar alfabéticamente
       return nombreANormalized.localeCompare(nombreBNormalized);
     });
@@ -251,14 +268,22 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
                 <TableHead className="font-medium">Email</TableHead>
                 <TableHead className="font-medium">Curso</TableHead>
                 {showAtrasosButtons && (
-                  <TableHead className="text-right font-medium">Acciones</TableHead>
+                  <TableHead className="text-right font-medium">
+                    Acciones
+                  </TableHead>
                 )}
+                <TableHead className="text-right font-medium">
+                  Talleres
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEstudiantes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell
+                    colSpan={showAtrasosButtons ? 5 : 4}
+                    className="h-24 text-center"
+                  >
                     <div className="flex flex-col items-center gap-2">
                       <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-3">
                         <svg
@@ -358,7 +383,9 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleNewAtraso(estudiante.id, "llegada")}
+                            onClick={() =>
+                              handleNewAtraso(estudiante.id, "llegada")
+                            }
                             className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                           >
                             <Clock className="h-4 w-4 mr-2" />
@@ -367,7 +394,9 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleNewAtraso(estudiante.id, "jornada")}
+                            onClick={() =>
+                              handleNewAtraso(estudiante.id, "jornada")
+                            }
                             className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300"
                           >
                             <Calendar className="h-4 w-4 mr-2" />
@@ -376,6 +405,17 @@ const TablaEstudiantes = ({ showAtrasosButtons = true }: TablaEstudiantesProps) 
                         </div>
                       </TableCell>
                     )}
+                    <TableCell className="text-right">
+                      <TalleresInscritosButton
+                        estudianteId={estudiante.estudiante_id || estudiante.id}
+                        estudianteNombre={
+                          estudiante.estudiante_nombre || estudiante.nombre
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-300"
+                      />
+                    </TableCell>
                   </TableRow>
                 ))
               )}

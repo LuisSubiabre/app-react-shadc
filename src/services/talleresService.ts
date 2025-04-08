@@ -108,3 +108,38 @@ export const getTalleresByCursoJefatura = async (curso_id: number) => {
     .get(`/talleres/curso/${curso_id}`)
     .then((response) => response.data);
 };
+
+export const obtenerTalleresDeEstudiante = async (estudiante_id: number) => {
+  try {
+    console.log("Obteniendo talleres para el estudiante:", estudiante_id);
+    const response = await api.get(
+      `/talleres/estudiantes/listado/${estudiante_id}`
+    );
+    console.log("Respuesta de la API:", response.data);
+
+    // Verificar si la respuesta tiene el formato esperado
+    if (response.data && response.data.talleres) {
+      console.log(
+        `Se encontraron ${response.data.talleres.length} talleres para el estudiante ${estudiante_id}`
+      );
+      return response.data;
+    } else {
+      console.error("Formato de respuesta inesperado:", response.data);
+      // Devolver un objeto con el formato esperado pero sin talleres
+      return {
+        message: "No se encontraron talleres",
+        talleres: [],
+      };
+    }
+  } catch (error) {
+    console.error("Error al obtener talleres del estudiante:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Detalles del error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+    }
+    throw error;
+  }
+};
