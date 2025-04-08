@@ -157,3 +157,26 @@ export interface Atraso {
   observaciones: string;
   fecha_registro: string;
 }
+
+export interface TallerInscritoType {
+  estudiante_id: number;
+  estudiante_nombre: string;
+  estudiante_email: string;
+  curso_nombre: string;
+  taller_id: number;
+  taller_nombre: string;
+  taller_descripcion: string;
+  taller_horario: string;
+  taller_nivel: string;
+  cantidad_cupos: number;
+  cantidad_inscritos: number;
+  ubicacion: string;
+  profesor_id: number;
+  taller_fecha_creacion: string;
+  taller_fecha_actualizacion: string;
+}
+
+export interface TalleresInscritosResponseType {
+  message: string;
+  talleres: TallerInscritoType[];
+}
