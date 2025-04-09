@@ -132,6 +132,11 @@ const data = {
           title: "Control de Atrasos",
           url: "/dashboard/inspectoria/controlatrasos",
         },
+        {
+          title: "Reportes Atrasos",
+          url: "/dashboard/inspectoria/atrasosreportes",
+        },
+        
       ],
     },
     {

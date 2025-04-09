@@ -56,3 +56,15 @@ export const getAtrasosByEstudiante = async (estudianteId: number) => {
     throw error;
   }
 };
+
+export const getAtrasosRangoFecha = async (fechaInicio: string, fechaFin: string) => {
+  const response = await api.post(`/atrasos/rango`, { fechaInicio, fechaFin });
+  return response.data.data || [];
+};
+
+
+export const getAtrasosCursoRangoFecha = async (fechaInicio: string, fechaFin: string, curso_id: number) => {
+  const response = await api.post(`/atrasos/curso-rango`, { fechaInicio, fechaFin, curso_id });
+  return response.data.data || [];
+};
+

@@ -40,6 +40,10 @@ const Calendarios = lazy(() => import("@/app/dashboard/calendarios/pageCalendari
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
 );
+const InspectoriaReporteAtrasos = lazy(
+  () => import("@/app/dashboard/inspectoria/atrasos/pageAtrasosReportes")
+);
+
 const AcleTalleres = lazy(
   () => import("@/app/dashboard/acles/talleres/pageTalleres")
 );
@@ -233,6 +237,16 @@ function App() {
                   <ProtectedRoute requiredRoles={[3]}>
                     <Layout>
                       <PageControlAtrasos />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+                  <Route
+                path="/dashboard/inspectoria/atrasosreportes"
+                element={
+                  <ProtectedRoute requiredRoles={[3]}>
+                    <Layout>
+                      <InspectoriaReporteAtrasos />
                     </Layout>
                   </ProtectedRoute>
                 }
