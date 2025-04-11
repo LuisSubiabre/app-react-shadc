@@ -176,7 +176,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
             id: estudiante.estudiante_id,
           }))
         : [];
-      
+
       setTotalEstudiantes(estudiantes.length);
 
       // Contar inscritos para cada asignatura
@@ -211,7 +211,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     setIsLoadingModal(true);
     setSelectedSubject(asignatura);
     setSelectedSubjectId(asignatura.id.toString());
-    
+
     try {
       // Cargar estudiantes solo cuando se selecciona una asignatura
       const estudiantesResponse = await fetch(
@@ -485,18 +485,14 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       <Dialog
         open={isModalSubjectsOpen}
         onOpenChange={(open) => {
+          // Solo permitir cerrar el modal si se hace clic en el botón de cerrar
           if (!open) {
-            setSelectedSubject(null);
-            setSelectedSubjectId("");
-            setDataEstudiantes([]);
-            setEnrolledStudents({});
-            setTotalEstudiantes(0);
-            setIsLoadingModal(false);
+            return;
           }
           setIsModalSubjectsOpen(open);
         }}
       >
-        <DialogContent className="max-w-4xl w-full">
+        <DialogContent className="max-w-4xl w-full [&>button]:hidden">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               Gestión de Asignaturas - {currentCurso?.nombre}
@@ -538,9 +534,13 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         value={asignatura.id.toString()}
                         className="flex flex-col items-start"
                       >
-                        <span className="font-medium">{asignatura.nombre} </span>
+                        <span className="font-medium">
+                          {asignatura.nombre}{" "}
+                        </span>
                         <span className="text-xs text-muted-foreground">
-                          {asignatura.inscritos} inscritos • {totalEstudiantes - (asignatura.inscritos || 0)} no inscritos
+                          {asignatura.inscritos} inscritos •{" "}
+                          {totalEstudiantes - (asignatura.inscritos || 0)} no
+                          inscritos
                         </span>
                       </SelectItem>
                     ))}
@@ -621,7 +621,9 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                                 value={profesor.id.toString()}
                                 className="flex flex-col items-start"
                               >
-                                <span className="font-medium">{profesor.nombre}</span>
+                                <span className="font-medium">
+                                  {profesor.nombre}
+                                </span>
                                 <span className="text-xs text-muted-foreground">
                                   {profesor.email}
                                 </span>
@@ -641,76 +643,63 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                           <Label className="text-sm font-medium">
                             Inscripción de Estudiantes
                           </Label>
-                          <DialogFooter className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  if (selectedSubject) {
-                                    const allSelected = dataEstudiantes.every(
-                                      (estudiante) =>
-                                        enrolledStudents[
-                                          `${estudiante.id}-${selectedSubject.id}`
-                                        ]
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (selectedSubject) {
+                                  const allSelected = dataEstudiantes.every(
+                                    (estudiante) =>
+                                      enrolledStudents[
+                                        `${estudiante.id}-${selectedSubject.id}`
+                                      ]
+                                  );
+
+                                  if (!allSelected) {
+                                    const updatedEnrolledStudents = {
+                                      ...enrolledStudents,
+                                    };
+
+                                    dataEstudiantes.forEach((estudiante) => {
+                                      updatedEnrolledStudents[
+                                        `${estudiante.id}-${selectedSubject.id}`
+                                      ] = true;
+                                    });
+
+                                    setEnrolledStudents(
+                                      updatedEnrolledStudents
                                     );
 
-                                    if (!allSelected) {
-                                      const updatedEnrolledStudents = {
-                                        ...enrolledStudents,
-                                      };
-
-                                      dataEstudiantes.forEach((estudiante) => {
-                                        updatedEnrolledStudents[
-                                          `${estudiante.id}-${selectedSubject.id}`
-                                        ] = true;
-                                      });
-
-                                      setEnrolledStudents(updatedEnrolledStudents);
-
-                                      dataEstudiantes.forEach((estudiante) => {
-                                        handleCheckboxChange(
-                                          estudiante.id,
-                                          selectedSubject.id,
-                                          true
-                                        );
-                                      });
-                                    }
+                                    dataEstudiantes.forEach((estudiante) => {
+                                      handleCheckboxChange(
+                                        estudiante.id,
+                                        selectedSubject.id,
+                                        true
+                                      );
+                                    });
                                   }
-                                }}
-                                className="flex items-center gap-2"
+                                }
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-4 h-4"
                               >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth={1.5}
-                                  stroke="currentColor"
-                                  className="w-4 h-4"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                  />
-                                </svg>
-                                Seleccionar Todos
-                              </Button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  setIsModalSubjectsOpen(false);
-                                  setSelectedSubject(null);
-                                  setDataEstudiantes([]);
-                                  setEnrolledStudents({});
-                                }}
-                              >
-                                Cerrar
-                              </Button>
-                            </div>
-                          </DialogFooter>
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                />
+                              </svg>
+                              Seleccionar Todos
+                            </Button>
+                          </div>
                         </div>
                         <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-96 overflow-y-auto">
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -777,6 +766,22 @@ const AcademicoCursoAsignaturas: React.FC = () => {
               </div>
             )}
           </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsModalSubjectsOpen(false);
+                setSelectedSubject(null);
+                setSelectedSubjectId("");
+                setDataEstudiantes([]);
+                setEnrolledStudents({});
+                setTotalEstudiantes(0);
+                setIsLoadingModal(false);
+              }}
+            >
+              Cerrar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       {/* Modal de confirmación para desinscribir */}
