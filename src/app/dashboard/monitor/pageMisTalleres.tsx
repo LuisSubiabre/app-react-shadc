@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { getTalleresByMonitor } from "@/services/talleresService";
-import { obtenerSesiones, eliminarSesion, crearSesion, obtenerEstudiantesSesion, modificarAsistencia } from "@/services/sesionesService";
+import {
+  getTalleresByMonitor,
+  getEstudiantesInscritos,
+} from "@/services/talleresService";
+import {
+  obtenerSesiones,
+  eliminarSesion,
+  crearSesion,
+  obtenerEstudiantesSesion,
+  modificarAsistencia,
+} from "@/services/sesionesService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +33,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Taller {
   taller_id: number;
@@ -69,7 +86,9 @@ const MisTalleres: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expandedTaller, setExpandedTaller] = useState<number | null>(null);
   const [fecha, setFecha] = useState<string>(format(new Date(), "yyyy-MM-dd"));
-  const [estado, setEstado] = useState<"realizado" | "no_realizado" | "suspendido">("realizado");
+  const [estado, setEstado] = useState<
+    "realizado" | "no_realizado" | "suspendido"
+  >("realizado");
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [loadingSesiones, setLoadingSesiones] = useState(false);
   const [sesionToDelete, setSesionToDelete] = useState<number | null>(null);
@@ -78,6 +97,17 @@ const MisTalleres: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(false);
   const [sesionActual, setSesionActual] = useState<Sesion | null>(null);
+  const [tallerInscritos, setTallerInscritos] = useState<number | null>(null);
+  const [estudiantesInscritos, setEstudiantesInscritos] = useState<
+    {
+      estudiante_id: number;
+      estudiante_nombre: string;
+      curso_nombre: string;
+      estudiante_email: string;
+    }[]
+  >([]);
+  const [loadingInscritos, setLoadingInscritos] = useState(false);
+  const [correosCopiados, setCorreosCopiados] = useState(false);
 
   useEffect(() => {
     const fetchTalleres = async () => {
@@ -102,7 +132,7 @@ const MisTalleres: React.FC = () => {
   useEffect(() => {
     const fetchSesiones = async () => {
       if (!expandedTaller) return;
-      
+
       setLoadingSesiones(true);
       try {
         const response = await obtenerSesiones(expandedTaller);
@@ -120,13 +150,13 @@ const MisTalleres: React.FC = () => {
   useEffect(() => {
     const fetchEstudiantes = async () => {
       if (!sesionAsistencia) return;
-      
+
       setLoadingEstudiantes(true);
       try {
         const response = await obtenerEstudiantesSesion(sesionAsistencia);
         setEstudiantes(response);
         // Encontrar la sesión actual
-        const sesion = sesiones.find(s => s.sesion_id === sesionAsistencia);
+        const sesion = sesiones.find((s) => s.sesion_id === sesionAsistencia);
         setSesionActual(sesion || null);
       } catch (error) {
         console.error("Error al obtener estudiantes:", error);
@@ -142,6 +172,29 @@ const MisTalleres: React.FC = () => {
 
     fetchEstudiantes();
   }, [sesionAsistencia, sesiones]);
+
+  useEffect(() => {
+    const fetchEstudiantesInscritos = async () => {
+      if (!tallerInscritos) return;
+
+      setLoadingInscritos(true);
+      try {
+        const response = await getEstudiantesInscritos(tallerInscritos);
+        setEstudiantesInscritos(response.estudiantes || []);
+      } catch (error) {
+        console.error("Error al obtener estudiantes inscritos:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los estudiantes inscritos",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingInscritos(false);
+      }
+    };
+
+    fetchEstudiantesInscritos();
+  }, [tallerInscritos]);
 
   const formatearFecha = (fechaStr: string) => {
     try {
@@ -164,7 +217,7 @@ const MisTalleres: React.FC = () => {
       const response = await obtenerSesiones(expandedTaller!);
       setSesiones(response);
       setSesionToDelete(null); // Cerrar el diálogo
-      
+
       toast({
         title: "Sesión eliminada",
         description: "La sesión ha sido eliminada exitosamente",
@@ -174,7 +227,8 @@ const MisTalleres: React.FC = () => {
       console.error("Error al eliminar sesión:", error);
       toast({
         title: "Error",
-        description: "No se pudo eliminar la sesión. Por favor, intente nuevamente.",
+        description:
+          "No se pudo eliminar la sesión. Por favor, intente nuevamente.",
         variant: "destructive",
       });
     }
@@ -224,7 +278,8 @@ const MisTalleres: React.FC = () => {
       console.error("Error al crear sesión:", error);
       toast({
         title: "Error",
-        description: "No se pudo crear la sesión. Por favor, intente nuevamente.",
+        description:
+          "No se pudo crear la sesión. Por favor, intente nuevamente.",
         variant: "destructive",
       });
     } finally {
@@ -232,18 +287,22 @@ const MisTalleres: React.FC = () => {
     }
   };
 
-  const handleCambiarAsistencia = async (asistencia_id: number, asistio: boolean) => {
+  const handleCambiarAsistencia = async (
+    asistencia_id: number,
+    asistio: boolean
+  ) => {
     try {
       const response = await modificarAsistencia(asistencia_id, asistio);
       if (response) {
-        setEstudiantes(estudiantes.map(e => 
-          e.asistencia_id === asistencia_id 
-            ? { ...e, asistio }
-            : e
-        ));
+        setEstudiantes(
+          estudiantes.map((e) =>
+            e.asistencia_id === asistencia_id ? { ...e, asistio } : e
+          )
+        );
         toast({
           title: "Asistencia actualizada",
-          description: "El estado de asistencia ha sido actualizado correctamente",
+          description:
+            "El estado de asistencia ha sido actualizado correctamente",
           variant: "default",
         });
       } else {
@@ -253,10 +312,40 @@ const MisTalleres: React.FC = () => {
       console.error("Error al modificar asistencia:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la asistencia. Por favor, intente nuevamente.",
+        description:
+          "No se pudo actualizar la asistencia. Por favor, intente nuevamente.",
         variant: "destructive",
       });
     }
+  };
+
+  const copiarCorreos = () => {
+    if (estudiantesInscritos.length === 0) return;
+
+    const correos = estudiantesInscritos
+      .map((estudiante) => estudiante.estudiante_email)
+      .join(", ");
+
+    navigator.clipboard
+      .writeText(correos)
+      .then(() => {
+        setCorreosCopiados(true);
+        setTimeout(() => setCorreosCopiados(false), 2000);
+        toast({
+          title: "Correos copiados",
+          description:
+            "Los correos electrónicos han sido copiados al portapapeles",
+          variant: "default",
+        });
+      })
+      .catch((error) => {
+        console.error("Error al copiar al portapapeles:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron copiar los correos al portapapeles",
+          variant: "destructive",
+        });
+      });
   };
 
   if (loading) {
@@ -299,13 +388,26 @@ const MisTalleres: React.FC = () => {
                     {taller.taller_cantidad_cupos}
                   </p>
                 </div>
-                <div className="mt-4">
-                  <Button 
-                    variant="outline" 
+                <div className="mt-4 space-y-2">
+                  <Button
+                    variant="outline"
                     className="w-full"
-                    onClick={() => setExpandedTaller(expandedTaller === taller.taller_id ? null : taller.taller_id)}
+                    onClick={() =>
+                      setExpandedTaller(
+                        expandedTaller === taller.taller_id
+                          ? null
+                          : taller.taller_id
+                      )
+                    }
                   >
                     Sesiones
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setTallerInscritos(taller.taller_id)}
+                  >
+                    Ver Inscritos
                   </Button>
                 </div>
               </CardContent>
@@ -320,13 +422,20 @@ const MisTalleres: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h3 className="font-semibold text-lg">
-                      Taller: {talleres.find(t => t.taller_id === expandedTaller)?.taller_nombre}
+                      Taller:{" "}
+                      {
+                        talleres.find((t) => t.taller_id === expandedTaller)
+                          ?.taller_nombre
+                      }
                     </h3>
-                    <Button variant="outline" onClick={() => setExpandedTaller(null)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setExpandedTaller(null)}
+                    >
                       Cerrar
                     </Button>
                   </div>
-                  
+
                   <div className="grid gap-4">
                     <div className="grid gap-2">
                       <label htmlFor="fecha" className="text-sm font-medium">
@@ -344,18 +453,25 @@ const MisTalleres: React.FC = () => {
                       <label className="text-sm font-medium">
                         Estado de la sesión
                       </label>
-                      <Select value={estado} onValueChange={(value: "realizado" | "no_realizado" | "suspendido") => setEstado(value)}>
+                      <Select
+                        value={estado}
+                        onValueChange={(
+                          value: "realizado" | "no_realizado" | "suspendido"
+                        ) => setEstado(value)}
+                      >
                         <SelectTrigger className="max-w-xs">
                           <SelectValue placeholder="Seleccionar estado" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="realizado">Realizado</SelectItem>
-                          <SelectItem value="no realizado">No Realizado</SelectItem>
+                          <SelectItem value="no realizado">
+                            No Realizado
+                          </SelectItem>
                           <SelectItem value="suspendido">Suspendido</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button 
+                    <Button
                       className="w-full sm:w-auto"
                       onClick={handleAgregarSesion}
                       disabled={saving}
@@ -391,9 +507,13 @@ const MisTalleres: React.FC = () => {
                   </div>
 
                   <div className="mt-8">
-                    <h4 className="font-semibold mb-4">Historial de Sesiones</h4>
+                    <h4 className="font-semibold mb-4">
+                      Historial de Sesiones
+                    </h4>
                     {loadingSesiones ? (
-                      <div className="text-center py-4">Cargando sesiones...</div>
+                      <div className="text-center py-4">
+                        Cargando sesiones...
+                      </div>
                     ) : sesiones.length > 0 ? (
                       <div className="space-y-4">
                         {sesiones.map((sesion) => (
@@ -406,24 +526,29 @@ const MisTalleres: React.FC = () => {
                                 {formatearFecha(sesion.fecha)}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Estado: {sesion.estado.charAt(0).toUpperCase() + sesion.estado.slice(1)}
+                                Estado:{" "}
+                                {sesion.estado.charAt(0).toUpperCase() +
+                                  sesion.estado.slice(1)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-            
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                                onClick={() => setSesionToDelete(sesion.sesion_id)}
+                                onClick={() =>
+                                  setSesionToDelete(sesion.sesion_id)
+                                }
                               >
                                 Eliminar
                               </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="h-8"
-                                onClick={() => setSesionAsistencia(sesion.sesion_id)}
+                                onClick={() =>
+                                  setSesionAsistencia(sesion.sesion_id)
+                                }
                               >
                                 Asistencia
                               </Button>
@@ -444,21 +569,27 @@ const MisTalleres: React.FC = () => {
         )}
       </div>
 
-      <Dialog open={!!sesionToDelete} onOpenChange={() => setSesionToDelete(null)}>
+      <Dialog
+        open={!!sesionToDelete}
+        onOpenChange={() => setSesionToDelete(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Eliminación</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro que deseas eliminar esta sesión? Esta acción no se puede deshacer.
+              ¿Estás seguro que deseas eliminar esta sesión? Esta acción no se
+              puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSesionToDelete(null)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={() => sesionToDelete && handleEliminarSesion(sesionToDelete)}
+            <Button
+              variant="destructive"
+              onClick={() =>
+                sesionToDelete && handleEliminarSesion(sesionToDelete)
+              }
             >
               Eliminar
             </Button>
@@ -466,17 +597,25 @@ const MisTalleres: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!sesionAsistencia} onOpenChange={() => setSesionAsistencia(null)}>
+      <Dialog
+        open={!!sesionAsistencia}
+        onOpenChange={() => setSesionAsistencia(null)}
+      >
         <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>
-              Registro de Asistencia - {sesionActual ? formatearFecha(sesionActual.fecha) : ''}
+              Registro de Asistencia -{" "}
+              {sesionActual ? formatearFecha(sesionActual.fecha) : ""}
             </DialogTitle>
             <DialogDescription>
-              Lista de estudiantes inscritos en el taller: {talleres.find(t => t.taller_id === expandedTaller)?.taller_nombre}
+              Lista de estudiantes inscritos en el taller:{" "}
+              {
+                talleres.find((t) => t.taller_id === expandedTaller)
+                  ?.taller_nombre
+              }
             </DialogDescription>
           </DialogHeader>
-          
+
           {loadingEstudiantes ? (
             <div className="text-center py-4">Cargando estudiantes...</div>
           ) : estudiantes.length > 0 ? (
@@ -496,27 +635,142 @@ const MisTalleres: React.FC = () => {
                         {estudiante.estudiante_nombre}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{estudiante.curso_nombre}</span>                      
+                        <span>{estudiante.curso_nombre}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={estudiante.asistio}
                         onCheckedChange={(checked) => {
-                          handleCambiarAsistencia(estudiante.asistencia_id, checked);
+                          handleCambiarAsistencia(
+                            estudiante.asistencia_id,
+                            checked
+                          );
                         }}
                         className={`${
-                          estudiante.asistio ? 'bg-green-500' : 'bg-red-500'
+                          estudiante.asistio ? "bg-green-500" : "bg-red-500"
                         }`}
                       />
-                      <span className={`text-sm font-medium ${
-                        estudiante.asistio ? "text-green-600" : "text-red-600"
-                      }`}>
+                      <span
+                        className={`text-sm font-medium ${
+                          estudiante.asistio ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
                         {estudiante.asistio ? "Presente" : "Ausente"}
                       </span>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-4">
+              No hay estudiantes inscritos
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!tallerInscritos}
+        onOpenChange={() => setTallerInscritos(null)}
+      >
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>
+              Estudiantes Inscritos -{" "}
+              {
+                talleres.find((t) => t.taller_id === tallerInscritos)
+                  ?.taller_nombre
+              }
+            </DialogTitle>
+            <DialogDescription>
+              Lista de estudiantes inscritos en el taller
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingInscritos ? (
+            <div className="text-center py-4">Cargando estudiantes...</div>
+          ) : estudiantesInscritos.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copiarCorreos}
+                  className="flex items-center gap-2"
+                >
+                  {correosCopiados ? (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-green-500"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Copiado
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        ></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      Copiar Correos
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="space-y-2 overflow-y-auto max-h-[60vh] pr-2">
+                <div className="rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Estudiante</TableHead>
+                        <TableHead>Curso</TableHead>
+                        <TableHead>Email</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {estudiantesInscritos.map((estudiante) => (
+                        <TableRow key={estudiante.estudiante_id}>
+                          <TableCell>
+                            <div className="font-medium">
+                              {estudiante.estudiante_nombre}
+                            </div>
+                          </TableCell>
+                          <TableCell>{estudiante.curso_nombre}</TableCell>
+                          <TableCell>{estudiante.estudiante_email}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           ) : (
