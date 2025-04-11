@@ -87,7 +87,9 @@ const PageControlAtrasos = () => {
     setSelectedEstudiante(estudiante);
     setIsModalOpen(true);
     try {
-      const response = await getAtrasosByEstudiante(estudiante.id);
+      const response = await getAtrasosByEstudiante(
+        estudiante.estudiante_id || estudiante.id
+      );
       setAtrasos(response);
     } catch (error) {
       console.error("Error al cargar atrasos:", error);
@@ -119,9 +121,13 @@ const PageControlAtrasos = () => {
       if (!searchTerm) return true;
 
       // Normalizar el término de búsqueda eliminando espacios múltiples
-      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+      const searchTermNormalized = normalizeString(
+        searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
+      );
       const nombreNormalized = normalizeString(estudiante.nombre.toLowerCase());
-      const rutNormalized = normalizeString(estudiante.rut?.toLowerCase() || "");
+      const rutNormalized = normalizeString(
+        estudiante.rut?.toLowerCase() || ""
+      );
       const emailNormalized = normalizeString(
         estudiante.email?.toLowerCase() || ""
       );
@@ -130,13 +136,14 @@ const PageControlAtrasos = () => {
       );
 
       // Si el término de búsqueda contiene espacios, buscar coincidencias exactas de palabras
-      if (searchTermNormalized.includes(' ')) {
-        const searchWords = searchTermNormalized.split(' ');
-        return searchWords.every(word => 
-          nombreNormalized.includes(word) ||
-          rutNormalized.includes(word) ||
-          emailNormalized.includes(word) ||
-          cursoNormalized.includes(word)
+      if (searchTermNormalized.includes(" ")) {
+        const searchWords = searchTermNormalized.split(" ");
+        return searchWords.every(
+          (word) =>
+            nombreNormalized.includes(word) ||
+            rutNormalized.includes(word) ||
+            emailNormalized.includes(word) ||
+            cursoNormalized.includes(word)
         );
       }
 
@@ -149,20 +156,22 @@ const PageControlAtrasos = () => {
     })
     .sort((a, b) => {
       if (!searchTerm) return 0;
-      
-      const searchTermNormalized = normalizeString(searchTerm.toLowerCase().replace(/\s+/g, ' ').trim());
+
+      const searchTermNormalized = normalizeString(
+        searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
+      );
       const nombreANormalized = normalizeString(a.nombre.toLowerCase());
       const nombreBNormalized = normalizeString(b.nombre.toLowerCase());
-      
+
       // Obtener la posición del término en cada nombre
       const posA = nombreANormalized.indexOf(searchTermNormalized);
       const posB = nombreBNormalized.indexOf(searchTermNormalized);
-      
+
       // Si el término está en diferentes posiciones, ordenar por posición
       if (posA !== posB) {
         return posA - posB;
       }
-      
+
       // Si el término está en la misma posición, ordenar alfabéticamente
       return nombreANormalized.localeCompare(nombreBNormalized);
     });

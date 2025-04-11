@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Clock, Calendar, BookOpenText  } from "lucide-react";
+import { Clock, Calendar, BookOpenText } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, FileDown } from "lucide-react";
 import { estudiantesCurso } from "@/services/estudiantesService";
@@ -20,6 +20,9 @@ import { getTalleresByCursoJefatura } from "@/services/talleresService";
 import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { ModalVerAtrasos } from "@/components/atrasos/ModalVerAtrasos";
+import { getAtrasosByEstudiante } from "@/services/atrasosService";
+import { Atraso } from "@/types";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -43,6 +46,11 @@ const PageJefatura = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState<boolean>(true);
   const { user } = useAuth() || {};
+  const [selectedEstudiante, setSelectedEstudiante] =
+    useState<EstudianteType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [atrasos, setAtrasos] = useState<Atraso[]>([]);
+
   useEffect(() => {
     getJefatura(Number(user?.id))
       .then((response) => {
@@ -209,6 +217,25 @@ const PageJefatura = () => {
     }
   };
 
+  const handleOpenModal = async (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalOpen(true);
+    try {
+      const response = await getAtrasosByEstudiante(
+        estudiante.estudiante_id || estudiante.id
+      );
+      setAtrasos(response);
+    } catch (error) {
+      console.error("Error al cargar atrasos:", error);
+      setAtrasos([]);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEstudiante(null);
+  };
+
   if (loading) return <div>Cargando...</div>;
 
   if (!curso)
@@ -272,9 +299,22 @@ const PageJefatura = () => {
                     <span className="text-xs">{estudiante.email}</span>
                   </TableCell>
                   <TableCell>{estudiante.rut}</TableCell>
-                  <TableCell><Clock /></TableCell>
-                  <TableCell><Calendar /></TableCell>
-                  <TableCell><BookOpenText /></TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenModal(estudiante)}
+                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                    >
+                      <Clock className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Calendar />
+                  </TableCell>
+                  <TableCell>
+                    <BookOpenText />
+                  </TableCell>
                   <TableCell>
                     <Button variant="outline" className="w-full">
                       Ver
@@ -286,6 +326,13 @@ const PageJefatura = () => {
           </Table>
         )}
       </div>
+
+      <ModalVerAtrasos
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        estudiante={selectedEstudiante}
+        atrasos={atrasos}
+      />
     </>
   );
 };
