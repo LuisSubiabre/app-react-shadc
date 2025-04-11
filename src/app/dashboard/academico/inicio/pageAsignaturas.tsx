@@ -234,6 +234,8 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
       // Cargar inscripciones para la asignatura seleccionada
       const enrollments: { [key: string]: boolean } = {};
+      let inscritosCount = 0;
+
       for (const estudiante of estudiantes) {
         const isEnrolled = await checkStudentEnrollment(
           estudiante.id,
@@ -241,17 +243,20 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         );
         enrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
         if (isEnrolled) {
-          // Actualizar el contador de inscritos
-          setSubjectsForCourse((prevSubjects) =>
-            prevSubjects.map((subject) =>
-              subject.id === asignatura.id
-                ? { ...subject, inscritos: (subject.inscritos || 0) + 1 }
-                : subject
-            )
-          );
+          inscritosCount++;
         }
       }
+
       setEnrolledStudents(enrollments);
+
+      // Actualizar el contador de inscritos en subjectsForCourse
+      setSubjectsForCourse((prevSubjects) =>
+        prevSubjects.map((subject) =>
+          subject.id === asignatura.id
+            ? { ...subject, inscritos: inscritosCount }
+            : subject
+        )
+      );
     } catch (error) {
       console.error("Error al cargar estudiantes:", error);
       toast({
