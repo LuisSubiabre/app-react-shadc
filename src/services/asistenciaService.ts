@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/config/config";
 import { AsistenciaEstudiante } from "@/types/asistencia";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types";
+import api from "../config/api.ts";
 
 export const getAsistencia = async (
   estudianteId: number,
@@ -78,6 +79,16 @@ export const getEstudiantesCurso = async (
       : [];
   } catch (error) {
     console.error("Error al obtener estudiantes:", error);
+    return [];
+  }
+};
+
+export const getAsistenciaEstudiante = async (estudianteId: number) => {
+  try {
+    const response = await api.get(`/asistencias/${estudianteId}`);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error al obtener asistencia:", error);
     return [];
   }
 };

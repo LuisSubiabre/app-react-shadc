@@ -23,6 +23,9 @@ import autoTable from "jspdf-autotable";
 import { ModalVerAtrasos } from "@/components/atrasos/ModalVerAtrasos";
 import { getAtrasosByEstudiante } from "@/services/atrasosService";
 import { Atraso } from "@/types";
+import { ModalVerAsistencia } from "@/components/asistencia/ModalVerAsistencia";
+import { getAsistenciaEstudiante } from "@/services/asistenciaService";
+import { AsistenciaEstudiante } from "@/types/asistencia";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -50,6 +53,12 @@ const PageJefatura = () => {
     useState<EstudianteType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atrasos, setAtrasos] = useState<Atraso[]>([]);
+  const [isModalAsistenciaOpen, setIsModalAsistenciaOpen] = useState(false);
+  const [asistencias, setAsistencias] = useState<AsistenciaEstudiante[]>([]);
+  const [mesSeleccionado, setMesSeleccionado] = useState<number>(3);
+  const [asistencia, setAsistencia] = useState<AsistenciaEstudiante | null>(
+    null
+  );
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -236,6 +245,45 @@ const PageJefatura = () => {
     setSelectedEstudiante(null);
   };
 
+  const handleOpenModalAsistencia = async (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalAsistenciaOpen(true);
+    try {
+      const response = await getAsistenciaEstudiante(
+        estudiante.estudiante_id || estudiante.id
+      );
+
+      if (response && response.length > 0) {
+        setAsistencias(response);
+        // Encontrar la asistencia del mes actual
+        const asistenciaActual = response.find(
+          (a: AsistenciaEstudiante) => a.mes === mesSeleccionado
+        );
+        setAsistencia(asistenciaActual || null);
+      } else {
+        setAsistencias([]);
+        setAsistencia(null);
+      }
+    } catch (error) {
+      console.error("Error al cargar asistencia:", error);
+      setAsistencias([]);
+      setAsistencia(null);
+    }
+  };
+
+  const handleCloseModalAsistencia = () => {
+    setIsModalAsistenciaOpen(false);
+    setSelectedEstudiante(null);
+  };
+
+  const handleMesChange = (mes: number) => {
+    setMesSeleccionado(mes);
+    const asistenciaDelMes = asistencias.find(
+      (a: AsistenciaEstudiante) => a.mes === mes
+    );
+    setAsistencia(asistenciaDelMes || null);
+  };
+
   if (loading) return <div>Cargando...</div>;
 
   if (!curso)
@@ -310,15 +358,22 @@ const PageJefatura = () => {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <Calendar />
-                  </TableCell>
-                  <TableCell>
-                    <BookOpenText />
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" className="w-full">
-                      Ver
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenModalAsistencia(estudiante)}
+                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                    >
+                      <Calendar className="h-4 w-4" />
                     </Button>
+                  </TableCell>
+                  <TableCell>
+                    {/* <BookOpenText /> */}
+                  </TableCell>
+                  <TableCell>
+                    {/* <Button variant="outline" className="w-full">
+                      Ver
+                    </Button> */}
                   </TableCell>
                 </TableRow>
               ))}
@@ -332,6 +387,15 @@ const PageJefatura = () => {
         onClose={handleCloseModal}
         estudiante={selectedEstudiante}
         atrasos={atrasos}
+      />
+
+      <ModalVerAsistencia
+        isOpen={isModalAsistenciaOpen}
+        onClose={handleCloseModalAsistencia}
+        estudiante={selectedEstudiante}
+        asistencia={asistencia}
+        mesSeleccionado={mesSeleccionado}
+        onMesChange={handleMesChange}
       />
     </>
   );
