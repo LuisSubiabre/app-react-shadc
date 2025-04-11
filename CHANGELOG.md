@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.5.0...v2.6.0) (2025-04-11)
+
+
+### Features
+
+* iconos ([c20dc4e](https://github.com/LuisSubiabre/app-react-shadc/commit/c20dc4e8c043cf5e8ef7ca27f9c0b7c0b815ccd1))
+* profesor jefe asistencia ([0933bcd](https://github.com/LuisSubiabre/app-react-shadc/commit/0933bcd898f3e78fd0d080a64dbb1d94e1c6ca8a))
+* profesor jefe modal atrasos ([b87d9cb](https://github.com/LuisSubiabre/app-react-shadc/commit/b87d9cb659737dfa2ed3270cc5ca8462ed9dedcd))
+
 ## [2.5.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.4.1...v2.5.0) (2025-04-09)
 
 

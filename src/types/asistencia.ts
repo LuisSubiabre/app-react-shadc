@@ -1,9 +1,16 @@
 export interface AsistenciaEstudiante {
   estudiante_id: number;
+  estudiante_nombre: string;
+  rut: string;
+  email: string;
+  curso_nombre: string;
+  curso_descripcion: string;
   mes: number;
   anio: number;
-  dias_asistidos: number;
   total_dias: number;
+  dias_asistidos: number;
+  porcentaje_asistencia: string;
+  fecha_registro: string;
 }
 
 export interface AsistenciaState {
