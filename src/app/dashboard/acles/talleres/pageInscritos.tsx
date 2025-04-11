@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Download, Copy, Check } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useToast } from "@/hooks/use-toast";
 
 import {
   Table,
@@ -32,6 +33,7 @@ interface JsPDFWithAutoTable extends jsPDF {
 }
 
 const AclesInscritos = () => {
+  const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState("");
   const [taller, setTaller] = useState<TallerType | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -186,9 +188,20 @@ const AclesInscritos = () => {
       .then(() => {
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
+        toast({
+          title: "Correos copiados",
+          description:
+            "Los correos electrónicos han sido copiados al portapapeles",
+          variant: "default",
+        });
       })
       .catch((err) => {
         console.error("Error al copiar al portapapeles:", err);
+        toast({
+          title: "Error",
+          description: "No se pudieron copiar los correos al portapapeles",
+          variant: "destructive",
+        });
       });
   };
 
