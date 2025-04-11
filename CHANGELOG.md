@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.6.0...v2.6.1) (2025-04-11)
+
+
+### Features
+
+* dialogo ontop, solo se cierra con boton ([b075a0b](https://github.com/LuisSubiabre/app-react-shadc/commit/b075a0bb296fe5604d8bea4ef838df85f101fe11))
+* inscritos en taller + copia de correos ([ce2452a](https://github.com/LuisSubiabre/app-react-shadc/commit/ce2452a805b52465e31b1760acb5985b1c913b5c))
+* toast copia de correos ([e6b2e54](https://github.com/LuisSubiabre/app-react-shadc/commit/e6b2e54d3cf8c20cdca698e81efac37ef3c2c99b))
+
+
+### Bug Fixes
+
+* correccion nùmero de inscritos ([b5cf691](https://github.com/LuisSubiabre/app-react-shadc/commit/b5cf691bfdab2b1e46bc441c6c7eec8502549627))
+
 ## [2.6.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.5.0...v2.6.0) (2025-04-11)
 
 
