@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Clock, Calendar, BookOpenText  } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, FileDown } from "lucide-react";
 import { estudiantesCurso } from "@/services/estudiantesService";
@@ -255,10 +256,11 @@ const PageJefatura = () => {
               <TableRow>
                 <TableHead>N°</TableHead>
                 <TableHead>Estudiante</TableHead>
-                <TableHead></TableHead>
-                <TableHead></TableHead>
-                <TableHead></TableHead>
-                <TableHead></TableHead>
+                <TableHead>RUN</TableHead>
+                <TableHead>Atrasos</TableHead>
+                <TableHead>Asistencia</TableHead>
+                <TableHead>Notas</TableHead>
+                <TableHead>Inf. Personalidad</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -269,10 +271,15 @@ const PageJefatura = () => {
                     {estudiante.nombre} <br />{" "}
                     <span className="text-xs">{estudiante.email}</span>
                   </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{estudiante.rut}</TableCell>
+                  <TableCell><Clock /></TableCell>
+                  <TableCell><Calendar /></TableCell>
+                  <TableCell><BookOpenText /></TableCell>
+                  <TableCell>
+                    <Button variant="outline" className="w-full">
+                      Ver
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
