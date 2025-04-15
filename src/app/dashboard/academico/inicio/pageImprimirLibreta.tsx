@@ -28,6 +28,49 @@ import { CursoApiResponseType } from "@/types";
 import { getFuncionarios } from "@/services/funcionariosService";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 import { API_BASE_URL } from "@/config/config";
+import { getLibretaEstudiante } from "@/services/academicoService";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
+interface AsignaturaLibreta {
+  asignatura_id: number;
+  nombre: string;
+  descripcion: string;
+  indice: number;
+  concepto: boolean;
+  codigo_sige: number;
+  nivel_educativo: number;
+  es_comun: boolean;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+  fecha_asignacion: string;
+  calificacion1: number | null;
+  calificacion2: number | null;
+  calificacion3: number | null;
+  calificacion4: number | null;
+  calificacion5: number | null;
+  calificacion6: number | null;
+  calificacion7: number | null;
+  calificacion8: number | null;
+  calificacion9: number | null;
+  calificacion10: number | null;
+  calificacion11: number | null;
+  calificacion12: number | null;
+  calificacion13: number | null;
+  calificacion14: number | null;
+  calificacion15: number | null;
+  calificacion16: number | null;
+  calificacion17: number | null;
+  calificacion18: number | null;
+  calificacion19: number | null;
+  calificacion20: number | null;
+  calificacion21: number | null;
+  calificacion22: number | null;
+  calificacion23: number | null;
+  nombre_estudiante: string;
+  nombre_curso: string;
+  nombre_profesor_jefe: string;
+}
 
 const AcademicoImprimirLibreta: React.FC = () => {
   const { error, loading, funcionarioCursos, setFuncionarioCursos } =
@@ -111,6 +154,70 @@ const AcademicoImprimirLibreta: React.FC = () => {
       console.error("Error al cargar estudiantes:", error);
     } finally {
       setLoadingEstudiantes(false);
+    }
+  };
+
+  const generarPDFLibreta = async (estudiante: Estudiante) => {
+    try {
+      const response = await getLibretaEstudiante(estudiante.id);
+      const libreta: AsignaturaLibreta[] = response.data;
+
+      if (!libreta || libreta.length === 0) {
+        throw new Error("No hay datos de calificaciones para este estudiante");
+      }
+
+      const doc = new jsPDF();
+      const fecha = new Date().toLocaleDateString();
+
+      // Título
+      doc.setFontSize(16);
+      doc.text(`Libreta de Calificaciones`, 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Fecha: ${fecha}`, 14, 22);
+      doc.text(`Estudiante: ${libreta[0].nombre_estudiante}`, 14, 29);
+      doc.text(`Curso: ${libreta[0].nombre_curso}`, 14, 36);
+      doc.text(`Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`, 14, 43);
+
+      // Preparar datos para la tabla
+      const tableData = libreta.map((asignatura: AsignaturaLibreta) => {
+        const calificaciones = [];
+        for (let i = 1; i <= 23; i++) {
+          const calificacion =
+            asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+          calificaciones.push(
+            calificacion !== null ? calificacion.toString() : "-"
+          );
+        }
+        return [asignatura.nombre, ...calificaciones];
+      });
+
+      // Encabezados de la tabla
+      const headers = [
+        "Asignatura",
+        ...Array.from({ length: 23 }, (_, i) => `C${i + 1}`),
+      ];
+
+      // Crear tabla
+      autoTable(doc, {
+        startY: 50,
+        head: [headers],
+        body: tableData,
+        theme: "grid",
+        headStyles: { fillColor: [41, 128, 185] },
+        styles: { fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 40 }, // Asignatura
+          ...Object.fromEntries(
+            Array.from({ length: 23 }, (_, i) => [i + 1, { cellWidth: 8 }])
+          ),
+        },
+        margin: { left: 14 },
+      });
+
+      // Guardar el PDF
+      doc.save(`libreta_${libreta[0].nombre_estudiante}_${fecha}.pdf`);
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
     }
   };
 
@@ -260,6 +367,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
                                 variant="outline"
                                 size="sm"
                                 className="hover:bg-primary/10 hover:text-primary"
+                                onClick={() => generarPDFLibreta(estudiante)}
                               >
                                 Imprimir Libreta
                               </Button>
