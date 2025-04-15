@@ -35,3 +35,9 @@ export const saveCalificacion = async (
     )
     .then((response) => response.data);
 };
+
+export const getLibretaEstudiante = async (estudiante_id: number) => {
+  return api
+    .get(`/estudiantes-asignaturas/${estudiante_id}`)
+    .then((response) => response.data);
+};
