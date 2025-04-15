@@ -21,6 +21,7 @@ import { FiltrosCalificaciones } from "@/components/calificaciones/FiltrosCalifi
 import { TablaCalificaciones } from "@/components/calificaciones/TablaCalificaciones";
 import { Asignatura, CalificacionesState } from "@/types/calificaciones";
 import { Button } from "@/components/ui/button";
+import { ModalInscripcionEstudiantes } from "@/components/calificaciones/ModalInscripcionEstudiantes";
 
 const PageCalificaciones: React.FC = () => {
   const { funcionarioCursos } = useCursosFuncionarios();
@@ -39,6 +40,7 @@ const PageCalificaciones: React.FC = () => {
   const [ordenAlfabetico, setOrdenAlfabetico] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [mensageDialogo, setMensajeDialogo] = useState("");
+  const [isModalInscripcionOpen, setIsModalInscripcionOpen] = useState(false);
 
   const handleCursoChange = useCallback(async (cursoId: number) => {
     setCursoSeleccionado(cursoId);
@@ -78,6 +80,23 @@ const PageCalificaciones: React.FC = () => {
     },
     [cursoSeleccionado]
   );
+
+  const actualizarEstudiantes = useCallback(async () => {
+    if (cursoSeleccionado && asignaturaSeleccionada) {
+      setLoading(true);
+      try {
+        const enrolled = await getEstudiantesEnAsignatura(
+          Number(asignaturaSeleccionada),
+          cursoSeleccionado
+        );
+        setEstudiantes(enrolled.data || []);
+      } catch (error) {
+        console.error("Error al actualizar estudiantes:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [cursoSeleccionado, asignaturaSeleccionada]);
 
   const handleCalificacionChange = useCallback(
     async (
@@ -140,7 +159,28 @@ const PageCalificaciones: React.FC = () => {
             </div>
           ) : estudiantes.length > 0 ? (
             <div className="p-4">
-              <div className="flex justify-end mb-4">
+              <div className="flex justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsModalInscripcionOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
+                    />
+                  </svg>
+                  <span>Gestionar Inscripciones</span>
+                </Button>
                 <Button
                   onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
                   variant="outline"
@@ -256,6 +296,21 @@ const PageCalificaciones: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {cursoSeleccionado && asignaturaSeleccionada && (
+        <ModalInscripcionEstudiantes
+          isOpen={isModalInscripcionOpen}
+          onClose={() => setIsModalInscripcionOpen(false)}
+          cursoId={cursoSeleccionado}
+          asignaturaId={Number(asignaturaSeleccionada)}
+          asignaturaNombre={
+            asignaturas.find(
+              (a) => a.asignatura_id.toString() === asignaturaSeleccionada
+            )?.asignatura_nombre || ""
+          }
+          onEstudiantesChange={actualizarEstudiantes}
+        />
+      )}
     </>
   );
 };
