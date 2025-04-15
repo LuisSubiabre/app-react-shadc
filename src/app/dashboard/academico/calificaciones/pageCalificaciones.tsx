@@ -22,9 +22,12 @@ import { TablaCalificaciones } from "@/components/calificaciones/TablaCalificaci
 import { Asignatura, CalificacionesState } from "@/types/calificaciones";
 import { Button } from "@/components/ui/button";
 import { ModalInscripcionEstudiantes } from "@/components/calificaciones/ModalInscripcionEstudiantes";
+import { API_BASE_URL } from "@/config/config";
+import { useAuth } from "@/hooks/useAuth";
 
 const PageCalificaciones: React.FC = () => {
   const { funcionarioCursos } = useCursosFuncionarios();
+  const { authToken } = useAuth();
 
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
     null
@@ -41,6 +44,7 @@ const PageCalificaciones: React.FC = () => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [mensageDialogo, setMensajeDialogo] = useState("");
   const [isModalInscripcionOpen, setIsModalInscripcionOpen] = useState(false);
+  const [totalEstudiantesCurso, setTotalEstudiantesCurso] = useState<number>(0);
 
   const handleCursoChange = useCallback(async (cursoId: number) => {
     setCursoSeleccionado(cursoId);
@@ -50,6 +54,21 @@ const PageCalificaciones: React.FC = () => {
       const response = await getAsignaturasCurso(cursoId);
       setAsignaturas(response.data || []);
       setAsignaturaSeleccionada(null);
+
+      // Obtener el total de estudiantes del curso
+      const estudiantesResponse = await fetch(
+        `${API_BASE_URL}/cursos/estudiantes/${cursoId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+      const estudiantesData = await estudiantesResponse.json();
+      setTotalEstudiantesCurso(
+        Array.isArray(estudiantesData) ? estudiantesData.length : 0
+      );
     } catch (error) {
       console.error("Error al obtener asignaturas:", error);
       setAsignaturas([]);
@@ -159,28 +178,40 @@ const PageCalificaciones: React.FC = () => {
             </div>
           ) : estudiantes.length > 0 ? (
             <div className="p-4">
-              <div className="flex justify-end gap-2 mb-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsModalInscripcionOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-4 h-4"
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                      {estudiantes.length} inscritos
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                      {totalEstudiantesCurso - estudiantes.length} no inscritos
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsModalInscripcionOpen(true)}
+                    className="flex items-center gap-2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
-                    />
-                  </svg>
-                  <span>Gestionar Inscripciones</span>
-                </Button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
+                      />
+                    </svg>
+                    <span>Gestionar Inscripciones</span>
+                  </Button>
+                </div>
                 <Button
                   onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
                   variant="outline"

@@ -208,9 +208,37 @@ export const ModalInscripcionEstudiantes: React.FC<
             ) : (
               <div className="grid gap-4">
                 <div className="flex items-center justify-between sticky top-0 bg-background z-10 py-2">
-                  <Label className="text-sm font-medium">
-                    Inscripción de Estudiantes
-                  </Label>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-sm font-medium">
+                      Inscripción de Estudiantes
+                    </Label>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        {
+                          estudiantes.filter(
+                            (estudiante) =>
+                              enrolledStudents[
+                                `${estudiante.id}-${asignaturaId}`
+                              ]
+                          ).length
+                        }{" "}
+                        inscritos
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                        {
+                          estudiantes.filter(
+                            (estudiante) =>
+                              !enrolledStudents[
+                                `${estudiante.id}-${asignaturaId}`
+                              ]
+                          ).length
+                        }{" "}
+                        no inscritos
+                      </span>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
