@@ -176,7 +176,7 @@ const PageCalificaciones: React.FC = () => {
             <div className="flex justify-center items-center py-8">
               <Spinner />
             </div>
-          ) : estudiantes.length > 0 ? (
+          ) : asignaturaSeleccionada ? (
             <div className="p-4">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-4">
@@ -212,61 +212,85 @@ const PageCalificaciones: React.FC = () => {
                     <span>Gestionar Inscripciones</span>
                   </Button>
                 </div>
-                <Button
-                  onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <span>
-                    {ordenAlfabetico
-                      ? "Orden Original"
-                      : "Ordenar Alfabéticamente"}
-                  </span>
-                  {ordenAlfabetico ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
-                      />
-                    </svg>
-                  )}
-                </Button>
+                {estudiantes.length > 0 && (
+                  <Button
+                    onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <span>
+                      {ordenAlfabetico
+                        ? "Orden Original"
+                        : "Ordenar Alfabéticamente"}
+                    </span>
+                    {ordenAlfabetico ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                        />
+                      </svg>
+                    )}
+                  </Button>
+                )}
               </div>
 
-              <TablaCalificaciones
-                estudiantes={estudiantesOrdenados}
-                asignaturas={asignaturas}
-                asignaturaSeleccionada={asignaturaSeleccionada}
-                selectedSemester={selectedSemester}
-                studentGrades={studentGrades}
-                onCalificacionChange={handleCalificacionChange}
-                setStudentGrades={setStudentGrades}
-                setMensajeDialogo={setMensajeDialogo}
-                setAlertOpen={setAlertOpen}
-              />
+              {estudiantes.length > 0 ? (
+                <TablaCalificaciones
+                  estudiantes={estudiantesOrdenados}
+                  asignaturas={asignaturas}
+                  asignaturaSeleccionada={asignaturaSeleccionada}
+                  selectedSemester={selectedSemester}
+                  studentGrades={studentGrades}
+                  onCalificacionChange={handleCalificacionChange}
+                  setStudentGrades={setStudentGrades}
+                  setMensajeDialogo={setMensajeDialogo}
+                  setAlertOpen={setAlertOpen}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-8 h-8 text-muted-foreground mb-2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                  <p className="text-muted-foreground">
+                    No hay estudiantes inscritos en la asignatura
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8">
@@ -285,7 +309,7 @@ const PageCalificaciones: React.FC = () => {
                 />
               </svg>
               <p className="text-muted-foreground">
-                No hay estudiantes inscritos en la asignatura
+                Seleccione una asignatura para ver las calificaciones
               </p>
             </div>
           )}
