@@ -21,9 +21,13 @@ import { FiltrosCalificaciones } from "@/components/calificaciones/FiltrosCalifi
 import { TablaCalificaciones } from "@/components/calificaciones/TablaCalificaciones";
 import { Asignatura, CalificacionesState } from "@/types/calificaciones";
 import { Button } from "@/components/ui/button";
+import { ModalInscripcionEstudiantes } from "@/components/calificaciones/ModalInscripcionEstudiantes";
+import { API_BASE_URL } from "@/config/config";
+import { useAuth } from "@/hooks/useAuth";
 
 const PageCalificaciones: React.FC = () => {
   const { funcionarioCursos } = useCursosFuncionarios();
+  const { authToken } = useAuth();
 
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
     null
@@ -39,6 +43,8 @@ const PageCalificaciones: React.FC = () => {
   const [ordenAlfabetico, setOrdenAlfabetico] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [mensageDialogo, setMensajeDialogo] = useState("");
+  const [isModalInscripcionOpen, setIsModalInscripcionOpen] = useState(false);
+  const [totalEstudiantesCurso, setTotalEstudiantesCurso] = useState<number>(0);
 
   const handleCursoChange = useCallback(async (cursoId: number) => {
     setCursoSeleccionado(cursoId);
@@ -48,6 +54,21 @@ const PageCalificaciones: React.FC = () => {
       const response = await getAsignaturasCurso(cursoId);
       setAsignaturas(response.data || []);
       setAsignaturaSeleccionada(null);
+
+      // Obtener el total de estudiantes del curso
+      const estudiantesResponse = await fetch(
+        `${API_BASE_URL}/cursos/estudiantes/${cursoId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+      const estudiantesData = await estudiantesResponse.json();
+      setTotalEstudiantesCurso(
+        Array.isArray(estudiantesData) ? estudiantesData.length : 0
+      );
     } catch (error) {
       console.error("Error al obtener asignaturas:", error);
       setAsignaturas([]);
@@ -78,6 +99,23 @@ const PageCalificaciones: React.FC = () => {
     },
     [cursoSeleccionado]
   );
+
+  const actualizarEstudiantes = useCallback(async () => {
+    if (cursoSeleccionado && asignaturaSeleccionada) {
+      setLoading(true);
+      try {
+        const enrolled = await getEstudiantesEnAsignatura(
+          Number(asignaturaSeleccionada),
+          cursoSeleccionado
+        );
+        setEstudiantes(enrolled.data || []);
+      } catch (error) {
+        console.error("Error al actualizar estudiantes:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [cursoSeleccionado, asignaturaSeleccionada]);
 
   const handleCalificacionChange = useCallback(
     async (
@@ -138,64 +176,121 @@ const PageCalificaciones: React.FC = () => {
             <div className="flex justify-center items-center py-8">
               <Spinner />
             </div>
-          ) : estudiantes.length > 0 ? (
+          ) : asignaturaSeleccionada ? (
             <div className="p-4">
-              <div className="flex justify-end mb-4">
-                <Button
-                  onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <span>
-                    {ordenAlfabetico
-                      ? "Orden Original"
-                      : "Ordenar Alfabéticamente"}
-                  </span>
-                  {ordenAlfabetico ? (
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                      {estudiantes.length} inscritos
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                      {totalEstudiantesCurso - estudiantes.length} no inscritos
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsModalInscripcionOpen(true)}
+                    className="flex items-center gap-2"
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4"
                       fill="none"
                       viewBox="0 0 24 24"
+                      strokeWidth={1.5}
                       stroke="currentColor"
+                      className="w-4 h-4"
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                        d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
                       />
                     </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
-                      />
-                    </svg>
-                  )}
-                </Button>
+                    <span>Gestionar Inscripciones</span>
+                  </Button>
+                </div>
+                {estudiantes.length > 0 && (
+                  <Button
+                    onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <span>
+                      {ordenAlfabetico
+                        ? "Orden Original"
+                        : "Ordenar Alfabéticamente"}
+                    </span>
+                    {ordenAlfabetico ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                        />
+                      </svg>
+                    )}
+                  </Button>
+                )}
               </div>
 
-              <TablaCalificaciones
-                estudiantes={estudiantesOrdenados}
-                asignaturas={asignaturas}
-                asignaturaSeleccionada={asignaturaSeleccionada}
-                selectedSemester={selectedSemester}
-                studentGrades={studentGrades}
-                onCalificacionChange={handleCalificacionChange}
-                setStudentGrades={setStudentGrades}
-                setMensajeDialogo={setMensajeDialogo}
-                setAlertOpen={setAlertOpen}
-              />
+              {estudiantes.length > 0 ? (
+                <TablaCalificaciones
+                  estudiantes={estudiantesOrdenados}
+                  asignaturas={asignaturas}
+                  asignaturaSeleccionada={asignaturaSeleccionada}
+                  selectedSemester={selectedSemester}
+                  studentGrades={studentGrades}
+                  onCalificacionChange={handleCalificacionChange}
+                  setStudentGrades={setStudentGrades}
+                  setMensajeDialogo={setMensajeDialogo}
+                  setAlertOpen={setAlertOpen}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-8 h-8 text-muted-foreground mb-2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                  <p className="text-muted-foreground">
+                    No hay estudiantes inscritos en la asignatura
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8">
@@ -214,7 +309,7 @@ const PageCalificaciones: React.FC = () => {
                 />
               </svg>
               <p className="text-muted-foreground">
-                No hay estudiantes inscritos en la asignatura
+                Seleccione una asignatura para ver las calificaciones
               </p>
             </div>
           )}
@@ -256,6 +351,21 @@ const PageCalificaciones: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {cursoSeleccionado && asignaturaSeleccionada && (
+        <ModalInscripcionEstudiantes
+          isOpen={isModalInscripcionOpen}
+          onClose={() => setIsModalInscripcionOpen(false)}
+          cursoId={cursoSeleccionado}
+          asignaturaId={Number(asignaturaSeleccionada)}
+          asignaturaNombre={
+            asignaturas.find(
+              (a) => a.asignatura_id.toString() === asignaturaSeleccionada
+            )?.asignatura_nombre || ""
+          }
+          onEstudiantesChange={actualizarEstudiantes}
+        />
+      )}
     </>
   );
 };

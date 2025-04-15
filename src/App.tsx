@@ -8,11 +8,12 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que P
 import Spinner from "./components/Spinner";
 import ErrorBoundary from "@/components/ErrorBoundary"; // Importa el ErrorBoundary
 import { Toaster } from "@/components/ui/toaster";
-import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageEditarCurso";
+import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageImprimirLibreta";
 import AcademicoCursosAsignaturas from "./app/dashboard/academico/inicio/pageAsignaturas";
 import PageCalificaciones from "./app/dashboard/academico/calificaciones/pageCalificaciones";
 import PageAtrasos from "./app/dashboard/inspectoria/atrasos/pageAtrasos";
 import PageControlAtrasos from "./app/dashboard/inspectoria/atrasos/pageControlAtrasos";
+import AcademicoImprimirLibreta from "./app/dashboard/academico/inicio/pageImprimirLibreta";
 
 const Login = lazy(() => import("@/app/login/page"));
 const Logout = lazy(() => import("@/app/logout/pageLogout"));
@@ -35,7 +36,9 @@ const Asignaturas = lazy(
 const AcademicoInicio = lazy(
   () => import("@/app/dashboard/academico/inicio/pageInicio")
 );
-const Calendarios = lazy(() => import("@/app/dashboard/calendarios/pageCalendarios"));
+const Calendarios = lazy(
+  () => import("@/app/dashboard/calendarios/pageCalendarios")
+);
 
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
@@ -191,6 +194,16 @@ function App() {
                 }
               />
               <Route
+                path="/dashboard/academico/imprimir-libreta"
+                element={
+                  <ProtectedRoute requiredRoles={[2]}>
+                    <Layout>
+                      <AcademicoImprimirLibreta />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard/academico/asignaturas"
                 element={
                   <ProtectedRoute requiredRoles={[2]}>
@@ -241,7 +254,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-                  <Route
+              <Route
                 path="/dashboard/inspectoria/atrasosreportes"
                 element={
                   <ProtectedRoute requiredRoles={[3]}>
@@ -283,8 +296,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-  
-               <Route
+
+              <Route
                 path="/dashboard/monitor/mis-talleres"
                 element={
                   <ProtectedRoute requiredRoles={[11]}>
