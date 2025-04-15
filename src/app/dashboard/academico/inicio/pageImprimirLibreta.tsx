@@ -169,56 +169,226 @@ const AcademicoImprimirLibreta: React.FC = () => {
       const doc = new jsPDF();
       const fecha = new Date().toLocaleDateString();
 
-      // Título
+      // Agregar logo
+      const logoUrl =
+        "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
+      const logoWidth = 50; // Ajustado para que quede bien en la página
+      const logoHeight = 15; // Manteniendo la proporción
+      doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
+
+      // Establecer fuente y colores
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(41, 128, 185);
+
+      // Nombre de la institución
+      doc.setFontSize(12);
+      doc.text("Liceo Experimental UMAG", 80, 20);
+
+      // Título principal
       doc.setFontSize(16);
-      doc.text(`Libreta de Calificaciones`, 14, 15);
+      doc.text("Libreta de Calificaciones", 105, 30, { align: "center" });
+
+      // Línea decorativa
+      doc.setDrawColor(41, 128, 185);
+      doc.setLineWidth(0.5);
+      doc.line(20, 35, 190, 35);
+
+      // Información del estudiante
       doc.setFontSize(10);
-      doc.text(`Fecha: ${fecha}`, 14, 22);
-      doc.text(`Estudiante: ${libreta[0].nombre_estudiante}`, 14, 29);
-      doc.text(`Curso: ${libreta[0].nombre_curso}`, 14, 36);
-      doc.text(`Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`, 14, 43);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+
+      const infoY = 45;
+      //doc.text(`Fecha: ${fecha}`, 20, infoY);
+      doc.text(`Estudiante: ${libreta[0].nombre_estudiante}`, 20, infoY + 7);
+      doc.text(`Curso: ${libreta[0].nombre_curso}`, 20, infoY + 14);
+      doc.text(
+        `Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`,
+        20,
+        infoY + 21
+      );
 
       // Preparar datos para la tabla
       const tableData = libreta.map((asignatura: AsignaturaLibreta) => {
-        const calificaciones = [];
-        for (let i = 1; i <= 23; i++) {
+        const calificacionesPrimerSemestre = [];
+        const calificacionesSegundoSemestre = [];
+
+        // Primer semestre (C1-C8)
+        for (let i = 1; i <= 8; i++) {
           const calificacion =
             asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
-          calificaciones.push(
+          calificacionesPrimerSemestre.push(
             calificacion !== null ? calificacion.toString() : "-"
           );
         }
-        return [asignatura.nombre, ...calificaciones];
+
+        // Segundo semestre (C13-C20)
+        for (let i = 13; i <= 20; i++) {
+          const calificacion =
+            asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+          calificacionesSegundoSemestre.push(
+            calificacion !== null ? calificacion.toString() : "-"
+          );
+        }
+
+        // Calcular PFS (Promedio Final Semestral)
+        const pfs1 = calcularPromedio(calificacionesPrimerSemestre);
+        const pfs2 = calcularPromedio(calificacionesSegundoSemestre);
+
+        // Calcular PF (Promedio Final Anual)
+        const pf = calcularPromedio([pfs1, pfs2]);
+
+        return [
+          asignatura.nombre,
+          ...calificacionesPrimerSemestre,
+          pfs1,
+          ...calificacionesSegundoSemestre,
+          pfs2,
+          pf,
+        ];
       });
 
       // Encabezados de la tabla
       const headers = [
         "Asignatura",
-        ...Array.from({ length: 23 }, (_, i) => `C${i + 1}`),
+        ...Array.from({ length: 8 }, (_, i) => (i + 1).toString()),
+        "PFS",
+        ...Array.from({ length: 8 }, (_, i) => (i + 1).toString()),
+        "PFS",
+        "PF",
       ];
 
       // Crear tabla
       autoTable(doc, {
-        startY: 50,
+        startY: 75,
         head: [headers],
         body: tableData,
         theme: "grid",
-        headStyles: { fillColor: [41, 128, 185] },
-        styles: { fontSize: 8 },
-        columnStyles: {
-          0: { cellWidth: 40 }, // Asignatura
-          ...Object.fromEntries(
-            Array.from({ length: 23 }, (_, i) => [i + 1, { cellWidth: 8 }])
-          ),
+        headStyles: {
+          fillColor: [41, 128, 185],
+          fontSize: 8,
+          cellPadding: 1,
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          halign: "center",
+          minCellHeight: 5,
         },
-        margin: { left: 14 },
+        styles: {
+          fontSize: 8,
+          cellPadding: 1,
+          lineColor: [200, 200, 200],
+          halign: "center",
+          minCellHeight: 5,
+        },
+        columnStyles: {
+          0: {
+            cellWidth: 35, // Asignatura
+            fontStyle: "bold",
+            halign: "left",
+          },
+          ...Object.fromEntries(
+            Array.from({ length: 8 }, (_, i) => [
+              i + 1,
+              {
+                cellWidth: 8,
+                halign: "center",
+              },
+            ])
+          ),
+          9: {
+            // PFS 1er semestre
+            cellWidth: 10,
+            halign: "center",
+            fontStyle: "bold",
+          },
+          ...Object.fromEntries(
+            Array.from({ length: 8 }, (_, i) => [
+              i + 10,
+              {
+                cellWidth: 8,
+                halign: "center",
+              },
+            ])
+          ),
+          18: {
+            // PFS 2do semestre
+            cellWidth: 10,
+            halign: "center",
+            fontStyle: "bold",
+          },
+          19: {
+            // PF
+            cellWidth: 10,
+            halign: "center",
+            fontStyle: "bold",
+          },
+        },
+        margin: { left: 10, right: 10 },
+        tableWidth: 193, // Ajustado para eliminar el espacio en blanco
+        didDrawPage: function () {
+          // Agregar títulos de semestres con fondo
+          doc.setFillColor(41, 128, 185);
+          // 1er Semestre (desde columna 1 hasta PFS)
+          doc.rect(45, 70, 75, 5, "F");
+          // 2do Semestre (desde columna 1 hasta PFS)
+          doc.rect(120, 70, 75, 5, "F");
+
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(9);
+          doc.text("1er Semestre", 82.5, 73, { align: "center" });
+          doc.text("2do Semestre", 157.5, 73, { align: "center" });
+
+          // Restaurar color del texto
+          doc.setTextColor(0, 0, 0);
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        tableLineColor: [41, 128, 185],
+        tableLineWidth: 0.5,
       });
+
+      // Espacio para firmas y timbres
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+
+      // Línea izquierda (Profesor Jefe)
+      doc.line(20, 250, 100, 250);
+      doc.setFontSize(8);
+      doc.text(libreta[0].nombre_profesor_jefe, 20, 255);
+      doc.setFontSize(7);
+      doc.text("PROFESOR JEFE", 20, 260);
+
+      // Línea derecha (Director)
+      doc.line(110, 250, 190, 250);
+      doc.setFontSize(8);
+      doc.text("BRAVO JORQUERA PATRICIO BRAVO", 110, 255);
+      doc.setFontSize(7);
+      doc.text("DIRECTOR", 110, 260);
+
+      // Pie de página con leyendas
+      doc.setFontSize(7);
+      doc.setTextColor(100, 100, 100);
+      doc.text("PFS: Promedio Final Semestral", 20, 270);
+      doc.text("PF: Promedio Final Anual", 20, 275);
 
       // Guardar el PDF
       doc.save(`libreta_${libreta[0].nombre_estudiante}_${fecha}.pdf`);
     } catch (error) {
       console.error("Error al generar el PDF:", error);
     }
+  };
+
+  // Función auxiliar para calcular promedios
+  const calcularPromedio = (calificaciones: (string | number)[]): string => {
+    const numeros = calificaciones
+      .map((c) => (typeof c === "string" ? parseFloat(c) : c))
+      .filter((c) => !isNaN(c));
+
+    if (numeros.length === 0) return "-";
+
+    const promedio = numeros.reduce((a, b) => a + b, 0) / numeros.length;
+    return promedio.toFixed(1);
   };
 
   if (loading || loadingUsuarios)
