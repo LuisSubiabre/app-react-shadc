@@ -33,6 +33,12 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import configPromedios from "@/config/configPromedios";
 
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
 interface AsignaturaLibreta {
   asignatura_id: number;
   nombre: string;
@@ -71,6 +77,13 @@ interface AsignaturaLibreta {
   nombre_estudiante: string;
   nombre_curso: string;
   nombre_profesor_jefe: string;
+}
+
+interface TableDataItem {
+  nombre: string;
+  calificaciones: string[];
+  pf: number;
+  pfs2: string;
 }
 
 const AcademicoImprimirLibreta: React.FC = () => {
@@ -167,7 +180,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
         throw new Error("No hay datos de calificaciones para este estudiante");
       }
 
-      const doc = new jsPDF();
+      const doc = new jsPDF() as JsPDFWithAutoTable;
       const fecha = new Date().toLocaleDateString();
 
       // Agregar logo
@@ -209,8 +222,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
         infoY + 21
       );
 
-      // Preparar datos para la tabla
-      const tableData = libreta.map((asignatura: AsignaturaLibreta) => {
+      // Preparar datos para la tabla y el gráfico
+      const tableData: TableDataItem[] = libreta.map((asignatura: AsignaturaLibreta) => {
         const calificacionesPrimerSemestre = [];
         const calificacionesSegundoSemestre = [];
 
@@ -257,14 +270,19 @@ const AcademicoImprimirLibreta: React.FC = () => {
         // Calcular PF (Promedio Final Anual)
         const pf = pfs2 === "-" ? pfs1 : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
 
-        return [
-          asignatura.nombre,
-          ...calificacionesPrimerSemestre,
-          pfs1,
-          ...calificacionesSegundoSemestre,
-          pfs2,
-          pf
-        ];
+        return {
+          nombre: asignatura.nombre,
+          calificaciones: [
+            asignatura.nombre,
+            ...calificacionesPrimerSemestre,
+            pfs1,
+            ...calificacionesSegundoSemestre,
+            pfs2,
+            pf
+          ],
+          pf: pf === "-" ? 0 : parseFloat(pf),
+          pfs2: pfs2
+        };
       });
 
       // Encabezados de la tabla
@@ -281,7 +299,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       autoTable(doc, {
         startY: 75,
         head: [headers],
-        body: tableData,
+        body: tableData.map((data) => data.calificaciones),
         theme: "grid",
         headStyles: {
           fillColor: [41, 128, 185],
@@ -365,32 +383,176 @@ const AcademicoImprimirLibreta: React.FC = () => {
         }
       });
 
-      // Espacio para firmas y timbres
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.5);
+      // Obtener la posición final de la tabla
+      const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY || 75 + (tableData.length * 5) + 20;
 
-      // Línea izquierda (Profesor Jefe)
-      doc.line(20, 250, 100, 250);
-      doc.setFontSize(8);
-      doc.text(libreta[0].nombre_profesor_jefe, 20, 255);
+      // Agregar gráfico después de la tabla
+      const chartY = finalY + 20;
+      const chartWidth = 130;
+      const chartHeight = 50;
+      const pageWidth = 210; // Ancho de página A4
+      const chartX = (pageWidth - chartWidth) / 2; // Centrar horizontalmente
+
+      // Dibujar el gráfico
       doc.setFontSize(7);
-      doc.text("PROFESOR JEFE", 20, 260);
+      doc.text("Promedios Finales por Asignatura", pageWidth/2, chartY - 5, { align: "center" });
 
-      // Línea derecha (Director)
-      doc.line(110, 250, 190, 250);
-      doc.setFontSize(8);
-      doc.text("BRAVO JORQUERA PATRICIO BRAVO", 110, 255);
-      doc.setFontSize(7);
-      doc.text("DIRECTOR", 110, 260);
+      // Crear un canvas para el gráfico con mayor resolución
+      const scaleFactor = 4;
+      const canvas = document.createElement('canvas');
+      canvas.width = chartWidth * scaleFactor;
+      canvas.height = chartHeight * scaleFactor;
+      const ctx = canvas.getContext('2d');
 
-      // Pie de página con leyendas
-      doc.setFontSize(7);
-      doc.setTextColor(100, 100, 100);
-      doc.text("1S | 2S: Promedio Final Semestral", 20, 270);
-      doc.text("PF: Promedio Final Anual", 20, 275);
+      if (ctx) {
+        // Escalar el contexto para mejorar la calidad
+        ctx.scale(scaleFactor, scaleFactor);
 
-      // Guardar el PDF
-      doc.save(`libreta_${libreta[0].nombre_estudiante}_${fecha}.pdf`);
+        // Dibujar el fondo con borde
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 0.5;
+        ctx.fillRect(0, 0, chartWidth, chartHeight);
+        ctx.strokeRect(0, 0, chartWidth, chartHeight);
+
+        // Configuración del gráfico
+        const maxValue = 70; // Valor máximo fijo para el gráfico
+        const scale = (chartHeight - 20) / maxValue;
+        const spacing = (chartWidth - 30) / (tableData.length - 1);
+        const startX = 15;
+
+        // Dibujar línea de referencia
+        ctx.beginPath();
+        ctx.strokeStyle = '#f0f0f0';
+        ctx.setLineDash([1, 1]);
+        ctx.moveTo(15, chartHeight - 10);
+        ctx.lineTo(chartWidth - 15, chartHeight - 10);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Dibujar línea horizontal para el valor máximo
+        ctx.beginPath();
+        ctx.strokeStyle = '#f0f0f0';
+        ctx.setLineDash([1, 1]);
+        ctx.moveTo(15, 10);
+        ctx.lineTo(chartWidth - 15, 10);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#666666';
+        ctx.font = '3px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('', 5, 13);
+
+        // Dibujar el área para el primer semestre
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(41, 121, 255, 0.1)';
+        ctx.moveTo(startX, chartHeight - 10);
+
+        let lastValidY: number | null = null;
+        tableData.forEach((data, index) => {
+          const x = startX + (index * spacing);
+          if (data.pf > 0) {
+            const y = chartHeight - 10 - (data.pf * scale);
+            ctx.lineTo(x, y);
+            lastValidY = y;
+          } else {
+            if (lastValidY !== null) {
+              ctx.lineTo(x, lastValidY);
+            }
+          }
+        });
+
+        ctx.lineTo(chartWidth - 15, chartHeight - 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Dibujar la línea del primer semestre
+        ctx.beginPath();
+        ctx.strokeStyle = '#2979ff';
+        ctx.lineWidth = 1.5;
+
+        lastValidY = null;
+        tableData.forEach((data, index) => {
+          const x = startX + (index * spacing);
+          if (data.pf > 0) {
+            const y = chartHeight - 10 - (data.pf * scale);
+            if (lastValidY === null) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+            lastValidY = y;
+          } else {
+            ctx.stroke();
+            ctx.beginPath();
+            lastValidY = null;
+          }
+        });
+
+        ctx.stroke();
+
+        // Dibujar los puntos y textos
+        tableData.forEach((data, index) => {
+          const x = startX + (index * spacing);
+          const y1s = data.pf > 0 ? chartHeight - 10 - (data.pf * scale) : null;
+
+          // Dibujar puntos
+          if (y1s !== null) {
+            ctx.beginPath();
+            ctx.fillStyle = '#2979ff';
+            ctx.arc(x, y1s, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Dibujar solo el valor del promedio final (PF) como encabezado
+          if (y1s !== null) {
+            ctx.fillStyle = '#2979ff';
+            ctx.font = '3px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(data.pf.toString(), x, 5);
+          }
+
+          // Nombres de asignaturas en la parte inferior
+          ctx.save();
+          ctx.translate(x, chartHeight - 5);
+          ctx.rotate(-Math.PI/2);
+          ctx.font = '2.5px Arial';
+          ctx.textAlign = 'left';
+          const nombreCorto = data.nombre.length > 10 ? data.nombre.substring(0, 8) + '...' : data.nombre;
+          ctx.fillText(nombreCorto, 0, 0);
+          ctx.restore();
+        });
+
+        // Agregar el gráfico al PDF con alta calidad
+        doc.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', chartX, chartY, chartWidth, chartHeight);
+
+        // Espacio para firmas y timbres
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+
+        // Línea izquierda (Profesor Jefe)
+        doc.line(20, 250, 100, 250);
+        doc.setFontSize(8);
+        doc.text(libreta[0].nombre_profesor_jefe, 20, 255);
+        doc.setFontSize(7);
+        doc.text("PROFESOR JEFE", 20, 260);
+
+        // Línea derecha (Director)
+        doc.line(110, 250, 190, 250);
+        doc.setFontSize(8);
+        doc.text("BRAVO JORQUERA PATRICIO BRAVO", 110, 255);
+        doc.setFontSize(7);
+        doc.text("DIRECTOR", 110, 260);
+
+        // Pie de página con leyendas
+        doc.setFontSize(7);
+        doc.setTextColor(100, 100, 100);
+        doc.text("1S | 2S: Promedio Final Semestral", 20, 270);
+        doc.text("PF: Promedio Final Anual", 20, 275);
+
+        // Guardar el PDF
+        doc.save(`libreta_${libreta[0].nombre_estudiante}_${fecha}.pdf`);
+      }
     } catch (error) {
       console.error("Error al generar el PDF:", error);
     }
