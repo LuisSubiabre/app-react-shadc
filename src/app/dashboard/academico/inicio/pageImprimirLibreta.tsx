@@ -255,7 +255,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
         const pfs2 = calcularPromedio(calificacionesSegundoSemestre, asignatura.concepto);
 
         // Calcular PF (Promedio Final Anual)
-        const pf = calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
+        const pf = pfs2 === "-" ? pfs1 : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
 
         return [
           asignatura.nombre,
