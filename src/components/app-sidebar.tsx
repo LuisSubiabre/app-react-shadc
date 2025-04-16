@@ -112,10 +112,10 @@ const data = {
           title: "Calificaciones",
           url: "/dashboard/academico/notas",
         },
-        {
-          title: "Imprimir Libreta",
-          url: "/dashboard/academico/imprimir-libreta",
-        },
+        // {
+        //   title: "Imprimir Libreta",
+        //   url: "/dashboard/academico/imprimir-libreta",
+        // },
       ],
     },
     {
