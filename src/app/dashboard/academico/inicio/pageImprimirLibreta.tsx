@@ -216,12 +216,12 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
         // Primer semestre (C1-C10)
         for (let i = 1; i <= 10; i++) {
-          const calificacion =
-            asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+          const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
           if (asignatura.concepto) {
-            if (calificacion !== null) {
-              const concepto = getConceptoFromNota(Number(calificacion));
-              calificacionesPrimerSemestre.push(concepto);
+            if (calificacion !== null && calificacion !== undefined) {
+              const calificacionStr = calificacion.toString();
+              const concepto = getConceptoFromNota(calificacionStr);
+              calificacionesPrimerSemestre.push(getValorConcepto(concepto));
             } else {
               calificacionesPrimerSemestre.push("-");
             }
@@ -234,12 +234,12 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
         // Segundo semestre (C11-C20)
         for (let i = 11; i <= 20; i++) {
-          const calificacion =
-            asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+          const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
           if (asignatura.concepto) {
-            if (calificacion !== null) {
-              const concepto = getConceptoFromNota(Number(calificacion));
-              calificacionesSegundoSemestre.push(concepto);
+            if (calificacion !== null && calificacion !== undefined) {
+              const calificacionStr = calificacion.toString();
+              const concepto = getConceptoFromNota(calificacionStr);
+              calificacionesSegundoSemestre.push(getValorConcepto(concepto));
             } else {
               calificacionesSegundoSemestre.push("-");
             }
@@ -257,18 +257,13 @@ const AcademicoImprimirLibreta: React.FC = () => {
         // Calcular PF (Promedio Final Anual)
         const pf = calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
 
-        // Calcular PC (Promedio de Curso)
-        const todasLasCalificaciones = [...calificacionesPrimerSemestre, ...calificacionesSegundoSemestre];
-        const pc = calcularPromedioCurso(todasLasCalificaciones, asignatura.concepto);
-
         return [
           asignatura.nombre,
           ...calificacionesPrimerSemestre,
           pfs1,
           ...calificacionesSegundoSemestre,
           pfs2,
-          pf,
-          pc,
+          pf
         ];
       });
 
@@ -279,8 +274,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
         "1S",
         ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
         "2S",
-        "PF",
-        "PC",
+        "PF"
       ];
 
       // Crear tabla
@@ -346,13 +340,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
             cellWidth: 8,
             halign: "center",
             fontStyle: "bold",
-          },
-          24: {
-            // PC
-            cellWidth: 8,
-            halign: "center",
-            fontStyle: "bold",
-          },
+          }
         },
         margin: { left: 5, right: 5 },
         tableWidth: 198,
@@ -374,9 +362,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
-        },
-        tableLineColor: [41, 128, 185],
-        tableLineWidth: 0.5,
+        }
       });
 
       // Espacio para firmas y timbres
@@ -411,12 +397,31 @@ const AcademicoImprimirLibreta: React.FC = () => {
   };
 
   // Función para convertir nota numérica a concepto
-  const getConceptoFromNota = (nota: number): string => {
-    if (nota >= 70) return "MB";
-    if (nota >= 50) return "B";
-    if (nota >= 40) return "S";
-    if (nota >= 30) return "I";
+  const getConceptoFromNota = (nota: number | string): string => {
+    const notaNum = typeof nota === 'string' ? parseFloat(nota) : nota;
+    if (isNaN(notaNum)) return "-";
+    
+    if (notaNum >= 70) return "MB";
+    if (notaNum >= 50) return "B";
+    if (notaNum >= 40) return "S";
+    if (notaNum >= 30) return "I";
     return "-";
+  };
+
+  // Función para obtener el valor del concepto
+  const getValorConcepto = (concept: string): string => {
+    switch (concept) {
+      case "MB":
+        return "MB";
+      case "B":
+        return "B";
+      case "S":
+        return "S";
+      case "I":
+        return "I";
+      default:
+        return "-";
+    }
   };
 
   // Función para extraer el valor numérico de un concepto
@@ -482,35 +487,19 @@ const AcademicoImprimirLibreta: React.FC = () => {
     if (isNaN(num1) || isNaN(num2)) return "-";
     
     const promedio = (num1 + num2) / 2;
-    return Math.round(promedio).toString();
-  };
-
-  // Función para calcular promedio de curso
-  const calcularPromedioCurso = (calificaciones: (string | number)[], esConcepto: boolean = false): string => {
-    if (esConcepto) {
-      // Para asignaturas con concepto, usamos el valor numérico del concepto
-      const valores = calificaciones
-        .map((c) => {
-          if (typeof c === "string") {
-            return getValorNumericoConcepto(c);
-          }
-          return null;
-        })
-        .filter((c) => c !== null);
-
-      if (valores.length === 0) return "-";
-
-      const promedio = valores.reduce((a, b) => a + b, 0) / valores.length;
-      return getConceptoFromNota(promedio);
+    const config = configPromedios.promedioAnualAsignatura;
+    
+    if (config.aproximar) {
+      const base = config.reglaAproximacion?.base || 0.05;
+      
+      // Aplicar regla de aproximación
+      const parteDecimal = promedio - Math.floor(promedio);
+      if (parteDecimal >= base) {
+        return Math.ceil(promedio).toString();
+      }
+      return Math.floor(promedio).toString();
     }
-
-    const numeros = calificaciones
-      .map((c) => (typeof c === "string" ? parseFloat(c) : c))
-      .filter((c) => !isNaN(c));
-
-    if (numeros.length === 0) return "-";
-
-    const promedio = numeros.reduce((a, b) => a + b, 0) / numeros.length;
+    
     return Math.round(promedio).toString();
   };
 
