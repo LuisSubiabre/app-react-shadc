@@ -80,6 +80,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
           nextInput = inputs[currentIndex - 1] as HTMLInputElement;
           break;
         case "ArrowDown":
+        case "Enter":
           nextInput = inputs[
             currentIndex + getColumnRange.length
           ] as HTMLInputElement;
