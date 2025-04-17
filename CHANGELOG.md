@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.7.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.7.0...v2.7.1) (2025-04-17)
+
+
+### Features
+
+* saltar casilleron de calificaciones con enter ([3162110](https://github.com/LuisSubiabre/app-react-shadc/commit/31621101edf17c5868925c4856211144a3129fae))
+
 ## [2.7.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.6.1...v2.7.0) (2025-04-17)
 
 
