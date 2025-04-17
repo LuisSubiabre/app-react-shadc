@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.6.1...v2.7.0) (2025-04-17)
+
+
+### Features
+
+* agregar gráfico de promedios finales en PDF de libreta ([a909000](https://github.com/LuisSubiabre/app-react-shadc/commit/a9090009f11e573f680c6ccccaca89fff6e785e6))
+* boton inscripcion ([7995804](https://github.com/LuisSubiabre/app-react-shadc/commit/7995804fe8abccd582f0edfb6d578aebd2349506))
+* componente imprimir libreta ([fdeb3bd](https://github.com/LuisSubiabre/app-react-shadc/commit/fdeb3bd00e832cc7b01b46473f4942a9985ac6a3))
+* endpoint libreta ([36fe01a](https://github.com/LuisSubiabre/app-react-shadc/commit/36fe01a37a013c42f2ad68156866824191c10e91))
+* gestion inscripciones asignatura en componente de ingreso de calificaciones ([f7c57d4](https://github.com/LuisSubiabre/app-react-shadc/commit/f7c57d4ce65333524818cd3160177b5de880b0fa))
+* iconoos para asignaturas comunes y conceptuales ([dc2d0d4](https://github.com/LuisSubiabre/app-react-shadc/commit/dc2d0d4ab927e1d6db53c961cea8918c007b7f1b))
+* info inscritos y no inscritos ([08350ae](https://github.com/LuisSubiabre/app-react-shadc/commit/08350aee41f8d0ee9fbaf8072fc70dfb91214dc8))
+* libreta PDF ([7b25976](https://github.com/LuisSubiabre/app-react-shadc/commit/7b25976b974e3fc18757d7dc348644e6c00b45c3))
+* nota concepto ([46e932b](https://github.com/LuisSubiabre/app-react-shadc/commit/46e932bf7f2c03a7e26e49d0765d350dd6ba405b))
+* pdf libreta ([ddedff6](https://github.com/LuisSubiabre/app-react-shadc/commit/ddedff682277384873b280c96da40d8a734a1cc4))
+* pdf libreta ([e62cbf0](https://github.com/LuisSubiabre/app-react-shadc/commit/e62cbf01db83bd5045fed1b25df439955a40b18d))
+* promedio 1s en pf cuando no existe promedio 2s ([09cea50](https://github.com/LuisSubiabre/app-react-shadc/commit/09cea5068a8caddd2c5aa91769c917da3b14a3dd))
+
 ### [2.6.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.6.0...v2.6.1) (2025-04-11)
 
 

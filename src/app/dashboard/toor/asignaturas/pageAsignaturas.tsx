@@ -60,6 +60,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { getCursos } from "@/services/cursosService";
 import { User } from "@/app/dashboard/toor/usuarios/types";
 import { getFuncionarios } from "@/services/funcionariosService";
+import { CheckCircle2, XCircle, BookOpen, Users } from "lucide-react";
 
 const Asignaturas: React.FC = () => {
   const [asignaturas, setAsignaturas] = useState<AsignaturaType[]>([]);
@@ -615,8 +616,28 @@ const Asignaturas: React.FC = () => {
                     </TableCell>
                     <TableCell>{asignatura.codigo_sige}</TableCell>
       
-                    <TableCell>{asignatura.concepto ? "Sí" : "No"}</TableCell>
-                    <TableCell>{asignatura.es_comun ? "Sí" : "No"}</TableCell>
+                    <TableCell>{asignatura.concepto ? (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span className="text-xs">Concepto</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <BookOpen className="h-4 w-4" />
+                        <span className="text-xs">Numérica</span>
+                      </div>
+                    )}</TableCell>
+                    <TableCell>{asignatura.es_comun ? (
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <Users className="h-4 w-4" />
+                        <span className="text-xs">Común</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <XCircle className="h-4 w-4" />
+                        <span className="text-xs">Electiva</span>
+                      </div>
+                    )}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {asignacionesCursos.get(asignatura.asignatura_id)?.map((curso, index) => (

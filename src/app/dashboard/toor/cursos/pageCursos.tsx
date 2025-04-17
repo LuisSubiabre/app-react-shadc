@@ -361,7 +361,7 @@ const Cursos: React.FC = () => {
 
     autoTable(doc, {
       startY: 30,
-      head: [["N", "Nombre",  "RUT", "Email", "Clave", "Estado"]],
+      head: [["N", "Nombre", "RUT", "Email", "Clave", "Estado"]],
       body: tableData,
       theme: "grid",
       headStyles: { fillColor: [41, 128, 185] },
@@ -442,7 +442,7 @@ const Cursos: React.FC = () => {
               Gestión de Cursos
             </h1>
             <p className="text-muted-foreground">
-              Administra los cursos del sistema
+              Administra los cursos del sistema.
             </p>
           </div>
           <Button

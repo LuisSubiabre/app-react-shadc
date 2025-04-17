@@ -112,6 +112,10 @@ const data = {
           title: "Calificaciones",
           url: "/dashboard/academico/notas",
         },
+        // {
+        //   title: "Imprimir Libreta",
+        //   url: "/dashboard/academico/imprimir-libreta",
+        // },
       ],
     },
     {
@@ -136,7 +140,6 @@ const data = {
           title: "Reportes Atrasos",
           url: "/dashboard/inspectoria/atrasosreportes",
         },
-        
       ],
     },
     {
@@ -172,10 +175,9 @@ const data = {
         {
           title: "Mis Talleres",
           url: "/dashboard/monitor/mis-talleres",
-        }
+        },
       ],
-    }
-
+    },
   ],
 };
 
@@ -209,7 +211,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return user?.roles?.includes(4); // Mostrar "Models" solo si el usuario tiene el rol 2
       }
       if (menu.title == "Jefatura") {
-        return user?.roles?.includes(12); 
+        return user?.roles?.includes(12);
       }
       if (menu.title == "Monitor ACLE") {
         return user?.roles?.includes(11); // Mostrar "Monitor ACLE" solo si el usuario tiene el rol 11
