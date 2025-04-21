@@ -8,7 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que P
 import Spinner from "./components/Spinner";
 import ErrorBoundary from "@/components/ErrorBoundary"; // Importa el ErrorBoundary
 import { Toaster } from "@/components/ui/toaster";
-import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageImprimirLibreta";
+import AcademicoEditarCurso from "./app/dashboard/academico/inicio/pageEditarCurso";
 import AcademicoCursosAsignaturas from "./app/dashboard/academico/inicio/pageAsignaturas";
 import PageCalificaciones from "./app/dashboard/academico/calificaciones/pageCalificaciones";
 import PageAtrasos from "./app/dashboard/inspectoria/atrasos/pageAtrasos";
