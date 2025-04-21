@@ -703,6 +703,13 @@ const AcademicoImprimirLibreta: React.FC = () => {
         </div>
 
         <div className="rounded-lg border bg-card">
+        <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Atención</AlertTitle>
+      <AlertDescription>
+        Esta funcionalidad está en desarrollo y puede no funcionar correctamente.
+      </AlertDescription>
+    </Alert>
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-muted/50">
@@ -789,6 +796,13 @@ const AcademicoImprimirLibreta: React.FC = () => {
           ) : (
             <div className="space-y-4 flex-1 overflow-hidden">
               <div className="rounded-lg border overflow-hidden">
+              <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Atención</AlertTitle>
+      <AlertDescription>
+        Esta funcionalidad está en desarrollo y puede no funcionar correctamente.
+      </AlertDescription>
+    </Alert>
                 <div className="overflow-auto max-h-[50vh]">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background">
