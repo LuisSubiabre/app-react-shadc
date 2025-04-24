@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.8.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.7.2...v2.8.0) (2025-04-24)
+
+
+### Features
+
+* calendarios ([14113c9](https://github.com/LuisSubiabre/app-react-shadc/commit/14113c99db7e8031e01b649e9c0edc2ccb624e29))
+
 ### [2.7.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.7.1...v2.7.2) (2025-04-21)
 
 
