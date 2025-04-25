@@ -59,6 +59,9 @@ const PasswordReset = lazy(() => import("@/app/password-reset/reset"));
 const MisTalleres = lazy(
   () => import("@/app/dashboard/monitor/pageMisTalleres")
 );
+const PageAccidenteEscolar = lazy(
+  () => import("@/app/dashboard/inspectoria/accidente-escolar/pageAccidente")
+);
 
 function App() {
   return (
@@ -264,7 +267,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
+              <Route
+                path="/dashboard/inspectoria/accidente-escolar"
+                element={
+                  <ProtectedRoute requiredRoles={[3]}>
+                    <Layout>
+                      <PageAccidenteEscolar />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/dashboard/acles/talleres"
                 element={
