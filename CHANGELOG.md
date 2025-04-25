@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.8.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.8.0...v2.8.1) (2025-04-25)
+
+
+### Bug Fixes
+
+* input numerico inicio y final cambia valores con flechas del teclado ([9301d4c](https://github.com/LuisSubiabre/app-react-shadc/commit/9301d4c10c580086440ab4917d2b58c5224a54c9))
+
 ## [2.8.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.7.2...v2.8.0) (2025-04-24)
 
 
