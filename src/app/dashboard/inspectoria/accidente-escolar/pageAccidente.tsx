@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -30,7 +28,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { PDFDocument } from "pdf-lib";
 
 interface EstudianteData {
   unico: number;
@@ -67,8 +67,11 @@ const PageAccidenteEscolar = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [estudianteData, setEstudianteData] = useState<EstudianteData | null>(null);
-  const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
+  const [estudianteData, setEstudianteData] = useState<EstudianteData | null>(
+    null
+  );
+  const [selectedEstudiante, setSelectedEstudiante] =
+    useState<EstudianteType | null>(null);
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -172,15 +175,15 @@ const PageAccidenteEscolar = () => {
 
   const formatRut = (rut: string) => {
     // Eliminar todo excepto números y k
-    const cleanRut = rut.replace(/[^0-9kK]/g, '');
-    
+    const cleanRut = rut.replace(/[^0-9kK]/g, "");
+
     // Separar el dígito verificador
     const dv = cleanRut.slice(-1).toUpperCase();
     const numbers = cleanRut.slice(0, -1);
-    
+
     // Formatear con puntos
-    const formattedNumbers = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    
+    const formattedNumbers = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
     return `${formattedNumbers}-${dv}`;
   };
 
@@ -188,20 +191,82 @@ const PageAccidenteEscolar = () => {
     setSelectedEstudiante(estudiante);
     setIsDialogOpen(true);
     try {
-      const rutFormateado = formatRut(estudiante.rut || '');
-      console.log('RUT formateado:', rutFormateado); // Para verificar el formato
-      
+      const rutFormateado = formatRut(estudiante.rut || "");
+      console.log("RUT formateado:", rutFormateado); // Para verificar el formato
+
       // Nota: Esta llamada fallará por CORS, necesitarás implementar un endpoint en tu backend
-      const response = await fetch(`https://nerv.liceoexperimental.cl/api/matalumno?rut=${rutFormateado}`);
-      
+      const response = await fetch(
+        `https://nerv.liceoexperimental.cl/api/matalumno?rut=${rutFormateado}`
+      );
+
       if (!response.ok) {
-        throw new Error('Error al obtener datos del estudiante');
+        throw new Error("Error al obtener datos del estudiante");
       }
       const data = await response.json();
       setEstudianteData(data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       // Aquí podrías mostrar un mensaje de error al usuario
+    }
+  };
+
+  const generarPDF = async () => {
+    if (!estudianteData) return;
+
+    try {
+      // Cargar el PDF existente
+      const response = await fetch("/Declaracion-Individual-de-Accidente.pdf");
+      const pdfBytes = await response.arrayBuffer();
+
+      // Cargar el PDF en pdf-lib
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const page = pdfDoc.getPages()[0];
+
+      // // Añadir el nombre completo del estudiante
+      // const establecimiento = `LICEO EXPERIMENTAL UMAG      PUNTA ARENAS      PUNTA ARENAS`;
+      // page.drawText(establecimiento, {
+      //   x: 60,
+      //   y: 700, // Posición aproximada arriba de "APELLIDO PATERNO"
+      //   size: 10,
+      // });
+
+      const estudianteCurso = `${estudianteData.cursole} ${estudianteData.letra}`;
+      page.drawText(estudianteCurso, {
+        x: 60,
+        y: 670, // Posición aproximada arriba de "APELLIDO PATERNO"
+        size: 10,
+      });
+
+      // Añadir el nombre completo del estudiante
+      const nombreCompleto = `${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`;
+      page.drawText(nombreCompleto, {
+        x: 60,
+        y: 613, // Posición aproximada arriba de "APELLIDO PATERNO"
+        size: 10,
+      });
+
+      const estudianteResidencia = `${estudianteData.dirpar} `;
+      page.drawText(estudianteResidencia, {
+        x: 60,
+        y: 550, // Posición aproximada arriba de "APELLIDO PATERNO"
+        size: 10,
+      });
+
+      // Guardar el PDF modificado
+      const modifiedPdfBytes = await pdfDoc.save();
+      const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Crear enlace y descargar
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Declaracion-Individual-de-Accidente-${estudianteData.nomalum}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error al modificar el PDF:", error);
     }
   };
 
@@ -427,23 +492,62 @@ const PageAccidenteEscolar = () => {
           {estudianteData && (
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="space-y-2">
-                <p><span className="font-medium">Nombre:</span> {estudianteData.nomalum}</p>
-                <p><span className="font-medium">RUT:</span> {estudianteData.rutalum}</p>
-                <p><span className="font-medium">Fecha de Nacimiento:</span> {estudianteData.fecnac}</p>
-                <p><span className="font-medium">Edad:</span> {estudianteData.edad} años</p>
-                <p><span className="font-medium">Sexo:</span> {estudianteData.sexo}</p>
-                <p><span className="font-medium">Curso Actual:</span> {estudianteData.cursole} {estudianteData.letra}</p>
+                <p>
+                  <span className="font-medium">Nombre:</span>{" "}
+                  {estudianteData.nomalum}
+                </p>
+                <p>
+                  <span className="font-medium">RUT:</span>{" "}
+                  {estudianteData.rutalum}
+                </p>
+                <p>
+                  <span className="font-medium">Fecha de Nacimiento:</span>{" "}
+                  {estudianteData.fecnac}
+                </p>
+                <p>
+                  <span className="font-medium">Edad:</span>{" "}
+                  {estudianteData.edad} años
+                </p>
+                <p>
+                  <span className="font-medium">Sexo:</span>{" "}
+                  {estudianteData.sexo}
+                </p>
+                <p>
+                  <span className="font-medium">Curso Actual:</span>{" "}
+                  {estudianteData.cursole} {estudianteData.letra}
+                </p>
               </div>
               <div className="space-y-2">
-                <p><span className="font-medium">Dirección:</span> {estudianteData.dirpar}</p>
-                <p><span className="font-medium">Teléfono:</span> {estudianteData.telpar}</p>
-                <p><span className="font-medium">Celular:</span> {estudianteData.celular}</p>
-                <p><span className="font-medium">Vive con:</span> {estudianteData.vivecon}</p>
-                <p><span className="font-medium">Colegio de Procedencia:</span> {estudianteData.coleproced}</p>
-                <p><span className="font-medium">Estado:</span> {estudianteData.is_active ? 'Activo' : 'Inactivo'}</p>
+                <p>
+                  <span className="font-medium">Dirección:</span>{" "}
+                  {estudianteData.dirpar}
+                </p>
+                <p>
+                  <span className="font-medium">Teléfono:</span>{" "}
+                  {estudianteData.telpar}
+                </p>
+                <p>
+                  <span className="font-medium">Celular:</span>{" "}
+                  {estudianteData.celular}
+                </p>
+                <p>
+                  <span className="font-medium">Vive con:</span>{" "}
+                  {estudianteData.vivecon}
+                </p>
+                <p>
+                  <span className="font-medium">Colegio de Procedencia:</span>{" "}
+                  {estudianteData.coleproced}
+                </p>
+                <p>
+                  <span className="font-medium">Estado:</span>{" "}
+                  {estudianteData.is_active ? "Activo" : "Inactivo"}
+                </p>
               </div>
             </div>
           )}
+          <DialogFooter>
+            <Button onClick={generarPDF}>Generar PDF</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
