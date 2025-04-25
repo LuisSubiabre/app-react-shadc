@@ -72,6 +72,15 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
       const currentIndex = rowIndex * getColumnRange.length + colIndex;
       let nextInput: HTMLInputElement | null = null;
 
+      // Prevenir el comportamiento predeterminado de las flechas arriba/abajo
+      if (
+        (e.key === "ArrowUp" && rowIndex === 0) ||
+        (e.key === "ArrowDown" && rowIndex === estudiantes.length - 1)
+      ) {
+        e.preventDefault();
+        return;
+      }
+
       switch (e.key) {
         case "ArrowRight":
           nextInput = inputs[currentIndex + 1] as HTMLInputElement;
@@ -99,7 +108,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
         nextInput.focus();
       }
     },
-    [getColumnRange.length]
+    [getColumnRange.length, estudiantes.length]
   );
 
   const handleCalificacionSave = async (
