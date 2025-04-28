@@ -44,8 +44,8 @@ interface EstudianteData {
   edad_calculada: number;
   sexo: string;
   dirpar: string;
-  telpar: number;
-  celular: number;
+  telpar: string | number;
+  celular: string | number;
   currep: string;
   vivecon: string;
   coleproced: string;
@@ -322,7 +322,7 @@ const PageAccidenteEscolar = () => {
         y: 480,
         size: 10,
       });
-
+console.log(selectedEstudiante)
       // Fecha de Registro
       const fechaReg = new Date(fechaRegistro);
       // Ajustar la fecha para evitar problemas de zona horaria
