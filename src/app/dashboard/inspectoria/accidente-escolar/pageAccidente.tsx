@@ -314,6 +314,75 @@ const PageAccidenteEscolar = () => {
         size: 10,
       });
 
+
+    // Dia semana accidente
+       const getNumeroDiaSemana = (dia: string): string => {
+         const map: { [key: string]: string } = {
+           'Lunes': '1',
+           'Martes': '2',
+           'Miércoles': '3',
+           'Jueves': '4',
+           'Viernes': '5',
+           'Sábado': '6',
+           'Domingo': '7'
+         };
+         return map[dia] || '';
+       };
+
+       const getCodigoTipoAccidente = (tipo: string): string => {
+         const map: { [key: string]: string } = {
+           'De Trayecto': '1',
+           'En La escuela': '2'
+         };
+         return map[tipo] || '';
+       };
+
+       const numeroDiaSemana = getNumeroDiaSemana(diaSemanaAccidente);
+       const codigoTipoAccidente = getCodigoTipoAccidente(tipoAccidente);
+
+       page.drawText(numeroDiaSemana, {
+         x: 135,
+         y: 430,
+         size: 10,
+       });
+
+       // Tipo de accidente
+       page.drawText(codigoTipoAccidente, {
+         x: 250,
+         y: 430,
+         size: 10,
+       });
+
+       // Circunstancia del accidente
+       const wrapText = (text: string, maxChars: number): string[] => {
+         const words = text.split(' ');
+         const lines: string[] = [];
+         let currentLine = '';
+
+         words.forEach(word => {
+           const testLine = currentLine ? `${currentLine} ${word}` : word;
+           if (testLine.length <= maxChars) {
+             currentLine = testLine;
+           } else {
+             lines.push(currentLine);
+             currentLine = word;
+           }
+         });
+         if (currentLine) {
+           lines.push(currentLine);
+         }
+         return lines;
+       };
+
+       const lineasCircunstancia = wrapText(circunstanciaAccidente, 75);
+       lineasCircunstancia.forEach((linea, index) => {
+         page.drawText(linea, {
+           x: 60,
+           y: 360 - (index * 16), // 15 es el espacio entre líneas
+           size: 10,
+         });
+       });
+
       // Guardar el PDF modificado
       const modifiedPdfBytes = await pdfDoc.save();
       const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
@@ -679,10 +748,18 @@ const PageAccidenteEscolar = () => {
                   <label className="text-sm font-medium">Circunstancia del Accidente</label>
                   <textarea
                     className="w-full min-h-[100px] p-2 border rounded-md"
-                    placeholder="Describa cómo ocurrió el accidente"
+                    placeholder="Describa cómo ocurrió el accidente (máximo 250 caracteres)"
                     value={circunstanciaAccidente}
-                    onChange={(e) => setCircunstanciaAccidente(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 250) {
+                        setCircunstanciaAccidente(e.target.value);
+                      }
+                    }}
+                    maxLength={250}
                   />
+                  <p className="text-sm text-muted-foreground text-right">
+                    {circunstanciaAccidente.length}/250 caracteres
+                  </p>
                 </div>
               </div>
             </div>
