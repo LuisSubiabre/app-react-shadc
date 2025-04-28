@@ -584,6 +584,13 @@ const AcademicoImprimirLibreta: React.FC = () => {
         doc.text(textoProfesor, xTextoProfesor, 260);
 
         // Línea derecha (Director)
+        // Agregar firma del director
+        const firmaUrl = "/pbravo-signature.png";
+        const firmaWidth = 60;
+        const firmaHeight = 20;
+        const xFirma = 110 + (80 - firmaWidth) / 2;
+        doc.addImage(firmaUrl, "PNG", xFirma, 230, firmaWidth, firmaHeight);
+
         doc.line(110, 250, 190, 250);
         doc.setFontSize(8);
         const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
