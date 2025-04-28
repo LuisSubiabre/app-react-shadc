@@ -78,7 +78,7 @@ const PageAccidenteEscolar = () => {
   const [diaSemanaAccidente, setDiaSemanaAccidente] = useState<string>("Lunes");
   const [tipoAccidente, setTipoAccidente] = useState<string>("En La escuela");
   const [horario, setHorario] = useState<string>("COMPLETA");
-  const [circunstanciaAccidente, setCircunstanciaAccidente] = useState<string>("El estudiante se cayó en el patio durante el recreo, sufriendo una fractura en el brazo derecho.");
+  const [circunstanciaAccidente, setCircunstanciaAccidente] = useState<string>("");
 
   // Estados para los testigos
   const [testigos, setTestigos] = useState([
