@@ -83,7 +83,9 @@ interface TableDataItem {
   nombre: string;
   calificaciones: string[];
   pf: number;
-  pfs2: string;
+  pfs1: number;
+  pfs2: number;
+  esConcepto: boolean;
 }
 
 const AcademicoImprimirLibreta: React.FC = () => {
@@ -281,9 +283,23 @@ const AcademicoImprimirLibreta: React.FC = () => {
             pf
           ],
           pf: pf === "-" ? 0 : parseFloat(pf),
-          pfs2: pfs2
+          pfs1: pfs1 === "-" ? 0 : parseFloat(pfs1),
+          pfs2: pfs2 === "-" ? 0 : parseFloat(pfs2),
+          esConcepto: asignatura.concepto
         };
       });
+
+      // Calcular promedio final del primer semestre (ignorando asignaturas conceptuales)
+      const asignaturas1S = tableData.filter(item => !item.esConcepto && item.pfs1 > 0);
+      const promedioFinal1S = asignaturas1S.length > 0 
+        ? asignaturas1S.reduce((acc, item) => acc + item.pfs1, 0) / asignaturas1S.length 
+        : null;
+
+      // Calcular promedio final del segundo semestre (ignorando asignaturas conceptuales)
+      const asignaturas2S = tableData.filter(item => !item.esConcepto && item.pfs2 > 0);
+      const promedioFinal2S = asignaturas2S.length > 0 
+        ? asignaturas2S.reduce((acc, item) => acc + item.pfs2, 0) / asignaturas2S.length 
+        : null;
 
       // Encabezados de la tabla
       const headers = [
@@ -386,8 +402,31 @@ const AcademicoImprimirLibreta: React.FC = () => {
       // Obtener la posición final de la tabla
       const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY || 75 + (tableData.length * 5) + 20;
 
+      // Agregar sección de promedios finales
+      const promediosY = finalY + 5;
+      
+      // Fondo para la sección de promedios
+      doc.setFillColor(245, 245, 245);
+      doc.rect(15, promediosY - 2, 180, 15, "F");
+      
+      // Borde de la sección
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.rect(15, promediosY - 2, 180, 15);
+      
+      // Promedios en una sola línea
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      
+      const promedio1S = promedioFinal1S !== null ? Math.round(promedioFinal1S) : "-";
+      const promedio2S = promedioFinal2S !== null ? Math.round(promedioFinal2S) : "-";
+      
+      doc.text(`Promedio Final 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
+      doc.text(`Promedio Final 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
+
       // Agregar gráfico después de la tabla
-      const chartY = finalY + 20;
+      const chartY = promediosY + 25;
       const chartWidth = 130;
       const chartHeight = 50;
       const pageWidth = 210; // Ancho de página A4
@@ -395,7 +434,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Dibujar el gráfico
       doc.setFontSize(7);
-      doc.text("Promedios Finales por Asignatura", pageWidth/2, chartY - 5, { align: "center" });
+      doc.text("Gráfico de Rendimiento Promedios Finales por Asignatura", pageWidth/2, chartY - 5, { align: "center" });
 
       // Crear un canvas para el gráfico con mayor resolución
       const scaleFactor = 4;
@@ -533,16 +572,30 @@ const AcademicoImprimirLibreta: React.FC = () => {
         // Línea izquierda (Profesor Jefe)
         doc.line(20, 250, 100, 250);
         doc.setFontSize(8);
-        doc.text(libreta[0].nombre_profesor_jefe, 20, 255);
+        const nombreProfesor = libreta[0].nombre_profesor_jefe;
+        const anchoProfesor = doc.getTextWidth(nombreProfesor);
+        const xProfesor = 20 + (80 - anchoProfesor) / 2;
+        doc.text(nombreProfesor, xProfesor, 255);
+        
         doc.setFontSize(7);
-        doc.text("PROFESOR JEFE", 20, 260);
+        const textoProfesor = "PROFESOR JEFE";
+        const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
+        const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
+        doc.text(textoProfesor, xTextoProfesor, 260);
 
         // Línea derecha (Director)
         doc.line(110, 250, 190, 250);
         doc.setFontSize(8);
-        doc.text("BRAVO JORQUERA PATRICIO BRAVO", 110, 255);
+        const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
+        const anchoDirector = doc.getTextWidth(nombreDirector);
+        const xDirector = 110 + (80 - anchoDirector) / 2;
+        doc.text(nombreDirector, xDirector, 255);
+        
         doc.setFontSize(7);
-        doc.text("DIRECTOR", 110, 260);
+        const textoDirector = "DIRECTOR";
+        const anchoTextoDirector = doc.getTextWidth(textoDirector);
+        const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
+        doc.text(textoDirector, xTextoDirector, 260);
 
         // Pie de página con leyendas
         doc.setFontSize(7);
