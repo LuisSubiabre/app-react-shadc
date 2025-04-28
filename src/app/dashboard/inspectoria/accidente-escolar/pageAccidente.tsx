@@ -698,15 +698,15 @@ const PageAccidenteEscolar = () => {
                   <div className="space-y-3">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre Completo</span>
-                      <span className="text-base">{estudianteData.nomalum}</span>
+                      <span className="text-base">{`${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">RUT</span>
                       <span className="text-base">{estudianteData.rutalum}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Curso Actual</span>
-                      <span className="text-base">{estudianteData.cursole} {estudianteData.letra}</span>
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Curso</span>
+                      <span className="text-base">{`${estudianteData.cursole} ${estudianteData.letra}`}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
