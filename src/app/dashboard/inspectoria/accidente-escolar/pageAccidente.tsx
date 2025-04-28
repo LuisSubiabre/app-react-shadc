@@ -248,9 +248,32 @@ const PageAccidenteEscolar = () => {
       const estudianteResidencia = `${estudianteData.dirpar} `;
       page.drawText(estudianteResidencia, {
         x: 60,
-        y: 550, // Posición aproximada arriba de "APELLIDO PATERNO"
+        y: 560, // Posición aproximada arriba de "APELLIDO PATERNO"
         size: 10,
       });
+
+      const estudianteGenero= `${estudianteData.sexo} `;
+      page.drawText(estudianteGenero, {
+        x: 422,
+        y: 600, 
+        size: 8,
+      });
+
+      const estudianteNacimiento= `${estudianteData.fecnac} `;
+      page.drawText(estudianteNacimiento, {
+        x: 450,
+        y: 600, 
+        size: 8,
+      });
+
+      const estudianteEdad= `${estudianteData.edad_calculada} `;
+      page.drawText(estudianteEdad, {
+        x: 512,
+        y: 600, 
+        size: 8,
+      });
+
+
 
       // Guardar el PDF modificado
       const modifiedPdfBytes = await pdfDoc.save();
