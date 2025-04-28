@@ -67,11 +67,17 @@ const PageAccidenteEscolar = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [estudianteData, setEstudianteData] = useState<EstudianteData | null>(
-    null
-  );
-  const [selectedEstudiante, setSelectedEstudiante] =
-    useState<EstudianteType | null>(null);
+  const [estudianteData, setEstudianteData] = useState<EstudianteData | null>(null);
+  const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
+
+  // Nuevos estados para el formulario de accidente con valores por defecto
+  const [fechaRegistro, setFechaRegistro] = useState<Date>(new Date());
+  const [horaAccidente, setHoraAccidente] = useState<string>("14");
+  const [minutoAccidente, setMinutoAccidente] = useState<string>("30");
+  const [fechaAccidente, setFechaAccidente] = useState<Date>(new Date());
+  const [diaSemanaAccidente, setDiaSemanaAccidente] = useState<string>("Lunes");
+  const [tipoAccidente, setTipoAccidente] = useState<string>("En La escuela");
+  const [circunstanciaAccidente, setCircunstanciaAccidente] = useState<string>("El estudiante se cayó en el patio durante el recreo, sufriendo una fractura en el brazo derecho.");
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -222,18 +228,10 @@ const PageAccidenteEscolar = () => {
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const page = pdfDoc.getPages()[0];
 
-      // // Añadir el nombre completo del estudiante
-      // const establecimiento = `LICEO EXPERIMENTAL UMAG      PUNTA ARENAS      PUNTA ARENAS`;
-      // page.drawText(establecimiento, {
-      //   x: 60,
-      //   y: 700, // Posición aproximada arriba de "APELLIDO PATERNO"
-      //   size: 10,
-      // });
-
       const estudianteCurso = `${estudianteData.cursole} ${estudianteData.letra}`;
       page.drawText(estudianteCurso, {
         x: 60,
-        y: 670, // Posición aproximada arriba de "APELLIDO PATERNO"
+        y: 670,
         size: 10,
       });
 
@@ -241,39 +239,80 @@ const PageAccidenteEscolar = () => {
       const nombreCompleto = `${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`;
       page.drawText(nombreCompleto, {
         x: 60,
-        y: 613, // Posición aproximada arriba de "APELLIDO PATERNO"
+        y: 613,
         size: 10,
       });
 
       const estudianteResidencia = `${estudianteData.dirpar} `;
       page.drawText(estudianteResidencia, {
         x: 60,
-        y: 560, // Posición aproximada arriba de "APELLIDO PATERNO"
+        y: 560,
         size: 10,
       });
 
-      const estudianteGenero= `${estudianteData.sexo} `;
+      const estudianteGenero = `${estudianteData.sexo} `;
       page.drawText(estudianteGenero, {
         x: 422,
-        y: 600, 
+        y: 600,
         size: 8,
       });
 
-      const estudianteNacimiento= `${estudianteData.fecnac} `;
+      const estudianteNacimiento = `${estudianteData.fecnac} `;
       page.drawText(estudianteNacimiento, {
         x: 450,
-        y: 600, 
+        y: 600,
         size: 8,
       });
 
-      const estudianteEdad= `${estudianteData.edad_calculada} `;
+      const estudianteEdad = `${estudianteData.edad_calculada} `;
       page.drawText(estudianteEdad, {
         x: 512,
-        y: 600, 
+        y: 600,
         size: 8,
       });
 
+      // Agregar la hora del accidente
+      const horaAccidenteFormateada = `${horaAccidente.split('').join('   ')}`;
+      page.drawText(horaAccidenteFormateada, {
+        x: 65,
+        y: 480,
+        size: 10,
+      });
+            // Agregar la hora del accidente
+  const minutoAccidenteFormateada = `${minutoAccidente.split('').join('   ')}`;
+            page.drawText(minutoAccidenteFormateada, {
+              x: 90,
+              y: 480,
+              size: 10,
+            });
+      
 
+      // Agregar la fecha del accidente
+      const fecha = new Date(fechaAccidente);
+      const dia = fecha.getDate().toString().padStart(2, '0').split('').join('   ');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0').split('').join('   ');
+      const año = fecha.getFullYear().toString();
+
+      // Dibujar día
+      page.drawText(dia, {
+        x: 270,
+        y: 480,
+        size: 10,
+      });
+
+      // Dibujar mes
+      page.drawText(mes, {
+        x: 205,
+        y: 480,
+        size: 10,
+      });
+
+      // Dibujar año
+      page.drawText(año, {
+        x: 140,
+        y: 480,
+        size: 10,
+      });
 
       // Guardar el PDF modificado
       const modifiedPdfBytes = await pdfDoc.save();
@@ -510,61 +549,141 @@ const PageAccidenteEscolar = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Datos del Estudiante</DialogTitle>
+            <DialogTitle>Registro de Accidente Escolar</DialogTitle>
           </DialogHeader>
           {estudianteData && (
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium">Nombre:</span>{" "}
-                  {estudianteData.nomalum}
-                </p>
-                <p>
-                  <span className="font-medium">RUT:</span>{" "}
-                  {estudianteData.rutalum}
-                </p>
-                <p>
-                  <span className="font-medium">Fecha de Nacimiento:</span>{" "}
-                  {estudianteData.fecnac}
-                </p>
-                <p>
-                  <span className="font-medium">Edad:</span>{" "}
-                  {estudianteData.edad} años
-                </p>
-                <p>
-                  <span className="font-medium">Sexo:</span>{" "}
-                  {estudianteData.sexo}
-                </p>
-                <p>
-                  <span className="font-medium">Curso Actual:</span>{" "}
-                  {estudianteData.cursole} {estudianteData.letra}
-                </p>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p>
+                    <span className="font-medium">Nombre:</span>{" "}
+                    {estudianteData.nomalum}
+                  </p>
+                  <p>
+                    <span className="font-medium">RUT:</span>{" "}
+                    {estudianteData.rutalum}
+                  </p>
+                  <p>
+                    <span className="font-medium">Curso Actual:</span>{" "}
+                    {estudianteData.cursole} {estudianteData.letra}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p>
+                    <span className="font-medium">Fecha de Nacimiento:</span>{" "}
+                    {estudianteData.fecnac}
+                  </p>
+                  <p>
+                    <span className="font-medium">Edad:</span>{" "}
+                    {estudianteData.edad} años
+                  </p>
+                  <p>
+                    <span className="font-medium">Sexo:</span>{" "}
+                    {estudianteData.sexo}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium">Dirección:</span>{" "}
-                  {estudianteData.dirpar}
-                </p>
-                <p>
-                  <span className="font-medium">Teléfono:</span>{" "}
-                  {estudianteData.telpar}
-                </p>
-                <p>
-                  <span className="font-medium">Celular:</span>{" "}
-                  {estudianteData.celular}
-                </p>
-                <p>
-                  <span className="font-medium">Vive con:</span>{" "}
-                  {estudianteData.vivecon}
-                </p>
-                <p>
-                  <span className="font-medium">Colegio de Procedencia:</span>{" "}
-                  {estudianteData.coleproced}
-                </p>
-                <p>
-                  <span className="font-medium">Estado:</span>{" "}
-                  {estudianteData.is_active ? "Activo" : "Inactivo"}
-                </p>
+
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-medium mb-4">Información del Accidente</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Fecha de Registro</label>
+                    <Input
+                      type="date"
+                      value={fechaRegistro.toISOString().split('T')[0]}
+                      onChange={(e) => setFechaRegistro(new Date(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Hora del Accidente</label>
+                    <div className="flex gap-2">
+                      <Select value={horaAccidente} onValueChange={setHoraAccidente}>
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Hora" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 25 }, (_, i) => {
+                            const hora = i.toString().padStart(2, '0');
+                            return (
+                              <SelectItem key={hora} value={hora}>
+                                {hora}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={minutoAccidente} onValueChange={setMinutoAccidente}>
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Minutos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 60 }, (_, i) => {
+                            const minuto = i.toString().padStart(2, '0');
+                            return (
+                              <SelectItem key={minuto} value={minuto}>
+                                {minuto}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Fecha del Accidente</label>
+                    <Input
+                      type="date"
+                      value={fechaAccidente.toISOString().split('T')[0]}
+                      onChange={(e) => setFechaAccidente(new Date(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Día de la Semana</label>
+                    <Select value={diaSemanaAccidente} onValueChange={setDiaSemanaAccidente}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el día" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Lunes">Lunes</SelectItem>
+                        <SelectItem value="Martes">Martes</SelectItem>
+                        <SelectItem value="Miércoles">Miércoles</SelectItem>
+                        <SelectItem value="Jueves">Jueves</SelectItem>
+                        <SelectItem value="Viernes">Viernes</SelectItem>
+                        <SelectItem value="Sábado">Sábado</SelectItem>
+                        <SelectItem value="Domingo">Domingo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipo de Accidente</label>
+                    <Select value={tipoAccidente} onValueChange={setTipoAccidente}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="De Trayecto">De Trayecto</SelectItem>
+                        <SelectItem value="En La escuela">En La escuela</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <label className="text-sm font-medium">Circunstancia del Accidente</label>
+                  <textarea
+                    className="w-full min-h-[100px] p-2 border rounded-md"
+                    placeholder="Describa cómo ocurrió el accidente"
+                    value={circunstanciaAccidente}
+                    onChange={(e) => setCircunstanciaAccidente(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           )}
