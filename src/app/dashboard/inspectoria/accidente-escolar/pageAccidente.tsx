@@ -77,7 +77,14 @@ const PageAccidenteEscolar = () => {
   const [fechaAccidente, setFechaAccidente] = useState<Date>(new Date());
   const [diaSemanaAccidente, setDiaSemanaAccidente] = useState<string>("Lunes");
   const [tipoAccidente, setTipoAccidente] = useState<string>("En La escuela");
+  const [horario, setHorario] = useState<string>("COMPLETA");
   const [circunstanciaAccidente, setCircunstanciaAccidente] = useState<string>("El estudiante se cayó en el patio durante el recreo, sufriendo una fractura en el brazo derecho.");
+
+  // Estados para los testigos
+  const [testigos, setTestigos] = useState([
+    { nombre: "", cedula: "" },
+    { nombre: "", cedula: "" }
+  ]);
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -250,15 +257,16 @@ const PageAccidenteEscolar = () => {
         size: 10,
       });
 
-      const estudianteGenero = `${estudianteData.sexo} `;
+      const estudianteGenero = `${estudianteData.sexo === 'M' ? '1' : '2'} `;
       page.drawText(estudianteGenero, {
         x: 422,
         y: 600,
         size: 8,
       });
 
-      const estudianteNacimiento = `${estudianteData.fecnac} `;
-      page.drawText(estudianteNacimiento, {
+      // Fecha de nacimiento
+      const fechaNacimiento = estudianteData.fecnac.split('-').reverse().join('/');
+      page.drawText(fechaNacimiento, {
         x: 450,
         y: 600,
         size: 8,
@@ -289,9 +297,10 @@ const PageAccidenteEscolar = () => {
 
       // Agregar la fecha del accidente
       const fecha = new Date(fechaAccidente);
-      const dia = fecha.getDate().toString().padStart(2, '0').split('').join('   ');
-      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0').split('').join('   ');
-      const año = fecha.getFullYear().toString();
+      // Ajustar la fecha para evitar problemas de zona horaria
+      const dia = fecha.getUTCDate().toString().padStart(2, '0').split('').join('   ');
+      const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0').split('').join('   ');
+      const año = fecha.getUTCFullYear().toString();
 
       // Dibujar día
       page.drawText(dia, {
@@ -314,6 +323,33 @@ const PageAccidenteEscolar = () => {
         size: 10,
       });
 
+      // Fecha de Registro
+      const fechaReg = new Date(fechaRegistro);
+      // Ajustar la fecha para evitar problemas de zona horaria
+      const diaReg = fechaReg.getUTCDate().toString().padStart(2, '0').split('').join('   ');
+      const mesReg = (fechaReg.getUTCMonth() + 1).toString().padStart(2, '0').split('').join('   ');
+      const añoReg = fechaReg.getUTCFullYear().toString();
+
+      // Dibujar día
+      page.drawText(diaReg, {
+        x: 330,
+        y: 655,
+        size: 10,
+      });
+
+      // Dibujar mes
+      page.drawText(mesReg, {
+        x: 355,
+        y: 655,
+        size: 10,
+      });
+
+      // Dibujar año
+      page.drawText(añoReg, {
+        x: 390,
+        y: 655,
+        size: 10,
+      });
 
     // Dia semana accidente
        const getNumeroDiaSemana = (dia: string): string => {
@@ -353,6 +389,34 @@ const PageAccidenteEscolar = () => {
          size: 10,
        });
 
+       // Horario
+       page.drawText(horario, {
+         x: 190,
+         y: 670,
+         size: 10,
+       });
+
+       // Testigos
+       testigos.forEach((testigo, index) => {
+         if (testigo.nombre) {
+           // Nombre del testigo
+           page.drawText(testigo.nombre, {
+             x: 290,
+             y: 445 - (index * 35),
+             size: 10,
+           });
+
+           // Cédula del testigo
+           if (testigo.cedula) {
+             page.drawText(testigo.cedula, {
+               x:420,
+               y: 445 - (index * 35),
+               size: 10,
+             });
+           }
+         }
+       });
+
        // Circunstancia del accidente
        const wrapText = (text: string, maxChars: number): string[] => {
          const words = text.split(' ');
@@ -378,7 +442,7 @@ const PageAccidenteEscolar = () => {
        lineasCircunstancia.forEach((linea, index) => {
          page.drawText(linea, {
            x: 60,
-           y: 360 - (index * 16), // 15 es el espacio entre líneas
+           y: 360 - (index * 17), // 15 es el espacio entre líneas
            size: 10,
          });
        });
@@ -399,6 +463,12 @@ const PageAccidenteEscolar = () => {
     } catch (error) {
       console.error("Error al modificar el PDF:", error);
     }
+  };
+
+  const handleTestigoChange = (index: number, field: 'nombre' | 'cedula', value: string) => {
+    const nuevosTestigos = [...testigos];
+    nuevosTestigos[index][field] = value;
+    setTestigos(nuevosTestigos);
   };
 
   return (
@@ -616,155 +686,206 @@ const PageAccidenteEscolar = () => {
       </main>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registro de Accidente Escolar</DialogTitle>
           </DialogHeader>
           {estudianteData && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p>
-                    <span className="font-medium">Nombre:</span>{" "}
-                    {estudianteData.nomalum}
-                  </p>
-                  <p>
-                    <span className="font-medium">RUT:</span>{" "}
-                    {estudianteData.rutalum}
-                  </p>
-                  <p>
-                    <span className="font-medium">Curso Actual:</span>{" "}
-                    {estudianteData.cursole} {estudianteData.letra}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <p>
-                    <span className="font-medium">Fecha de Nacimiento:</span>{" "}
-                    {estudianteData.fecnac}
-                  </p>
-                  <p>
-                    <span className="font-medium">Edad:</span>{" "}
-                    {estudianteData.edad} años
-                  </p>
-                  <p>
-                    <span className="font-medium">Sexo:</span>{" "}
-                    {estudianteData.sexo}
-                  </p>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Información del Estudiante</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre Completo</span>
+                      <span className="text-base">{estudianteData.nomalum}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">RUT</span>
+                      <span className="text-base">{estudianteData.rutalum}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Curso Actual</span>
+                      <span className="text-base">{estudianteData.cursole} {estudianteData.letra}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Nacimiento</span>
+                      <span className="text-base">{estudianteData.fecnac}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Edad</span>
+                      <span className="text-base">{estudianteData.edad} años</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sexo</span>
+                      <span className="text-base">{estudianteData.sexo}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-medium mb-4">Información del Accidente</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Fecha de Registro</label>
-                    <Input
-                      type="date"
-                      value={fechaRegistro.toISOString().split('T')[0]}
-                      onChange={(e) => setFechaRegistro(new Date(e.target.value))}
-                    />
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Información de Contacto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Dirección</span>
+                    <span className="text-base">{estudianteData.dirpar}</span>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Hora del Accidente</label>
-                    <div className="flex gap-2">
-                      <Select value={horaAccidente} onValueChange={setHoraAccidente}>
-                        <SelectTrigger className="w-1/2">
-                          <SelectValue placeholder="Hora" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 25 }, (_, i) => {
-                            const hora = i.toString().padStart(2, '0');
-                            return (
-                              <SelectItem key={hora} value={hora}>
-                                {hora}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={minutoAccidente} onValueChange={setMinutoAccidente}>
-                        <SelectTrigger className="w-1/2">
-                          <SelectValue placeholder="Minutos" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 60 }, (_, i) => {
-                            const minuto = i.toString().padStart(2, '0');
-                            return (
-                              <SelectItem key={minuto} value={minuto}>
-                                {minuto}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Teléfono Celular</span>
+                    <span className="text-base">{estudianteData.celular}</span>
                   </div>
+                </div>
+              </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Fecha del Accidente</label>
-                    <Input
-                      type="date"
-                      value={fechaAccidente.toISOString().split('T')[0]}
-                      onChange={(e) => setFechaAccidente(new Date(e.target.value))}
-                    />
-                  </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Fecha de Registro</label>
+                  <Input
+                    type="date"
+                    value={fechaRegistro.toISOString().split('T')[0]}
+                    onChange={(e) => setFechaRegistro(new Date(e.target.value))}
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Día de la Semana</label>
-                    <Select value={diaSemanaAccidente} onValueChange={setDiaSemanaAccidente}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione el día" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Hora del Accidente</label>
+                  <div className="flex gap-2">
+                    <Select value={horaAccidente} onValueChange={setHoraAccidente}>
+                      <SelectTrigger className="w-1/2">
+                        <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Lunes">Lunes</SelectItem>
-                        <SelectItem value="Martes">Martes</SelectItem>
-                        <SelectItem value="Miércoles">Miércoles</SelectItem>
-                        <SelectItem value="Jueves">Jueves</SelectItem>
-                        <SelectItem value="Viernes">Viernes</SelectItem>
-                        <SelectItem value="Sábado">Sábado</SelectItem>
-                        <SelectItem value="Domingo">Domingo</SelectItem>
+                        {Array.from({ length: 25 }, (_, i) => {
+                          const hora = i.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={hora} value={hora}>
+                              {hora}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Tipo de Accidente</label>
-                    <Select value={tipoAccidente} onValueChange={setTipoAccidente}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione el tipo" />
+                    <Select value={minutoAccidente} onValueChange={setMinutoAccidente}>
+                      <SelectTrigger className="w-1/2">
+                        <SelectValue placeholder="Minutos" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="De Trayecto">De Trayecto</SelectItem>
-                        <SelectItem value="En La escuela">En La escuela</SelectItem>
+                        {Array.from({ length: 60 }, (_, i) => {
+                          const minuto = i.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={minuto} value={minuto}>
+                              {minuto}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-2">
-                  <label className="text-sm font-medium">Circunstancia del Accidente</label>
-                  <textarea
-                    className="w-full min-h-[100px] p-2 border rounded-md"
-                    placeholder="Describa cómo ocurrió el accidente (máximo 250 caracteres)"
-                    value={circunstanciaAccidente}
-                    onChange={(e) => {
-                      if (e.target.value.length <= 250) {
-                        setCircunstanciaAccidente(e.target.value);
-                      }
-                    }}
-                    maxLength={250}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Fecha del Accidente</label>
+                  <Input
+                    type="date"
+                    value={fechaAccidente.toISOString().split('T')[0]}
+                    onChange={(e) => setFechaAccidente(new Date(e.target.value))}
                   />
-                  <p className="text-sm text-muted-foreground text-right">
-                    {circunstanciaAccidente.length}/250 caracteres
-                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Día de la Semana</label>
+                  <Select value={diaSemanaAccidente} onValueChange={setDiaSemanaAccidente}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione el día" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lunes">Lunes</SelectItem>
+                      <SelectItem value="Martes">Martes</SelectItem>
+                      <SelectItem value="Miércoles">Miércoles</SelectItem>
+                      <SelectItem value="Jueves">Jueves</SelectItem>
+                      <SelectItem value="Viernes">Viernes</SelectItem>
+                      <SelectItem value="Sábado">Sábado</SelectItem>
+                      <SelectItem value="Domingo">Domingo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tipo de Accidente</label>
+                  <Select value={tipoAccidente} onValueChange={setTipoAccidente}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione el tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="De Trayecto">De Trayecto</SelectItem>
+                      <SelectItem value="En La escuela">En La escuela</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Horario</label>
+                  <Select value={horario} onValueChange={setHorario}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione el horario" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MAÑANA">Mañana</SelectItem>
+                      <SelectItem value="TARDE">Tarde</SelectItem>
+                      <SelectItem value="COMPLETA">Completa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Circunstancia del Accidente</label>
+                <textarea
+                  className="w-full min-h-[80px] p-2 border rounded-md"
+                  placeholder="Describa cómo ocurrió el accidente (máximo 250 caracteres)"
+                  value={circunstanciaAccidente}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 250) {
+                      setCircunstanciaAccidente(e.target.value);
+                    }
+                  }}
+                  maxLength={250}
+                />
+                <p className="text-sm text-muted-foreground text-right">
+                  {circunstanciaAccidente.length}/250 caracteres
+                </p>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-3">Testigos (Opcional)</h3>
+                <div className="space-y-3">
+                  {testigos.map((testigo, index) => (
+                    <div key={index} className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Input
+                          placeholder={`Nombre y Apellido Testigo ${index + 1}`}
+                          value={testigo.nombre}
+                          onChange={(e) => handleTestigoChange(index, 'nombre', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Input
+                          placeholder="Cédula de Identidad"
+                          value={testigo.cedula}
+                          onChange={(e) => handleTestigoChange(index, 'cedula', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button onClick={generarPDF}>Generar PDF</Button>
           </DialogFooter>
         </DialogContent>
