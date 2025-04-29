@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts";
-import { AlertCircle, Users } from "lucide-react";
+import { AlertCircle, Users, FileDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -100,6 +100,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
+  const [loadingPDF, setLoadingPDF] = useState(false);
 
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -173,448 +174,469 @@ const AcademicoImprimirLibreta: React.FC = () => {
     }
   };
 
-  const generarPDFLibreta = async (estudiante: Estudiante) => {
-    try {
-      const response = await getLibretaEstudiante(estudiante.id);
-      const libreta: AsignaturaLibreta[] = response.data;
+  const generarPDFEstudiante = async (estudiante: Estudiante, doc: JsPDFWithAutoTable, fecha: string) => {
+    const response = await getLibretaEstudiante(estudiante.id);
+    const libreta: AsignaturaLibreta[] = response.data;
 
-      if (!libreta || libreta.length === 0) {
-        throw new Error("No hay datos de calificaciones para este estudiante");
+    if (!libreta || libreta.length === 0) {
+      throw new Error("No hay datos de calificaciones para este estudiante");
+    }
+
+    // Agregar logo
+    const logoUrl = "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
+    const logoWidth = 50;
+    const logoHeight = 15;
+    doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
+
+    // Establecer fuente y colores
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+
+    // Nombre de la institución
+    doc.setFontSize(12);
+    doc.text("Liceo Experimental UMAG", 80, 20);
+
+    // Título principal
+    doc.setFontSize(16);
+    doc.text("Libreta de Calificaciones", 105, 30, { align: "center" });
+
+    // Línea decorativa superior
+    doc.setDrawColor(41, 128, 185);
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+
+    // Información del estudiante
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+
+    const infoY = 45;
+    doc.text(`Estudiante: ${libreta[0].nombre_estudiante}`, 20, infoY + 7);
+    doc.text(`Curso: ${libreta[0].nombre_curso}`, 20, infoY + 14);
+    doc.text(`Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`, 20, infoY + 21);
+
+    // Preparar datos para la tabla y el gráfico
+    const tableData: TableDataItem[] = libreta.map((asignatura: AsignaturaLibreta) => {
+      const calificacionesPrimerSemestre = [];
+      const calificacionesSegundoSemestre = [];
+
+      // Primer semestre (C1-C10)
+      for (let i = 1; i <= 10; i++) {
+        const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+        if (asignatura.concepto) {
+          if (calificacion !== null && calificacion !== undefined) {
+            const calificacionStr = calificacion.toString();
+            const concepto = getConceptoFromNota(calificacionStr);
+            calificacionesPrimerSemestre.push(getValorConcepto(concepto));
+          } else {
+            calificacionesPrimerSemestre.push("-");
+          }
+        } else {
+          calificacionesPrimerSemestre.push(
+            calificacion !== null ? calificacion.toString() : "-"
+          );
+        }
       }
 
+      // Segundo semestre (C11-C20)
+      for (let i = 11; i <= 20; i++) {
+        const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+        if (asignatura.concepto) {
+          if (calificacion !== null && calificacion !== undefined) {
+            const calificacionStr = calificacion.toString();
+            const concepto = getConceptoFromNota(calificacionStr);
+            calificacionesSegundoSemestre.push(getValorConcepto(concepto));
+          } else {
+            calificacionesSegundoSemestre.push("-");
+          }
+        } else {
+          calificacionesSegundoSemestre.push(
+            calificacion !== null ? calificacion.toString() : "-"
+          );
+        }
+      }
+
+      // Calcular PFS (Promedio Final Semestral)
+      const pfs1 = calcularPromedio(calificacionesPrimerSemestre, asignatura.concepto);
+      const pfs2 = calcularPromedio(calificacionesSegundoSemestre, asignatura.concepto);
+
+      // Calcular PF (Promedio Final Anual)
+      const pf = pfs2 === "-" ? pfs1 : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
+
+      return {
+        nombre: asignatura.nombre,
+        calificaciones: [
+          asignatura.nombre,
+          ...calificacionesPrimerSemestre,
+          pfs1,
+          ...calificacionesSegundoSemestre,
+          pfs2,
+          pf
+        ],
+        pf: pf === "-" ? 0 : parseFloat(pf),
+        pfs1: pfs1 === "-" ? 0 : parseFloat(pfs1),
+        pfs2: pfs2 === "-" ? 0 : parseFloat(pfs2),
+        esConcepto: asignatura.concepto
+      };
+    });
+
+    // Calcular promedio final del primer semestre (ignorando asignaturas conceptuales)
+    const asignaturas1S = tableData.filter(item => !item.esConcepto && item.pfs1 > 0);
+    const promedioFinal1S = asignaturas1S.length > 0 
+      ? asignaturas1S.reduce((acc, item) => acc + item.pfs1, 0) / asignaturas1S.length 
+      : null;
+
+    // Calcular promedio final del segundo semestre (ignorando asignaturas conceptuales)
+    const asignaturas2S = tableData.filter(item => !item.esConcepto && item.pfs2 > 0);
+    const promedioFinal2S = asignaturas2S.length > 0 
+      ? asignaturas2S.reduce((acc, item) => acc + item.pfs2, 0) / asignaturas2S.length 
+      : null;
+
+    // Encabezados de la tabla
+    const headers = [
+      "Asignatura",
+      ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
+      "1S",
+      ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
+      "2S",
+      "PF"
+    ];
+
+    // Crear tabla
+    autoTable(doc, {
+      startY: 75,
+      head: [headers],
+      body: tableData.map((data) => data.calificaciones),
+      theme: "grid",
+      headStyles: {
+        fillColor: [41, 128, 185],
+        fontSize: 8,
+        cellPadding: 1,
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        halign: "center",
+        minCellHeight: 5,
+      },
+      styles: {
+        fontSize: 8,
+        cellPadding: 1,
+        lineColor: [200, 200, 200],
+        halign: "center",
+        minCellHeight: 5,
+      },
+      columnStyles: {
+        0: {
+          cellWidth: 30,
+          fontStyle: "bold",
+          halign: "left",
+        },
+        ...Object.fromEntries(
+          Array.from({ length: 10 }, (_, i) => [
+            i + 1,
+            {
+              cellWidth: 7,
+              halign: "center",
+            },
+          ])
+        ),
+        11: {
+          cellWidth: 8,
+          halign: "center",
+          fontStyle: "bold",
+        },
+        ...Object.fromEntries(
+          Array.from({ length: 10 }, (_, i) => [
+            i + 12,
+            {
+              cellWidth: 7,
+              halign: "center",
+            },
+          ])
+        ),
+        22: {
+          cellWidth: 8,
+          halign: "center",
+          fontStyle: "bold",
+        },
+        23: {
+          cellWidth: 8,
+          halign: "center",
+          fontStyle: "bold",
+        }
+      },
+      margin: { left: 5, right: 5 },
+      tableWidth: 198,
+      didDrawPage: function () {
+        doc.setFillColor(41, 128, 185);
+        doc.rect(35, 70, 77, 5, "F");
+        doc.rect(112, 70, 77, 5, "F");
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.text("1er Semestre", 73.5, 73, { align: "center" });
+        doc.text("2do Semestre", 150.5, 73, { align: "center" });
+
+        doc.setTextColor(0, 0, 0);
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      }
+    });
+
+    // Obtener la posición final de la tabla
+    const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY || 75 + (tableData.length * 5) + 20;
+
+    // Agregar sección de promedios finales
+    const promediosY = finalY + 5;
+    
+    // Fondo para la sección de promedios
+    doc.setFillColor(245, 245, 245);
+    doc.rect(15, promediosY - 2, 180, 15, "F");
+    
+    // Borde de la sección
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.rect(15, promediosY - 2, 180, 15);
+    
+    // Promedios en una sola línea
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    
+    const promedio1S = promedioFinal1S !== null ? Math.round(promedioFinal1S) : "-";
+    const promedio2S = promedioFinal2S !== null ? Math.round(promedioFinal2S) : "-";
+    
+    doc.text(`Promedio Final 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
+    doc.text(`Promedio Final 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
+
+    // Agregar gráfico después de la tabla
+    const chartY = promediosY + 25;
+    const chartWidth = 130;
+    const chartHeight = 50;
+    const pageWidth = 210;
+    const chartX = (pageWidth - chartWidth) / 2;
+
+    // Dibujar el gráfico
+    doc.setFontSize(7);
+    doc.text("Gráfico de Rendimiento Promedios Finales por Asignatura", pageWidth/2, chartY - 5, { align: "center" });
+
+    // Crear un canvas para el gráfico con mayor resolución
+    const scaleFactor = 4;
+    const canvas = document.createElement('canvas');
+    canvas.width = chartWidth * scaleFactor;
+    canvas.height = chartHeight * scaleFactor;
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+      // Escalar el contexto para mejorar la calidad
+      ctx.scale(scaleFactor, scaleFactor);
+
+      // Dibujar el fondo con borde
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#e0e0e0';
+      ctx.lineWidth = 0.5;
+      ctx.fillRect(0, 0, chartWidth, chartHeight);
+      ctx.strokeRect(0, 0, chartWidth, chartHeight);
+
+      // Configuración del gráfico
+      const maxValue = 70;
+      const scale = (chartHeight - 20) / maxValue;
+      const spacing = (chartWidth - 30) / (tableData.length - 1);
+      const startX = 15;
+
+      // Dibujar línea de referencia
+      ctx.beginPath();
+      ctx.strokeStyle = '#f0f0f0';
+      ctx.setLineDash([1, 1]);
+      ctx.moveTo(15, chartHeight - 10);
+      ctx.lineTo(chartWidth - 15, chartHeight - 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Dibujar línea horizontal para el valor máximo
+      ctx.beginPath();
+      ctx.strokeStyle = '#f0f0f0';
+      ctx.setLineDash([1, 1]);
+      ctx.moveTo(15, 10);
+      ctx.lineTo(chartWidth - 15, 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#666666';
+      ctx.font = '3px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('', 5, 13);
+
+      // Dibujar el área para el primer semestre
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(41, 121, 255, 0.1)';
+      ctx.moveTo(startX, chartHeight - 10);
+
+      let lastValidY: number | null = null;
+      tableData.forEach((data, index) => {
+        const x = startX + (index * spacing);
+        if (data.pf > 0) {
+          const y = chartHeight - 10 - (data.pf * scale);
+          ctx.lineTo(x, y);
+          lastValidY = y;
+        } else {
+          if (lastValidY !== null) {
+            ctx.lineTo(x, lastValidY);
+          }
+        }
+      });
+
+      ctx.lineTo(chartWidth - 15, chartHeight - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // Dibujar la línea del primer semestre
+      ctx.beginPath();
+      ctx.strokeStyle = '#2979ff';
+      ctx.lineWidth = 1.5;
+
+      lastValidY = null;
+      tableData.forEach((data, index) => {
+        const x = startX + (index * spacing);
+        if (data.pf > 0) {
+          const y = chartHeight - 10 - (data.pf * scale);
+          if (lastValidY === null) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+          lastValidY = y;
+        } else {
+          ctx.stroke();
+          ctx.beginPath();
+          lastValidY = null;
+        }
+      });
+
+      ctx.stroke();
+
+      // Dibujar los puntos y textos
+      tableData.forEach((data, index) => {
+        const x = startX + (index * spacing);
+        const y1s = data.pf > 0 ? chartHeight - 10 - (data.pf * scale) : null;
+
+        // Dibujar puntos
+        if (y1s !== null) {
+          ctx.beginPath();
+          ctx.fillStyle = '#2979ff';
+          ctx.arc(x, y1s, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Dibujar solo el valor del promedio final (PF) como encabezado
+        if (y1s !== null) {
+          ctx.fillStyle = '#2979ff';
+          ctx.font = '3px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(data.pf.toString(), x, 5);
+        }
+
+        // Nombres de asignaturas en la parte inferior
+        ctx.save();
+        ctx.translate(x, chartHeight - 5);
+        ctx.rotate(-Math.PI/2);
+        ctx.font = '2.5px Arial';
+        ctx.textAlign = 'left';
+        const nombreCorto = data.nombre.length > 10 ? data.nombre.substring(0, 8) + '...' : data.nombre;
+        ctx.fillText(nombreCorto, 0, 0);
+        ctx.restore();
+      });
+
+      // Agregar el gráfico al PDF con alta calidad
+      doc.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', chartX, chartY, chartWidth, chartHeight);
+
+      // Espacio para firmas y timbres
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+
+      // Línea izquierda (Profesor Jefe)
+      doc.line(20, 250, 100, 250);
+      doc.setFontSize(8);
+      const nombreProfesor = libreta[0].nombre_profesor_jefe;
+      const anchoProfesor = doc.getTextWidth(nombreProfesor);
+      const xProfesor = 20 + (80 - anchoProfesor) / 2;
+      doc.text(nombreProfesor, xProfesor, 255);
+      
+      doc.setFontSize(7);
+      const textoProfesor = "PROFESOR JEFE";
+      const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
+      const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
+      doc.text(textoProfesor, xTextoProfesor, 260);
+
+      // Línea derecha (Director)
+      doc.line(110, 250, 190, 250);
+      
+      // Agregar imagen de firma
+      const firmaUrl = "/pbravo-signature.png";
+      const firmaWidth = 65;
+      const firmaHeight = 20;
+      doc.addImage(firmaUrl, "PNG", 120, 225, firmaWidth, firmaHeight);
+      
+      doc.setFontSize(8);
+      const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
+      const anchoDirector = doc.getTextWidth(nombreDirector);
+      const xDirector = 110 + (80 - anchoDirector) / 2;
+      doc.text(nombreDirector, xDirector, 265);
+      
+      doc.setFontSize(7);
+      const textoDirector = "DIRECTOR";
+      const anchoTextoDirector = doc.getTextWidth(textoDirector);
+      const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
+      doc.text(textoDirector, xTextoDirector, 270);
+
+      // Pie de página con leyendas
+      doc.setFontSize(7);
+      doc.setTextColor(100, 100, 100);
+      doc.text("1S | 2S: Promedio Final Semestral", 20, 270);
+      doc.text("PF: Promedio Final Anual", 20, 275);
+      doc.text(`Impreso el: ${fecha}`, 20, 280);
+    }
+
+    return libreta[0].nombre_estudiante;
+  };
+
+  const generarPDFLibreta = async (estudiante: Estudiante) => {
+    try {
+      setLoadingPDF(true);
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+      const fecha = new Date().toLocaleDateString();
+      
+      const nombreEstudiante = await generarPDFEstudiante(estudiante, doc, fecha);
+      doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+    } finally {
+      setLoadingPDF(false);
+    }
+  };
+
+  const generarPDFConsolidado = async () => {
+    if (!currentCurso || dataEstudiantes.length === 0) return;
+
+    try {
+      setLoadingPDF(true);
       const doc = new jsPDF() as JsPDFWithAutoTable;
       const fecha = new Date().toLocaleDateString();
 
-      // Agregar logo
-      const logoUrl =
-        "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
-      const logoWidth = 50; // Ajustado para que quede bien en la página
-      const logoHeight = 15; // Manteniendo la proporción
-      doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
-
-      // Establecer fuente y colores
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(41, 128, 185);
-
-      // Nombre de la institución
-      doc.setFontSize(12);
-      doc.text("Liceo Experimental UMAG", 80, 20);
-
-      // Título principal
-      doc.setFontSize(16);
-      doc.text("Libreta de Calificaciones", 105, 30, { align: "center" });
-
-      // Línea decorativa superior
-      doc.setDrawColor(41, 128, 185);
-      doc.setLineWidth(0.5);
-      doc.line(20, 35, 190, 35);
-
-      // Información del estudiante
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
-
-      const infoY = 45;
-      //doc.text(`Fecha: ${fecha}`, 20, infoY);
-      doc.text(`Estudiante: ${libreta[0].nombre_estudiante}`, 20, infoY + 7);
-      doc.text(`Curso: ${libreta[0].nombre_curso}`, 20, infoY + 14);
-      doc.text(
-        `Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`,
-        20,
-        infoY + 21
-      );
-
-      // Preparar datos para la tabla y el gráfico
-      const tableData: TableDataItem[] = libreta.map((asignatura: AsignaturaLibreta) => {
-        const calificacionesPrimerSemestre = [];
-        const calificacionesSegundoSemestre = [];
-
-        // Primer semestre (C1-C10)
-        for (let i = 1; i <= 10; i++) {
-          const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
-          if (asignatura.concepto) {
-            if (calificacion !== null && calificacion !== undefined) {
-              const calificacionStr = calificacion.toString();
-              const concepto = getConceptoFromNota(calificacionStr);
-              calificacionesPrimerSemestre.push(getValorConcepto(concepto));
-            } else {
-              calificacionesPrimerSemestre.push("-");
-            }
-          } else {
-            calificacionesPrimerSemestre.push(
-              calificacion !== null ? calificacion.toString() : "-"
-            );
-          }
+      // Generar PDF para cada estudiante
+      for (let i = 0; i < dataEstudiantes.length; i++) {
+        const estudiante = dataEstudiantes[i];
+        if (i > 0) {
+          doc.addPage();
         }
-
-        // Segundo semestre (C11-C20)
-        for (let i = 11; i <= 20; i++) {
-          const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
-          if (asignatura.concepto) {
-            if (calificacion !== null && calificacion !== undefined) {
-              const calificacionStr = calificacion.toString();
-              const concepto = getConceptoFromNota(calificacionStr);
-              calificacionesSegundoSemestre.push(getValorConcepto(concepto));
-            } else {
-              calificacionesSegundoSemestre.push("-");
-            }
-          } else {
-            calificacionesSegundoSemestre.push(
-              calificacion !== null ? calificacion.toString() : "-"
-            );
-          }
-        }
-
-        // Calcular PFS (Promedio Final Semestral)
-        const pfs1 = calcularPromedio(calificacionesPrimerSemestre, asignatura.concepto);
-        const pfs2 = calcularPromedio(calificacionesSegundoSemestre, asignatura.concepto);
-
-        // Calcular PF (Promedio Final Anual)
-        const pf = pfs2 === "-" ? pfs1 : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
-
-        return {
-          nombre: asignatura.nombre,
-          calificaciones: [
-            asignatura.nombre,
-            ...calificacionesPrimerSemestre,
-            pfs1,
-            ...calificacionesSegundoSemestre,
-            pfs2,
-            pf
-          ],
-          pf: pf === "-" ? 0 : parseFloat(pf),
-          pfs1: pfs1 === "-" ? 0 : parseFloat(pfs1),
-          pfs2: pfs2 === "-" ? 0 : parseFloat(pfs2),
-          esConcepto: asignatura.concepto
-        };
-      });
-
-      // Calcular promedio final del primer semestre (ignorando asignaturas conceptuales)
-      const asignaturas1S = tableData.filter(item => !item.esConcepto && item.pfs1 > 0);
-      const promedioFinal1S = asignaturas1S.length > 0 
-        ? asignaturas1S.reduce((acc, item) => acc + item.pfs1, 0) / asignaturas1S.length 
-        : null;
-
-      // Calcular promedio final del segundo semestre (ignorando asignaturas conceptuales)
-      const asignaturas2S = tableData.filter(item => !item.esConcepto && item.pfs2 > 0);
-      const promedioFinal2S = asignaturas2S.length > 0 
-        ? asignaturas2S.reduce((acc, item) => acc + item.pfs2, 0) / asignaturas2S.length 
-        : null;
-
-      // Encabezados de la tabla
-      const headers = [
-        "Asignatura",
-        ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
-        "1S",
-        ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
-        "2S",
-        "PF"
-      ];
-
-      // Crear tabla
-      autoTable(doc, {
-        startY: 75,
-        head: [headers],
-        body: tableData.map((data) => data.calificaciones),
-        theme: "grid",
-        headStyles: {
-          fillColor: [41, 128, 185],
-          fontSize: 8,
-          cellPadding: 1,
-          textColor: [255, 255, 255],
-          fontStyle: "bold",
-          halign: "center",
-          minCellHeight: 5,
-        },
-        styles: {
-          fontSize: 8,
-          cellPadding: 1,
-          lineColor: [200, 200, 200],
-          halign: "center",
-          minCellHeight: 5,
-        },
-        columnStyles: {
-          0: {
-            cellWidth: 30,
-            fontStyle: "bold",
-            halign: "left",
-          },
-          ...Object.fromEntries(
-            Array.from({ length: 10 }, (_, i) => [
-              i + 1,
-              {
-                cellWidth: 7,
-                halign: "center",
-              },
-            ])
-          ),
-          11: {
-            // PFS 1er semestre
-            cellWidth: 8,
-            halign: "center",
-            fontStyle: "bold",
-          },
-          ...Object.fromEntries(
-            Array.from({ length: 10 }, (_, i) => [
-              i + 12,
-              {
-                cellWidth: 7,
-                halign: "center",
-              },
-            ])
-          ),
-          22: {
-            // PFS 2do semestre
-            cellWidth: 8,
-            halign: "center",
-            fontStyle: "bold",
-          },
-          23: {
-            // PF
-            cellWidth: 8,
-            halign: "center",
-            fontStyle: "bold",
-          }
-        },
-        margin: { left: 5, right: 5 },
-        tableWidth: 198,
-        didDrawPage: function () {
-          // Agregar títulos de semestres con fondo
-          doc.setFillColor(41, 128, 185);
-          // 1er Semestre (desde columna 1 hasta PFS)
-          doc.rect(35, 70, 77, 5, "F");
-          // 2do Semestre (desde columna 1 hasta PFS)
-          doc.rect(112, 70, 77, 5, "F");
-
-          doc.setTextColor(255, 255, 255);
-          doc.setFontSize(9);
-          doc.text("1er Semestre", 73.5, 73, { align: "center" });
-          doc.text("2do Semestre", 150.5, 73, { align: "center" });
-
-          // Restaurar color del texto
-          doc.setTextColor(0, 0, 0);
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245],
-        }
-      });
-
-      // Obtener la posición final de la tabla
-      const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY || 75 + (tableData.length * 5) + 20;
-
-      // Agregar sección de promedios finales
-      const promediosY = finalY + 5;
-      
-      // Fondo para la sección de promedios
-      doc.setFillColor(245, 245, 245);
-      doc.rect(15, promediosY - 2, 180, 15, "F");
-      
-      // Borde de la sección
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.rect(15, promediosY - 2, 180, 15);
-      
-      // Promedios en una sola línea
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
-      
-      const promedio1S = promedioFinal1S !== null ? Math.round(promedioFinal1S) : "-";
-      const promedio2S = promedioFinal2S !== null ? Math.round(promedioFinal2S) : "-";
-      
-      doc.text(`Promedio Final 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
-      doc.text(`Promedio Final 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
-
-      // Agregar gráfico después de la tabla
-      const chartY = promediosY + 25;
-      const chartWidth = 130;
-      const chartHeight = 50;
-      const pageWidth = 210; // Ancho de página A4
-      const chartX = (pageWidth - chartWidth) / 2; // Centrar horizontalmente
-
-      // Dibujar el gráfico
-      doc.setFontSize(7);
-      doc.text("Gráfico de Rendimiento Promedios Finales por Asignatura", pageWidth/2, chartY - 5, { align: "center" });
-
-      // Crear un canvas para el gráfico con mayor resolución
-      const scaleFactor = 4;
-      const canvas = document.createElement('canvas');
-      canvas.width = chartWidth * scaleFactor;
-      canvas.height = chartHeight * scaleFactor;
-      const ctx = canvas.getContext('2d');
-
-      if (ctx) {
-        // Escalar el contexto para mejorar la calidad
-        ctx.scale(scaleFactor, scaleFactor);
-
-        // Dibujar el fondo con borde
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#e0e0e0';
-        ctx.lineWidth = 0.5;
-        ctx.fillRect(0, 0, chartWidth, chartHeight);
-        ctx.strokeRect(0, 0, chartWidth, chartHeight);
-
-        // Configuración del gráfico
-        const maxValue = 70; // Valor máximo fijo para el gráfico
-        const scale = (chartHeight - 20) / maxValue;
-        const spacing = (chartWidth - 30) / (tableData.length - 1);
-        const startX = 15;
-
-        // Dibujar línea de referencia
-        ctx.beginPath();
-        ctx.strokeStyle = '#f0f0f0';
-        ctx.setLineDash([1, 1]);
-        ctx.moveTo(15, chartHeight - 10);
-        ctx.lineTo(chartWidth - 15, chartHeight - 10);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Dibujar línea horizontal para el valor máximo
-        ctx.beginPath();
-        ctx.strokeStyle = '#f0f0f0';
-        ctx.setLineDash([1, 1]);
-        ctx.moveTo(15, 10);
-        ctx.lineTo(chartWidth - 15, 10);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = '#666666';
-        ctx.font = '3px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('', 5, 13);
-
-        // Dibujar el área para el primer semestre
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(41, 121, 255, 0.1)';
-        ctx.moveTo(startX, chartHeight - 10);
-
-        let lastValidY: number | null = null;
-        tableData.forEach((data, index) => {
-          const x = startX + (index * spacing);
-          if (data.pf > 0) {
-            const y = chartHeight - 10 - (data.pf * scale);
-            ctx.lineTo(x, y);
-            lastValidY = y;
-          } else {
-            if (lastValidY !== null) {
-              ctx.lineTo(x, lastValidY);
-            }
-          }
-        });
-
-        ctx.lineTo(chartWidth - 15, chartHeight - 10);
-        ctx.closePath();
-        ctx.fill();
-
-        // Dibujar la línea del primer semestre
-        ctx.beginPath();
-        ctx.strokeStyle = '#2979ff';
-        ctx.lineWidth = 1.5;
-
-        lastValidY = null;
-        tableData.forEach((data, index) => {
-          const x = startX + (index * spacing);
-          if (data.pf > 0) {
-            const y = chartHeight - 10 - (data.pf * scale);
-            if (lastValidY === null) {
-              ctx.moveTo(x, y);
-            } else {
-              ctx.lineTo(x, y);
-            }
-            lastValidY = y;
-          } else {
-            ctx.stroke();
-            ctx.beginPath();
-            lastValidY = null;
-          }
-        });
-
-        ctx.stroke();
-
-        // Dibujar los puntos y textos
-        tableData.forEach((data, index) => {
-          const x = startX + (index * spacing);
-          const y1s = data.pf > 0 ? chartHeight - 10 - (data.pf * scale) : null;
-
-          // Dibujar puntos
-          if (y1s !== null) {
-            ctx.beginPath();
-            ctx.fillStyle = '#2979ff';
-            ctx.arc(x, y1s, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Dibujar solo el valor del promedio final (PF) como encabezado
-          if (y1s !== null) {
-            ctx.fillStyle = '#2979ff';
-            ctx.font = '3px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(data.pf.toString(), x, 5);
-          }
-
-          // Nombres de asignaturas en la parte inferior
-          ctx.save();
-          ctx.translate(x, chartHeight - 5);
-          ctx.rotate(-Math.PI/2);
-          ctx.font = '2.5px Arial';
-          ctx.textAlign = 'left';
-          const nombreCorto = data.nombre.length > 10 ? data.nombre.substring(0, 8) + '...' : data.nombre;
-          ctx.fillText(nombreCorto, 0, 0);
-          ctx.restore();
-        });
-
-        // Agregar el gráfico al PDF con alta calidad
-        doc.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', chartX, chartY, chartWidth, chartHeight);
-
-        // Espacio para firmas y timbres
-        doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.5);
-
-        // Línea izquierda (Profesor Jefe)
-        doc.line(20, 250, 100, 250);
-        doc.setFontSize(8);
-        const nombreProfesor = libreta[0].nombre_profesor_jefe;
-        const anchoProfesor = doc.getTextWidth(nombreProfesor);
-        const xProfesor = 20 + (80 - anchoProfesor) / 2;
-        doc.text(nombreProfesor, xProfesor, 255);
-        
-        doc.setFontSize(7);
-        const textoProfesor = "PROFESOR JEFE";
-        const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
-        const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
-        doc.text(textoProfesor, xTextoProfesor, 260);
-
-        // Línea derecha (Director)
-        // Agregar firma del director
-        const firmaUrl = "/pbravo-signature.png";
-        const firmaWidth = 60;
-        const firmaHeight = 20;
-        const xFirma = 110 + (80 - firmaWidth) / 2;
-        doc.addImage(firmaUrl, "PNG", xFirma, 230, firmaWidth, firmaHeight);
-
-        doc.line(110, 250, 190, 250);
-        doc.setFontSize(8);
-        const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
-        const anchoDirector = doc.getTextWidth(nombreDirector);
-        const xDirector = 110 + (80 - anchoDirector) / 2;
-        doc.text(nombreDirector, xDirector, 255);
-        
-        doc.setFontSize(7);
-        const textoDirector = "DIRECTOR";
-        const anchoTextoDirector = doc.getTextWidth(textoDirector);
-        const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
-        doc.text(textoDirector, xTextoDirector, 260);
-
-        // Pie de página con leyendas
-        doc.setFontSize(7);
-        doc.setTextColor(100, 100, 100);
-        doc.text("1S | 2S: Promedio Final Semestral", 20, 270);
-        doc.text("PF: Promedio Final Anual", 20, 275);
-
-        // Guardar el PDF
-        doc.save(`libreta_${libreta[0].nombre_estudiante}_${fecha}.pdf`);
+        await generarPDFEstudiante(estudiante, doc, fecha);
       }
+
+      // Guardar el PDF consolidado
+      doc.save(`libretas_${currentCurso.nombre}_${fecha}.pdf`);
     } catch (error) {
-      console.error("Error al generar el PDF:", error);
+      console.error("Error al generar el PDF consolidado:", error);
+    } finally {
+      setLoadingPDF(false);
     }
   };
 
@@ -856,13 +878,34 @@ const AcademicoImprimirLibreta: React.FC = () => {
           ) : (
             <div className="space-y-4 flex-1 overflow-hidden">
               <div className="rounded-lg border overflow-hidden">
-              <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Atención</AlertTitle>
-      <AlertDescription>
-        Esta funcionalidad está en desarrollo y puede no funcionar correctamente.
-      </AlertDescription>
-    </Alert>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Atención</AlertTitle>
+                  <AlertDescription>
+                    Esta funcionalidad está en desarrollo y puede no funcionar correctamente.
+                  </AlertDescription>
+                </Alert>
+                <div className="flex justify-end p-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={generarPDFConsolidado}
+                    className="flex items-center gap-2"
+                    disabled={loadingPDF}
+                  >
+                    {loadingPDF ? (
+                      <>
+                        <Spinner />
+                        Generando PDF...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="h-4 w-4" />
+                        Descargar PDF Consolidado
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <div className="overflow-auto max-h-[50vh]">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background">
@@ -886,8 +929,18 @@ const AcademicoImprimirLibreta: React.FC = () => {
                                 size="sm"
                                 className="hover:bg-primary/10 hover:text-primary"
                                 onClick={() => generarPDFLibreta(estudiante)}
+                                disabled={loadingPDF}
                               >
-                                Imprimir Libreta
+                                {loadingPDF ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex justify-center">
+                                      <Spinner />
+                                    </div>
+                                    <span>Generando PDF...</span>
+                                  </div>
+                                ) : (
+                                  "Imprimir Libreta"
+                                )}
                               </Button>
                             </TableCell>
                           </TableRow>
