@@ -571,7 +571,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       doc.line(110, 250, 190, 250);
       
       // Agregar imagen de firma
-      const firmaUrl = "/pbravo-signature.png";
+      const firmaUrl = "https://res.cloudinary.com/dx219dazh/image/upload/v1745947577/varios/wnt3zcbohrtgnnkpefi4.png";
       const firmaWidth = 65;
       const firmaHeight = 20;
       doc.addImage(firmaUrl, "PNG", 120, 225, firmaWidth, firmaHeight);
