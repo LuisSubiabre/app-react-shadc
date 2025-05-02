@@ -19,6 +19,13 @@ import { obtenerInformeAsistencia } from "@/services/sesionesService";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
 
 interface RegistroAsistencia {
   sesion_id: number;
@@ -62,6 +69,27 @@ export const ModalAsistencia: React.FC<ModalAsistenciaProps> = ({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const formatearFecha = (fechaISO: string) => {
+    try {
+      // Extraer solo la parte de la fecha (YYYY-MM-DD)
+      const fechaPart = fechaISO.split("T")[0];
+      const [year, month, day] = fechaPart.split("-").map(Number);
+
+      // Crear una nueva fecha con los componentes
+      const fecha = new Date(year, month - 1, day);
+
+      if (isNaN(fecha.getTime())) {
+        console.error("Fecha inválida:", fechaISO);
+        return "Fecha inválida";
+      }
+
+      return format(fecha, "dd-MM-yyyy");
+    } catch (error) {
+      console.error("Error al formatear fecha:", error);
+      return "Fecha inválida";
+    }
+  };
+
   const handleGenerarInforme = async () => {
     if (!taller || !mesSeleccionado) return;
 
@@ -82,7 +110,7 @@ export const ModalAsistencia: React.FC<ModalAsistenciaProps> = ({
         return;
       }
 
-      const doc = new jsPDF();
+      const doc = new jsPDF() as JsPDFWithAutoTable;
 
       // Título
       doc.setFontSize(16);
@@ -96,27 +124,112 @@ export const ModalAsistencia: React.FC<ModalAsistenciaProps> = ({
       );
       doc.text(`Monitor: ${data[0].nombre_monitor}`, 14, 39);
 
-      // Tabla
-      const tableData = data.map((registro: RegistroAsistencia) => [
-        registro.nombre,
-        registro.rut,
-        registro.fecha.split("T")[0],
-        registro.asistio ? "Presente" : "Ausente",
-      ]);
+      // Línea horizontal
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, 45, 196, 45);
 
-      autoTable(doc, {
-        startY: 45,
-        head: [["Estudiante", "RUT", "Fecha", "Asistencia"]],
-        body: tableData,
-        theme: "grid",
-        headStyles: { fillColor: [41, 128, 185] },
-        styles: { fontSize: 10 },
-        columnStyles: {
-          0: { cellWidth: 60 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 30 },
+      // Agrupar registros por fecha y sesión
+      const registrosPorSesion = data.reduce(
+        (acc: { [key: string]: RegistroAsistencia[] }, registro) => {
+          const fechaISO = registro.fecha;
+          const key = `${registro.sesion_id}-${fechaISO}`;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(registro);
+          return acc;
         },
+        {}
+      );
+
+      // Agrupar sesiones por fecha
+      const sesionesPorFecha = Object.entries(registrosPorSesion).reduce(
+        (
+          acc: { [key: string]: { [key: string]: RegistroAsistencia[] } },
+          [key, registros]
+        ) => {
+          const [fechaISO] = key.split("-");
+          if (!acc[fechaISO]) {
+            acc[fechaISO] = {};
+          }
+          acc[fechaISO][key] = registros;
+          return acc;
+        },
+        {}
+      );
+
+      // Ordenar fechas
+      const fechasOrdenadas = Object.keys(sesionesPorFecha).sort();
+
+      let startY = 50;
+      let pageNumber = 1;
+
+      // Generar tabla para cada fecha
+      fechasOrdenadas.forEach((fechaISO, fechaIndex) => {
+        const sesionesDeFecha = sesionesPorFecha[fechaISO];
+        const sesionesOrdenadas = Object.keys(sesionesDeFecha).sort();
+
+        // Si no es la primera página y el espacio es limitado, agregar nueva página
+        if (fechaIndex > 0 && startY > 250) {
+          doc.addPage();
+          startY = 20;
+          pageNumber++;
+        }
+
+        // Título de la fecha
+        doc.setFontSize(12);
+        // doc.text(`Fecha: ${formatearFecha(fechaISO)}`, 14, startY);
+        startY += 10;
+
+        // Generar tabla para cada sesión de la fecha
+        sesionesOrdenadas.forEach((key, sesionIndex) => {
+          const registros = sesionesDeFecha[key];
+          const estado = registros[0].estado;
+
+          // Estado de la sesión
+          doc.setFontSize(10);
+          doc.text(
+            `Sesión ${sesionIndex + 1} (${formatearFecha(
+              registros[0].fecha
+            )}): ${estado.charAt(0).toUpperCase() + estado.slice(1)}`,
+            14,
+            startY
+          );
+          startY += 7;
+
+          // Tabla para la sesión actual
+          const tableData = registros.map((registro) => [
+            registro.nombre,
+            registro.rut,
+            registro.asistio ? "Presente" : "Ausente",
+          ]);
+
+          autoTable(doc, {
+            startY: startY,
+            head: [["Estudiante", "RUT", "Asistencia"]],
+            body: tableData,
+            theme: "grid",
+            headStyles: { fillColor: [41, 128, 185] },
+            styles: { fontSize: 10 },
+            columnStyles: {
+              0: { cellWidth: 70 },
+              1: { cellWidth: 35 },
+              2: { cellWidth: 25 },
+            },
+            didDrawPage: function (data) {
+              // Agregar número de página
+              doc.setFontSize(10);
+              doc.text(
+                `Página ${pageNumber}`,
+                data.settings.margin.left,
+                doc.internal.pageSize.height - 10
+              );
+            },
+          });
+
+          // Actualizar startY para la próxima tabla
+          startY = doc.lastAutoTable.finalY + 10;
+        });
       });
 
       // Guardar el PDF
