@@ -32,6 +32,7 @@ interface TablaTalleresProps {
   onEditClick: (taller: TallerType) => void;
   onDeleteClick: (taller: TallerType) => void;
   onOpenCursosModal: (taller: TallerType) => void;
+  onOpenAsistenciaModal: (taller: TallerType) => void;
 }
 
 export const TablaTalleres: React.FC<TablaTalleresProps> = ({
@@ -39,6 +40,7 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
   onEditClick,
   onDeleteClick,
   onOpenCursosModal,
+  onOpenAsistenciaModal,
 }) => {
   const getBgColorByNivel = (nivel: string): string => {
     switch (nivel) {
@@ -311,6 +313,25 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Exportar lista de inscritos en PDF</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onOpenAsistenciaModal(taller)}
+                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        >
+                          Asistencia
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Ver informe de asistencia</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
