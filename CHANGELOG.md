@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.9.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.8.1...v2.9.0) (2025-05-05)
+
+
+### Features
+
+* actualizar la lógica de filtrado y búsqueda de estudiantes en la página de accidente escolar, además de mejorar la gestión de testigos y la generación de PDF con datos del accidente ([9b7d4ee](https://github.com/LuisSubiabre/app-react-shadc/commit/9b7d4ee0fe7aa7f15ad02b4f5f4609b62c564e63))
+* agregar campos para horario y testigos en el formulario de registro de accidente escolar, además de ajustar la visualización de fechas en el PDF ([3c2488f](https://github.com/LuisSubiabre/app-react-shadc/commit/3c2488ffe3e13be53b5f88833998053741e18a41))
+* agregar dependencia pdf-lib y sus módulos relacionados en package.json y package-lock.json ([272eaea](https://github.com/LuisSubiabre/app-react-shadc/commit/272eaeaeca37a62c6443d621b1edb5c193dfd87f))
+* agregar firma del director en el PDF de la libreta de notas, incluyendo la imagen de la firma en la posición adecuada ([ad93fd9](https://github.com/LuisSubiabre/app-react-shadc/commit/ad93fd9dc627f0aa1edd69d676ec73d6f3934215))
+* agregar formulario de registro de accidente escolar con nuevos estados y campos para la información del accidente ([7d8a8ce](https://github.com/LuisSubiabre/app-react-shadc/commit/7d8a8cedc1c17ec6de4940f47b4182cca6cab908))
+* agregar función para formatear fechas en el informe de asistencia y mejorar la generación de tablas agrupadas por fecha y sesión en el PDF ([564c4f2](https://github.com/LuisSubiabre/app-react-shadc/commit/564c4f2dbd7d7a1b30f10fc48c1e9973733e1219))
+* agregar lógica para calcular y mostrar promedios finales de asignaturas en la libreta de notas, incluyendo ajustes en la estructura de datos y mejoras en la presentación del PDF ([8bd3a1f](https://github.com/LuisSubiabre/app-react-shadc/commit/8bd3a1fcc70d02465721b477ec06e9ad7cee7338))
+* agregar lógica para obtener y mostrar el día de la semana y el tipo de accidente en el PDF, además de limitar la descripción del accidente a 250 caracteres ([02476a9](https://github.com/LuisSubiabre/app-react-shadc/commit/02476a9fa5d9f8f364170995b3fd4b1587ee6b94))
+* agregar manejo de errores en la obtención de datos del estudiante y mejorar la presentación de la información en el modal de registro de accidente escolar ([719036a](https://github.com/LuisSubiabre/app-react-shadc/commit/719036a9f79af9da0909ab0286e62b6fa753a9f0))
+* agregar mensaje de advertencia en el modal de registro de accidente escolar, informando que la información no se almacena y solo se genera un archivo PDF ([7137caf](https://github.com/LuisSubiabre/app-react-shadc/commit/7137cafe5ce827f8456531f14d258c7264de6f66))
+* agregar modal de asistencia en la página de talleres, incluyendo lógica para abrir y cerrar el modal desde la tabla de talleres ([9c8b867](https://github.com/LuisSubiabre/app-react-shadc/commit/9c8b8670ec205fc494a3a07066317602b515acec))
+* agregar página de Accidente Escolar y ruta correspondiente en el sidebar ([5dbe633](https://github.com/LuisSubiabre/app-react-shadc/commit/5dbe63397093a31ef08476b1be6035094ab45582))
+* datos pdf ([fe7aa94](https://github.com/LuisSubiabre/app-react-shadc/commit/fe7aa947bd29fcc4eddc2dae137d5d749838c93e))
+* implementar generación de PDF consolidado para estudiantes, incluyendo mejoras en la lógica de descarga y visualización de estado de carga ([b419051](https://github.com/LuisSubiabre/app-react-shadc/commit/b4190511fbe2e757093c5d6827d33933793e0168))
+* mejorar visualización del nombre completo y del curso en la página de accidente escolar ([9f91156](https://github.com/LuisSubiabre/app-react-shadc/commit/9f91156e5a7efa49f9fceed62971d39035b350d4))
+
+
+### Bug Fixes
+
+* actualizar la URL de la imagen de la firma en el PDF de la libreta de notas para asegurar su correcta visualización ([195b9f0](https://github.com/LuisSubiabre/app-react-shadc/commit/195b9f0a209df67c22e7887789ead3863b217f66))
+* cambiar tipos de datos de telpar y celular a string | number y agregar consola para depuración en pageAccidente.tsx ([85eb266](https://github.com/LuisSubiabre/app-react-shadc/commit/85eb266f89a34b8c6bf49ed634365a49fc3a9721))
+* restablecer el estado inicial de la circunstancia del accidente en la página de accidente escolar ([a2f2bd8](https://github.com/LuisSubiabre/app-react-shadc/commit/a2f2bd89edf34ce34038ddcf368aff9db16d9dbe))
+
 ### [2.8.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.8.0...v2.8.1) (2025-04-25)
 
 
