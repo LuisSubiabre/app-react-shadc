@@ -17,8 +17,42 @@
       }
     },
     {
+      "src": "/static/(.*)",
+      "headers": {
+        "Content-Type": "application/pdf",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/accidente-escolar/pdf",
+      "destination": "/static/Declaracion-Individual-de-Accidente.pdf"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/static/Declaracion-Individual-de-Accidente.pdf",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
+      ]
     }
   ]
 }

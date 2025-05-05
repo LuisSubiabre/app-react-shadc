@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import { routerConfig } from "./router.config";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthProvider";
@@ -80,7 +81,7 @@ function App() {
               </>
             }
           >
-            <Routes>
+            <Routes {...routerConfig}>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/logout" element={<Logout />} />
@@ -92,6 +93,15 @@ function App() {
               <Route
                 path="/reset-password/:token"
                 element={<PasswordReset />}
+              />
+              <Route
+                path="/static/Declaracion-Individual-de-Accidente.pdf"
+                element={
+                  <Navigate
+                    to="/dashboard/inspectoria/accidente-escolar"
+                    replace
+                  />
+                }
               />
 
               {/* Protected Routes */}
