@@ -67,8 +67,12 @@ const PageAccidenteEscolar = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [estudianteData, setEstudianteData] = useState<EstudianteData | null>(null);
-  const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
+  const [estudianteData, setEstudianteData] = useState<EstudianteData | null>(
+    null
+  );
+  const [selectedEstudiante, setSelectedEstudiante] =
+    useState<EstudianteType | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Nuevos estados para el formulario de accidente con valores por defecto
   const [fechaRegistro, setFechaRegistro] = useState<Date>(new Date());
@@ -78,12 +82,13 @@ const PageAccidenteEscolar = () => {
   const [diaSemanaAccidente, setDiaSemanaAccidente] = useState<string>("Lunes");
   const [tipoAccidente, setTipoAccidente] = useState<string>("En La escuela");
   const [horario, setHorario] = useState<string>("COMPLETA");
-  const [circunstanciaAccidente, setCircunstanciaAccidente] = useState<string>("");
+  const [circunstanciaAccidente, setCircunstanciaAccidente] =
+    useState<string>("");
 
   // Estados para los testigos
   const [testigos, setTestigos] = useState([
     { nombre: "", cedula: "" },
-    { nombre: "", cedula: "" }
+    { nombre: "", cedula: "" },
   ]);
 
   useEffect(() => {
@@ -203,11 +208,11 @@ const PageAccidenteEscolar = () => {
   const handleRegistrarAccidente = async (estudiante: EstudianteType) => {
     setSelectedEstudiante(estudiante);
     setIsDialogOpen(true);
+    setErrorMessage(null);
     try {
       const rutFormateado = formatRut(estudiante.rut || "");
-      console.log("RUT formateado:", rutFormateado); // Para verificar el formato
+      console.log("RUT formateado:", rutFormateado);
 
-      // Nota: Esta llamada fallará por CORS, necesitarás implementar un endpoint en tu backend
       const response = await fetch(
         `https://nerv.liceoexperimental.cl/api/matalumno?rut=${rutFormateado}`
       );
@@ -216,10 +221,15 @@ const PageAccidenteEscolar = () => {
         throw new Error("Error al obtener datos del estudiante");
       }
       const data = await response.json();
+
+      if (!data || Object.keys(data).length === 0) {
+        throw new Error("No se pudo obtener la información del estudiante");
+      }
+
       setEstudianteData(data);
     } catch (error) {
       console.error("Error:", error);
-      // Aquí podrías mostrar un mensaje de error al usuario
+      setErrorMessage("No se pudo obtener la información del estudiante");
     }
   };
 
@@ -257,7 +267,7 @@ const PageAccidenteEscolar = () => {
         size: 10,
       });
 
-      const estudianteGenero = `${estudianteData.sexo === 'M' ? '1' : '2'} `;
+      const estudianteGenero = `${estudianteData.sexo === "M" ? "1" : "2"} `;
       page.drawText(estudianteGenero, {
         x: 422,
         y: 600,
@@ -265,7 +275,10 @@ const PageAccidenteEscolar = () => {
       });
 
       // Fecha de nacimiento
-      const fechaNacimiento = estudianteData.fecnac.split('-').reverse().join('/');
+      const fechaNacimiento = estudianteData.fecnac
+        .split("-")
+        .reverse()
+        .join("/");
       page.drawText(fechaNacimiento, {
         x: 450,
         y: 600,
@@ -280,26 +293,36 @@ const PageAccidenteEscolar = () => {
       });
 
       // Agregar la hora del accidente
-      const horaAccidenteFormateada = `${horaAccidente.split('').join('   ')}`;
+      const horaAccidenteFormateada = `${horaAccidente.split("").join("   ")}`;
       page.drawText(horaAccidenteFormateada, {
         x: 65,
         y: 480,
         size: 10,
       });
-            // Agregar la hora del accidente
-  const minutoAccidenteFormateada = `${minutoAccidente.split('').join('   ')}`;
-            page.drawText(minutoAccidenteFormateada, {
-              x: 90,
-              y: 480,
-              size: 10,
-            });
-      
+      // Agregar la hora del accidente
+      const minutoAccidenteFormateada = `${minutoAccidente
+        .split("")
+        .join("   ")}`;
+      page.drawText(minutoAccidenteFormateada, {
+        x: 90,
+        y: 480,
+        size: 10,
+      });
 
       // Agregar la fecha del accidente
       const fecha = new Date(fechaAccidente);
       // Ajustar la fecha para evitar problemas de zona horaria
-      const dia = fecha.getUTCDate().toString().padStart(2, '0').split('').join('   ');
-      const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0').split('').join('   ');
+      const dia = fecha
+        .getUTCDate()
+        .toString()
+        .padStart(2, "0")
+        .split("")
+        .join("   ");
+      const mes = (fecha.getUTCMonth() + 1)
+        .toString()
+        .padStart(2, "0")
+        .split("")
+        .join("   ");
       const año = fecha.getUTCFullYear().toString();
 
       // Dibujar día
@@ -322,12 +345,21 @@ const PageAccidenteEscolar = () => {
         y: 480,
         size: 10,
       });
-console.log(selectedEstudiante)
+      console.log(selectedEstudiante);
       // Fecha de Registro
       const fechaReg = new Date(fechaRegistro);
       // Ajustar la fecha para evitar problemas de zona horaria
-      const diaReg = fechaReg.getUTCDate().toString().padStart(2, '0').split('').join('   ');
-      const mesReg = (fechaReg.getUTCMonth() + 1).toString().padStart(2, '0').split('').join('   ');
+      const diaReg = fechaReg
+        .getUTCDate()
+        .toString()
+        .padStart(2, "0")
+        .split("")
+        .join("   ");
+      const mesReg = (fechaReg.getUTCMonth() + 1)
+        .toString()
+        .padStart(2, "0")
+        .split("")
+        .join("   ");
       const añoReg = fechaReg.getUTCFullYear().toString();
 
       // Dibujar día
@@ -351,101 +383,101 @@ console.log(selectedEstudiante)
         size: 10,
       });
 
-    // Dia semana accidente
-       const getNumeroDiaSemana = (dia: string): string => {
-         const map: { [key: string]: string } = {
-           'Lunes': '1',
-           'Martes': '2',
-           'Miércoles': '3',
-           'Jueves': '4',
-           'Viernes': '5',
-           'Sábado': '6',
-           'Domingo': '7'
-         };
-         return map[dia] || '';
-       };
+      // Dia semana accidente
+      const getNumeroDiaSemana = (dia: string): string => {
+        const map: { [key: string]: string } = {
+          Lunes: "1",
+          Martes: "2",
+          Miércoles: "3",
+          Jueves: "4",
+          Viernes: "5",
+          Sábado: "6",
+          Domingo: "7",
+        };
+        return map[dia] || "";
+      };
 
-       const getCodigoTipoAccidente = (tipo: string): string => {
-         const map: { [key: string]: string } = {
-           'De Trayecto': '1',
-           'En La escuela': '2'
-         };
-         return map[tipo] || '';
-       };
+      const getCodigoTipoAccidente = (tipo: string): string => {
+        const map: { [key: string]: string } = {
+          "De Trayecto": "1",
+          "En La escuela": "2",
+        };
+        return map[tipo] || "";
+      };
 
-       const numeroDiaSemana = getNumeroDiaSemana(diaSemanaAccidente);
-       const codigoTipoAccidente = getCodigoTipoAccidente(tipoAccidente);
+      const numeroDiaSemana = getNumeroDiaSemana(diaSemanaAccidente);
+      const codigoTipoAccidente = getCodigoTipoAccidente(tipoAccidente);
 
-       page.drawText(numeroDiaSemana, {
-         x: 135,
-         y: 430,
-         size: 10,
-       });
+      page.drawText(numeroDiaSemana, {
+        x: 135,
+        y: 430,
+        size: 10,
+      });
 
-       // Tipo de accidente
-       page.drawText(codigoTipoAccidente, {
-         x: 250,
-         y: 430,
-         size: 10,
-       });
+      // Tipo de accidente
+      page.drawText(codigoTipoAccidente, {
+        x: 250,
+        y: 430,
+        size: 10,
+      });
 
-       // Horario
-       page.drawText(horario, {
-         x: 190,
-         y: 670,
-         size: 10,
-       });
+      // Horario
+      page.drawText(horario, {
+        x: 190,
+        y: 670,
+        size: 10,
+      });
 
-       // Testigos
-       testigos.forEach((testigo, index) => {
-         if (testigo.nombre) {
-           // Nombre del testigo
-           page.drawText(testigo.nombre, {
-             x: 290,
-             y: 445 - (index * 35),
-             size: 10,
-           });
+      // Testigos
+      testigos.forEach((testigo, index) => {
+        if (testigo.nombre) {
+          // Nombre del testigo
+          page.drawText(testigo.nombre, {
+            x: 290,
+            y: 445 - index * 35,
+            size: 10,
+          });
 
-           // Cédula del testigo
-           if (testigo.cedula) {
-             page.drawText(testigo.cedula, {
-               x:420,
-               y: 445 - (index * 35),
-               size: 10,
-             });
-           }
-         }
-       });
+          // Cédula del testigo
+          if (testigo.cedula) {
+            page.drawText(testigo.cedula, {
+              x: 420,
+              y: 445 - index * 35,
+              size: 10,
+            });
+          }
+        }
+      });
 
-       // Circunstancia del accidente
-       const wrapText = (text: string, maxChars: number): string[] => {
-         const words = text.split(' ');
-         const lines: string[] = [];
-         let currentLine = '';
+      // Circunstancia del accidente
+      const wrapText = (text: string, maxChars: number): string[] => {
+        const words = text.split(" ");
+        const lines: string[] = [];
+        let currentLine = "";
 
-         words.forEach(word => {
-           const testLine = currentLine ? `${currentLine} ${word}` : word;
-           if (testLine.length <= maxChars) {
-             currentLine = testLine;
-           } else {
-             lines.push(currentLine);
-             currentLine = word;
-           }
-         });
-         if (currentLine) {
-           lines.push(currentLine);
-         }
-         return lines;
-       };
+        words.forEach((word) => {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          if (testLine.length <= maxChars) {
+            currentLine = testLine;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        return lines;
+      };
 
-       const lineasCircunstancia = wrapText(circunstanciaAccidente, 75);
-       lineasCircunstancia.forEach((linea, index) => {
-         page.drawText(linea, {
-           x: 60,
-           y: 360 - (index * 17), // 15 es el espacio entre líneas
-           size: 10,
-         });
-       });
+      const lineasCircunstancia = wrapText(circunstanciaAccidente, 75);
+      lineasCircunstancia.forEach((linea, index) => {
+        page.drawText(linea, {
+          x: 60,
+          y: 360 - index * 17, // 15 es el espacio entre líneas
+          size: 10,
+        });
+      });
 
       // Guardar el PDF modificado
       const modifiedPdfBytes = await pdfDoc.save();
@@ -465,7 +497,11 @@ console.log(selectedEstudiante)
     }
   };
 
-  const handleTestigoChange = (index: number, field: 'nombre' | 'cedula', value: string) => {
+  const handleTestigoChange = (
+    index: number,
+    field: "nombre" | "cedula",
+    value: string
+  ) => {
     const nuevosTestigos = [...testigos];
     nuevosTestigos[index][field] = value;
     setTestigos(nuevosTestigos);
@@ -690,203 +726,310 @@ console.log(selectedEstudiante)
           <DialogHeader>
             <DialogTitle>Registro de Accidente Escolar</DialogTitle>
           </DialogHeader>
-          {estudianteData && (
-            <div className="space-y-6">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Información del Estudiante</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre Completo</span>
-                      <span className="text-base">{`${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">RUT</span>
-                      <span className="text-base">{estudianteData.rutalum}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Curso</span>
-                      <span className="text-base">{`${estudianteData.cursole} ${estudianteData.letra}`}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Nacimiento</span>
-                      <span className="text-base">{estudianteData.fecnac}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Edad</span>
-                      <span className="text-base">{estudianteData.edad} años</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sexo</span>
-                      <span className="text-base">{estudianteData.sexo}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Información de Contacto</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Dirección</span>
-                    <span className="text-base">{estudianteData.dirpar}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Teléfono Celular</span>
-                    <span className="text-base">{estudianteData.celular}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Fecha de Registro</label>
-                  <Input
-                    type="date"
-                    value={fechaRegistro.toISOString().split('T')[0]}
-                    onChange={(e) => setFechaRegistro(new Date(e.target.value))}
+          {errorMessage ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-3 mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-8 h-8 text-red-600 dark:text-red-400"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Hora del Accidente</label>
-                  <div className="flex gap-2">
-                    <Select value={horaAccidente} onValueChange={setHoraAccidente}>
-                      <SelectTrigger className="w-1/2">
-                        <SelectValue placeholder="Hora" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 25 }, (_, i) => {
-                          const hora = i.toString().padStart(2, '0');
-                          return (
-                            <SelectItem key={hora} value={hora}>
-                              {hora}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={minutoAccidente} onValueChange={setMinutoAccidente}>
-                      <SelectTrigger className="w-1/2">
-                        <SelectValue placeholder="Minutos" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 60 }, (_, i) => {
-                          const minuto = i.toString().padStart(2, '0');
-                          return (
-                            <SelectItem key={minuto} value={minuto}>
-                              {minuto}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Fecha del Accidente</label>
-                  <Input
-                    type="date"
-                    value={fechaAccidente.toISOString().split('T')[0]}
-                    onChange={(e) => setFechaAccidente(new Date(e.target.value))}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Día de la Semana</label>
-                  <Select value={diaSemanaAccidente} onValueChange={setDiaSemanaAccidente}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el día" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Lunes">Lunes</SelectItem>
-                      <SelectItem value="Martes">Martes</SelectItem>
-                      <SelectItem value="Miércoles">Miércoles</SelectItem>
-                      <SelectItem value="Jueves">Jueves</SelectItem>
-                      <SelectItem value="Viernes">Viernes</SelectItem>
-                      <SelectItem value="Sábado">Sábado</SelectItem>
-                      <SelectItem value="Domingo">Domingo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tipo de Accidente</label>
-                  <Select value={tipoAccidente} onValueChange={setTipoAccidente}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="De Trayecto">De Trayecto</SelectItem>
-                      <SelectItem value="En La escuela">En La escuela</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Horario</label>
-                  <Select value={horario} onValueChange={setHorario}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el horario" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MAÑANA">Mañana</SelectItem>
-                      <SelectItem value="TARDE">Tarde</SelectItem>
-                      <SelectItem value="COMPLETA">Completa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                </svg>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Circunstancia del Accidente</label>
-                <textarea
-                  className="w-full min-h-[80px] p-2 border rounded-md"
-                  placeholder="Describa cómo ocurrió el accidente (máximo 250 caracteres)"
-                  value={circunstanciaAccidente}
-                  onChange={(e) => {
-                    if (e.target.value.length <= 250) {
-                      setCircunstanciaAccidente(e.target.value);
-                    }
-                  }}
-                  maxLength={250}
-                />
-                <p className="text-sm text-muted-foreground text-right">
-                  {circunstanciaAccidente.length}/250 caracteres
-                </p>
-              </div>
-
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-medium mb-3">Testigos (Opcional)</h3>
-                <div className="space-y-3">
-                  {testigos.map((testigo, index) => (
-                    <div key={index} className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Input
-                          placeholder={`Nombre y Apellido Testigo ${index + 1}`}
-                          value={testigo.nombre}
-                          onChange={(e) => handleTestigoChange(index, 'nombre', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Input
-                          placeholder="Cédula de Identidad"
-                          value={testigo.cedula}
-                          onChange={(e) => handleTestigoChange(index, 'cedula', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <p className="text-lg font-medium text-red-600 dark:text-red-400">
+                {errorMessage}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Cerrar
+              </Button>
             </div>
+          ) : (
+            estudianteData && (
+              <div className="space-y-6">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">
+                    Información del Estudiante
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Nombre Completo
+                        </span>
+                        <span className="text-base">{`${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          RUT
+                        </span>
+                        <span className="text-base">
+                          {estudianteData.rutalum}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Curso
+                        </span>
+                        <span className="text-base">{`${estudianteData.cursole} ${estudianteData.letra}`}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Fecha de Nacimiento
+                        </span>
+                        <span className="text-base">
+                          {estudianteData.fecnac}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Edad
+                        </span>
+                        <span className="text-base">
+                          {estudianteData.edad} años
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Sexo
+                        </span>
+                        <span className="text-base">{estudianteData.sexo}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">
+                    Información de Contacto
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Dirección
+                      </span>
+                      <span className="text-base">{estudianteData.dirpar}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Teléfono Celular
+                      </span>
+                      <span className="text-base">
+                        {estudianteData.celular}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Fecha de Registro
+                    </label>
+                    <Input
+                      type="date"
+                      value={fechaRegistro.toISOString().split("T")[0]}
+                      onChange={(e) =>
+                        setFechaRegistro(new Date(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Hora del Accidente
+                    </label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={horaAccidente}
+                        onValueChange={setHoraAccidente}
+                      >
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Hora" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 25 }, (_, i) => {
+                            const hora = i.toString().padStart(2, "0");
+                            return (
+                              <SelectItem key={hora} value={hora}>
+                                {hora}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={minutoAccidente}
+                        onValueChange={setMinutoAccidente}
+                      >
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Minutos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 60 }, (_, i) => {
+                            const minuto = i.toString().padStart(2, "0");
+                            return (
+                              <SelectItem key={minuto} value={minuto}>
+                                {minuto}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Fecha del Accidente
+                    </label>
+                    <Input
+                      type="date"
+                      value={fechaAccidente.toISOString().split("T")[0]}
+                      onChange={(e) =>
+                        setFechaAccidente(new Date(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Día de la Semana
+                    </label>
+                    <Select
+                      value={diaSemanaAccidente}
+                      onValueChange={setDiaSemanaAccidente}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el día" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Lunes">Lunes</SelectItem>
+                        <SelectItem value="Martes">Martes</SelectItem>
+                        <SelectItem value="Miércoles">Miércoles</SelectItem>
+                        <SelectItem value="Jueves">Jueves</SelectItem>
+                        <SelectItem value="Viernes">Viernes</SelectItem>
+                        <SelectItem value="Sábado">Sábado</SelectItem>
+                        <SelectItem value="Domingo">Domingo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Tipo de Accidente
+                    </label>
+                    <Select
+                      value={tipoAccidente}
+                      onValueChange={setTipoAccidente}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="De Trayecto">De Trayecto</SelectItem>
+                        <SelectItem value="En La escuela">
+                          En La escuela
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Horario</label>
+                    <Select value={horario} onValueChange={setHorario}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el horario" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MAÑANA">Mañana</SelectItem>
+                        <SelectItem value="TARDE">Tarde</SelectItem>
+                        <SelectItem value="COMPLETA">Completa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Circunstancia del Accidente
+                  </label>
+                  <textarea
+                    className="w-full min-h-[80px] p-2 border rounded-md"
+                    placeholder="Describa cómo ocurrió el accidente (máximo 250 caracteres)"
+                    value={circunstanciaAccidente}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 250) {
+                        setCircunstanciaAccidente(e.target.value);
+                      }
+                    }}
+                    maxLength={250}
+                  />
+                  <p className="text-sm text-muted-foreground text-right">
+                    {circunstanciaAccidente.length}/250 caracteres
+                  </p>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-3">
+                    Testigos (Opcional)
+                  </h3>
+                  <div className="space-y-3">
+                    {testigos.map((testigo, index) => (
+                      <div key={index} className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <Input
+                            placeholder={`Nombre y Apellido Testigo ${
+                              index + 1
+                            }`}
+                            value={testigo.nombre}
+                            onChange={(e) =>
+                              handleTestigoChange(
+                                index,
+                                "nombre",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Input
+                            placeholder="Cédula de Identidad"
+                            value={testigo.cedula}
+                            onChange={(e) =>
+                              handleTestigoChange(
+                                index,
+                                "cedula",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
           )}
           <DialogFooter className="mt-4">
-            <Button onClick={generarPDF}>Generar PDF</Button>
+            {!errorMessage && estudianteData && (
+              <Button onClick={generarPDF}>Generar PDF</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
