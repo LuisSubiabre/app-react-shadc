@@ -174,7 +174,11 @@ const AcademicoImprimirLibreta: React.FC = () => {
     }
   };
 
-  const generarPDFEstudiante = async (estudiante: Estudiante, doc: JsPDFWithAutoTable, fecha: string) => {
+  const generarPDFEstudiante = async (
+    estudiante: Estudiante,
+    doc: JsPDFWithAutoTable,
+    fecha: string
+  ) => {
     const response = await getLibretaEstudiante(estudiante.id);
     const libreta: AsignaturaLibreta[] = response.data;
 
@@ -183,7 +187,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
     }
 
     // Agregar logo
-    const logoUrl = "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
+    const logoUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
     const logoWidth = 50;
     const logoHeight = 15;
     doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
@@ -198,7 +203,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Título principal
     doc.setFontSize(16);
-    doc.text("Libreta de Calificaciones", 105, 30, { align: "center" });
+    doc.text("Informe Parcial de Calificaciones", 105, 30, { align: "center" });
 
     // Línea decorativa superior
     doc.setDrawColor(41, 128, 185);
@@ -213,84 +218,109 @@ const AcademicoImprimirLibreta: React.FC = () => {
     const infoY = 45;
     doc.text(`Estudiante: ${libreta[0].nombre_estudiante}`, 20, infoY + 7);
     doc.text(`Curso: ${libreta[0].nombre_curso}`, 20, infoY + 14);
-    doc.text(`Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`, 20, infoY + 21);
+    doc.text(
+      `Profesor Jefe: ${libreta[0].nombre_profesor_jefe}`,
+      20,
+      infoY + 21
+    );
 
     // Preparar datos para la tabla y el gráfico
-    const tableData: TableDataItem[] = libreta.map((asignatura: AsignaturaLibreta) => {
-      const calificacionesPrimerSemestre = [];
-      const calificacionesSegundoSemestre = [];
+    const tableData: TableDataItem[] = libreta.map(
+      (asignatura: AsignaturaLibreta) => {
+        const calificacionesPrimerSemestre = [];
+        const calificacionesSegundoSemestre = [];
 
-      // Primer semestre (C1-C10)
-      for (let i = 1; i <= 10; i++) {
-        const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
-        if (asignatura.concepto) {
-          if (calificacion !== null && calificacion !== undefined) {
-            const calificacionStr = calificacion.toString();
-            const concepto = getConceptoFromNota(calificacionStr);
-            calificacionesPrimerSemestre.push(getValorConcepto(concepto));
+        // Primer semestre (C1-C10)
+        for (let i = 1; i <= 10; i++) {
+          const calificacion =
+            asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+          if (asignatura.concepto) {
+            if (calificacion !== null && calificacion !== undefined) {
+              const calificacionStr = calificacion.toString();
+              const concepto = getConceptoFromNota(calificacionStr);
+              calificacionesPrimerSemestre.push(getValorConcepto(concepto));
+            } else {
+              calificacionesPrimerSemestre.push("-");
+            }
           } else {
-            calificacionesPrimerSemestre.push("-");
+            calificacionesPrimerSemestre.push(
+              calificacion !== null ? calificacion.toString() : "-"
+            );
           }
-        } else {
-          calificacionesPrimerSemestre.push(
-            calificacion !== null ? calificacion.toString() : "-"
-          );
         }
-      }
 
-      // Segundo semestre (C11-C20)
-      for (let i = 11; i <= 20; i++) {
-        const calificacion = asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
-        if (asignatura.concepto) {
-          if (calificacion !== null && calificacion !== undefined) {
-            const calificacionStr = calificacion.toString();
-            const concepto = getConceptoFromNota(calificacionStr);
-            calificacionesSegundoSemestre.push(getValorConcepto(concepto));
+        // Segundo semestre (C11-C20)
+        for (let i = 11; i <= 20; i++) {
+          const calificacion =
+            asignatura[`calificacion${i}` as keyof AsignaturaLibreta];
+          if (asignatura.concepto) {
+            if (calificacion !== null && calificacion !== undefined) {
+              const calificacionStr = calificacion.toString();
+              const concepto = getConceptoFromNota(calificacionStr);
+              calificacionesSegundoSemestre.push(getValorConcepto(concepto));
+            } else {
+              calificacionesSegundoSemestre.push("-");
+            }
           } else {
-            calificacionesSegundoSemestre.push("-");
+            calificacionesSegundoSemestre.push(
+              calificacion !== null ? calificacion.toString() : "-"
+            );
           }
-        } else {
-          calificacionesSegundoSemestre.push(
-            calificacion !== null ? calificacion.toString() : "-"
-          );
         }
+
+        // Calcular PFS (Promedio Final Semestral)
+        const pfs1 = calcularPromedio(
+          calificacionesPrimerSemestre,
+          asignatura.concepto
+        );
+        const pfs2 = calcularPromedio(
+          calificacionesSegundoSemestre,
+          asignatura.concepto
+        );
+
+        // Calcular PF (Promedio Final Anual)
+        const pf =
+          pfs2 === "-"
+            ? pfs1
+            : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
+
+        return {
+          nombre: asignatura.nombre,
+          calificaciones: [
+            asignatura.nombre,
+            ...calificacionesPrimerSemestre,
+            pfs1,
+            ...calificacionesSegundoSemestre,
+            pfs2,
+            pf,
+          ],
+          pf: pf === "-" ? 0 : parseFloat(pf),
+          pfs1: pfs1 === "-" ? 0 : parseFloat(pfs1),
+          pfs2: pfs2 === "-" ? 0 : parseFloat(pfs2),
+          esConcepto: asignatura.concepto,
+        };
       }
-
-      // Calcular PFS (Promedio Final Semestral)
-      const pfs1 = calcularPromedio(calificacionesPrimerSemestre, asignatura.concepto);
-      const pfs2 = calcularPromedio(calificacionesSegundoSemestre, asignatura.concepto);
-
-      // Calcular PF (Promedio Final Anual)
-      const pf = pfs2 === "-" ? pfs1 : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
-
-      return {
-        nombre: asignatura.nombre,
-        calificaciones: [
-          asignatura.nombre,
-          ...calificacionesPrimerSemestre,
-          pfs1,
-          ...calificacionesSegundoSemestre,
-          pfs2,
-          pf
-        ],
-        pf: pf === "-" ? 0 : parseFloat(pf),
-        pfs1: pfs1 === "-" ? 0 : parseFloat(pfs1),
-        pfs2: pfs2 === "-" ? 0 : parseFloat(pfs2),
-        esConcepto: asignatura.concepto
-      };
-    });
+    );
 
     // Calcular promedio final del primer semestre (ignorando asignaturas conceptuales)
-    const asignaturas1S = tableData.filter(item => !item.esConcepto && item.pfs1 > 0);
-    const promedioFinal1S = asignaturas1S.length > 0 
-      ? asignaturas1S.reduce((acc, item) => acc + item.pfs1, 0) / asignaturas1S.length 
-      : null;
+    const asignaturas1S = tableData.filter(
+      (item) => !item.esConcepto && item.pfs1 > 0
+    );
+    const promedioFinal1S =
+      asignaturas1S.length > 0
+        ? asignaturas1S.reduce((acc, item) => acc + item.pfs1, 0) /
+          asignaturas1S.length
+        : null;
 
     // Calcular promedio final del segundo semestre (ignorando asignaturas conceptuales)
-    const asignaturas2S = tableData.filter(item => !item.esConcepto && item.pfs2 > 0);
-    const promedioFinal2S = asignaturas2S.length > 0 
-      ? asignaturas2S.reduce((acc, item) => acc + item.pfs2, 0) / asignaturas2S.length 
-      : null;
+    const asignaturas2S = tableData.filter(
+      (item) => !item.esConcepto && item.pfs2 > 0
+    );
+    const promedioFinal2S =
+      asignaturas2S.length > 0
+        ? asignaturas2S.reduce((acc, item) => acc + item.pfs2, 0) /
+          asignaturas2S.length
+        : null;
 
     // Encabezados de la tabla
     const headers = [
@@ -299,7 +329,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       "1S",
       ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
       "2S",
-      "PF"
+      "PF",
     ];
 
     // Crear tabla
@@ -362,7 +392,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
           cellWidth: 8,
           halign: "center",
           fontStyle: "bold",
-        }
+        },
       },
       margin: { left: 5, right: 5 },
       tableWidth: 198,
@@ -380,34 +410,38 @@ const AcademicoImprimirLibreta: React.FC = () => {
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245],
-      }
+      },
     });
 
     // Obtener la posición final de la tabla
-    const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY || 75 + (tableData.length * 5) + 20;
+    const finalY =
+      (doc as JsPDFWithAutoTable).lastAutoTable.finalY ||
+      75 + tableData.length * 5 + 20;
 
     // Agregar sección de promedios finales
     const promediosY = finalY + 5;
-    
+
     // Fondo para la sección de promedios
     doc.setFillColor(245, 245, 245);
     doc.rect(15, promediosY - 2, 180, 15, "F");
-    
+
     // Borde de la sección
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
     doc.rect(15, promediosY - 2, 180, 15);
-    
+
     // Promedios en una sola línea
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
-    
-    const promedio1S = promedioFinal1S !== null ? Math.round(promedioFinal1S) : "-";
-    const promedio2S = promedioFinal2S !== null ? Math.round(promedioFinal2S) : "-";
-    
-    doc.text(`Promedio Final 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
-    doc.text(`Promedio Final 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
+
+    const promedio1S =
+      promedioFinal1S !== null ? Math.round(promedioFinal1S) : "-";
+    const promedio2S =
+      promedioFinal2S !== null ? Math.round(promedioFinal2S) : "-";
+
+    doc.text(`Promedio General 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
+    doc.text(`Promedio General 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
 
     // Agregar gráfico después de la tabla
     const chartY = promediosY + 25;
@@ -418,22 +452,27 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Dibujar el gráfico
     doc.setFontSize(7);
-    doc.text("Gráfico de Rendimiento Promedios Finales por Asignatura", pageWidth/2, chartY - 5, { align: "center" });
+    doc.text(
+      "Gráfico de Rendimiento Promedios Finales por Asignatura",
+      pageWidth / 2,
+      chartY - 5,
+      { align: "center" }
+    );
 
     // Crear un canvas para el gráfico con mayor resolución
     const scaleFactor = 4;
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = chartWidth * scaleFactor;
     canvas.height = chartHeight * scaleFactor;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
     if (ctx) {
       // Escalar el contexto para mejorar la calidad
       ctx.scale(scaleFactor, scaleFactor);
 
       // Dibujar el fondo con borde
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#e0e0e0';
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#e0e0e0";
       ctx.lineWidth = 0.5;
       ctx.fillRect(0, 0, chartWidth, chartHeight);
       ctx.strokeRect(0, 0, chartWidth, chartHeight);
@@ -446,7 +485,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Dibujar línea de referencia
       ctx.beginPath();
-      ctx.strokeStyle = '#f0f0f0';
+      ctx.strokeStyle = "#f0f0f0";
       ctx.setLineDash([1, 1]);
       ctx.moveTo(15, chartHeight - 10);
       ctx.lineTo(chartWidth - 15, chartHeight - 10);
@@ -455,27 +494,27 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Dibujar línea horizontal para el valor máximo
       ctx.beginPath();
-      ctx.strokeStyle = '#f0f0f0';
+      ctx.strokeStyle = "#f0f0f0";
       ctx.setLineDash([1, 1]);
       ctx.moveTo(15, 10);
       ctx.lineTo(chartWidth - 15, 10);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = '#666666';
-      ctx.font = '3px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText('', 5, 13);
+      ctx.fillStyle = "#666666";
+      ctx.font = "3px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText("", 5, 13);
 
       // Dibujar el área para el primer semestre
       ctx.beginPath();
-      ctx.fillStyle = 'rgba(41, 121, 255, 0.1)';
+      ctx.fillStyle = "rgba(41, 121, 255, 0.1)";
       ctx.moveTo(startX, chartHeight - 10);
 
       let lastValidY: number | null = null;
       tableData.forEach((data, index) => {
-        const x = startX + (index * spacing);
+        const x = startX + index * spacing;
         if (data.pf > 0) {
-          const y = chartHeight - 10 - (data.pf * scale);
+          const y = chartHeight - 10 - data.pf * scale;
           ctx.lineTo(x, y);
           lastValidY = y;
         } else {
@@ -491,14 +530,14 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Dibujar la línea del primer semestre
       ctx.beginPath();
-      ctx.strokeStyle = '#2979ff';
+      ctx.strokeStyle = "#2979ff";
       ctx.lineWidth = 1.5;
 
       lastValidY = null;
       tableData.forEach((data, index) => {
-        const x = startX + (index * spacing);
+        const x = startX + index * spacing;
         if (data.pf > 0) {
-          const y = chartHeight - 10 - (data.pf * scale);
+          const y = chartHeight - 10 - data.pf * scale;
           if (lastValidY === null) {
             ctx.moveTo(x, y);
           } else {
@@ -516,38 +555,48 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Dibujar los puntos y textos
       tableData.forEach((data, index) => {
-        const x = startX + (index * spacing);
-        const y1s = data.pf > 0 ? chartHeight - 10 - (data.pf * scale) : null;
+        const x = startX + index * spacing;
+        const y1s = data.pf > 0 ? chartHeight - 10 - data.pf * scale : null;
 
         // Dibujar puntos
         if (y1s !== null) {
           ctx.beginPath();
-          ctx.fillStyle = '#2979ff';
+          ctx.fillStyle = "#2979ff";
           ctx.arc(x, y1s, 1.5, 0, Math.PI * 2);
           ctx.fill();
         }
 
         // Dibujar solo el valor del promedio final (PF) como encabezado
         if (y1s !== null) {
-          ctx.fillStyle = '#2979ff';
-          ctx.font = '3px Arial';
-          ctx.textAlign = 'center';
+          ctx.fillStyle = "#2979ff";
+          ctx.font = "3px Arial";
+          ctx.textAlign = "center";
           ctx.fillText(data.pf.toString(), x, 5);
         }
 
         // Nombres de asignaturas en la parte inferior
         ctx.save();
         ctx.translate(x, chartHeight - 5);
-        ctx.rotate(-Math.PI/2);
-        ctx.font = '2.5px Arial';
-        ctx.textAlign = 'left';
-        const nombreCorto = data.nombre.length > 10 ? data.nombre.substring(0, 8) + '...' : data.nombre;
+        ctx.rotate(-Math.PI / 2);
+        ctx.font = "2.5px Arial";
+        ctx.textAlign = "left";
+        const nombreCorto =
+          data.nombre.length > 10
+            ? data.nombre.substring(0, 8) + "..."
+            : data.nombre;
         ctx.fillText(nombreCorto, 0, 0);
         ctx.restore();
       });
 
       // Agregar el gráfico al PDF con alta calidad
-      doc.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', chartX, chartY, chartWidth, chartHeight);
+      doc.addImage(
+        canvas.toDataURL("image/png", 1.0),
+        "PNG",
+        chartX,
+        chartY,
+        chartWidth,
+        chartHeight
+      );
 
       // Espacio para firmas y timbres
       doc.setDrawColor(0, 0, 0);
@@ -560,7 +609,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       const anchoProfesor = doc.getTextWidth(nombreProfesor);
       const xProfesor = 20 + (80 - anchoProfesor) / 2;
       doc.text(nombreProfesor, xProfesor, 255);
-      
+
       doc.setFontSize(7);
       const textoProfesor = "PROFESOR JEFE";
       const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
@@ -569,24 +618,25 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Línea derecha (Director)
       doc.line(110, 250, 190, 250);
-      
+
       // Agregar imagen de firma
-      const firmaUrl = "https://res.cloudinary.com/dx219dazh/image/upload/v1745947577/varios/wnt3zcbohrtgnnkpefi4.png";
+      const firmaUrl =
+        "https://res.cloudinary.com/dx219dazh/image/upload/v1746451823/varios/zrnowutpg5fgaijjxkpm.png";
       const firmaWidth = 65;
       const firmaHeight = 20;
-      doc.addImage(firmaUrl, "PNG", 120, 225, firmaWidth, firmaHeight);
-      
+      doc.addImage(firmaUrl, "PNG", 120, 235, firmaWidth, firmaHeight);
+
       doc.setFontSize(8);
       const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
       const anchoDirector = doc.getTextWidth(nombreDirector);
       const xDirector = 110 + (80 - anchoDirector) / 2;
-      doc.text(nombreDirector, xDirector, 265);
-      
+      doc.text(nombreDirector, xDirector, 255);
+
       doc.setFontSize(7);
       const textoDirector = "DIRECTOR";
       const anchoTextoDirector = doc.getTextWidth(textoDirector);
       const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
-      doc.text(textoDirector, xTextoDirector, 270);
+      doc.text(textoDirector, xTextoDirector, 260);
 
       // Pie de página con leyendas
       doc.setFontSize(7);
@@ -604,8 +654,12 @@ const AcademicoImprimirLibreta: React.FC = () => {
       setLoadingPDF(true);
       const doc = new jsPDF() as JsPDFWithAutoTable;
       const fecha = new Date().toLocaleDateString();
-      
-      const nombreEstudiante = await generarPDFEstudiante(estudiante, doc, fecha);
+
+      const nombreEstudiante = await generarPDFEstudiante(
+        estudiante,
+        doc,
+        fecha
+      );
       doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
     } catch (error) {
       console.error("Error al generar el PDF:", error);
@@ -642,9 +696,9 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
   // Función para convertir nota numérica a concepto
   const getConceptoFromNota = (nota: number | string): string => {
-    const notaNum = typeof nota === 'string' ? parseFloat(nota) : nota;
+    const notaNum = typeof nota === "string" ? parseFloat(nota) : nota;
     if (isNaN(notaNum)) return "-";
-    
+
     if (notaNum >= 70) return "MB";
     if (notaNum >= 50) return "B";
     if (notaNum >= 40) return "S";
@@ -685,7 +739,10 @@ const AcademicoImprimirLibreta: React.FC = () => {
   };
 
   // Función auxiliar para calcular promedios
-  const calcularPromedio = (calificaciones: (string | number)[], esConcepto: boolean = false): string => {
+  const calcularPromedio = (
+    calificaciones: (string | number)[],
+    esConcepto: boolean = false
+  ): string => {
     if (esConcepto) {
       // Para asignaturas con concepto, usamos el valor numérico del concepto
       const valores = calificaciones
@@ -714,28 +771,32 @@ const AcademicoImprimirLibreta: React.FC = () => {
   };
 
   // Función para calcular promedio anual
-  const calcularPromedioAnual = (pfs1: string, pfs2: string, esConcepto: boolean = false): string => {
+  const calcularPromedioAnual = (
+    pfs1: string,
+    pfs2: string,
+    esConcepto: boolean = false
+  ): string => {
     if (esConcepto) {
       const num1 = getValorNumericoConcepto(pfs1);
       const num2 = getValorNumericoConcepto(pfs2);
-      
+
       if (num1 === null || num2 === null) return "-";
-      
+
       const promedio = (num1 + num2) / 2;
       return getConceptoFromNota(promedio);
     }
 
     const num1 = parseFloat(pfs1);
     const num2 = parseFloat(pfs2);
-    
+
     if (isNaN(num1) || isNaN(num2)) return "-";
-    
+
     const promedio = (num1 + num2) / 2;
     const config = configPromedios.promedioAnualAsignatura;
-    
+
     if (config.aproximar) {
       const base = config.reglaAproximacion?.base || 0.05;
-      
+
       // Aplicar regla de aproximación
       const parteDecimal = promedio - Math.floor(promedio);
       if (parteDecimal >= base) {
@@ -743,7 +804,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       }
       return Math.floor(promedio).toString();
     }
-    
+
     return Math.round(promedio).toString();
   };
 
@@ -785,13 +846,14 @@ const AcademicoImprimirLibreta: React.FC = () => {
         </div>
 
         <div className="rounded-lg border bg-card">
-        <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Atención</AlertTitle>
-      <AlertDescription>
-        Esta funcionalidad está en desarrollo y puede no funcionar correctamente.
-      </AlertDescription>
-    </Alert>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Atención</AlertTitle>
+            <AlertDescription>
+              Esta funcionalidad está en desarrollo y puede no funcionar
+              correctamente.
+            </AlertDescription>
+          </Alert>
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-muted/50">
@@ -882,7 +944,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Atención</AlertTitle>
                   <AlertDescription>
-                    Esta funcionalidad está en desarrollo y puede no funcionar correctamente.
+                    Esta funcionalidad está en desarrollo y puede no funcionar
+                    correctamente.
                   </AlertDescription>
                 </Alert>
                 <div className="flex justify-end p-4">
