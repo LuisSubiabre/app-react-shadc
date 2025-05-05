@@ -237,8 +237,23 @@ const PageAccidenteEscolar = () => {
     if (!estudianteData) return;
 
     try {
-      // Cargar el PDF existente
-      const response = await fetch("/Declaracion-Individual-de-Accidente.pdf");
+      // Usar una ruta relativa que Vercel manejará correctamente
+      const response = await fetch(
+        "/static/Declaracion-Individual-de-Accidente.pdf",
+        {
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Error al cargar el PDF: ${response.status} ${response.statusText}`
+        );
+      }
+
       const pdfBytes = await response.arrayBuffer();
 
       // Cargar el PDF en pdf-lib
