@@ -140,6 +140,10 @@ const data = {
           title: "Reportes Atrasos",
           url: "/dashboard/inspectoria/atrasosreportes",
         },
+        {
+          title: "Accidente Escolar",
+          url: "/dashboard/inspectoria/accidente-escolar",
+        },
       ],
     },
     {

@@ -39,11 +39,14 @@ import { getCursos } from "@/services/cursosService.ts";
 import { FiltrosTalleres } from "@/components/talleres/FiltrosTalleres";
 import { TablaTalleres } from "@/components/talleres/TablaTalleres";
 import { ModalCursos } from "@/components/talleres/ModalCursos";
+import { ModalAsistencia } from "@/components/talleres/ModalAsistencia";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
+  const [isModalAsistenciaOpen, setIsModalAsistenciaOpen] =
+    useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newTaller, setNewTaller] = useState<Partial<TallerType>>({
@@ -82,20 +85,24 @@ const AcleTalleres: React.FC = () => {
 
   const ordenarTalleresPorNivel = (talleres: TallerType[]) => {
     const ordenNiveles = {
-      'pre-basica': 1,
-      'basica': 2,
-      'media': 3
+      "pre-basica": 1,
+      basica: 2,
+      media: 3,
     };
 
     return [...talleres].sort((a, b) => {
       // Primero ordenamos por nivel
-      const ordenPorNivel = ordenNiveles[a.taller_nivel as keyof typeof ordenNiveles] - ordenNiveles[b.taller_nivel as keyof typeof ordenNiveles];
-      
+      const ordenPorNivel =
+        ordenNiveles[a.taller_nivel as keyof typeof ordenNiveles] -
+        ordenNiveles[b.taller_nivel as keyof typeof ordenNiveles];
+
       // Si son del mismo nivel, ordenamos por nombre
       if (ordenPorNivel === 0) {
-        return a.taller_nombre.localeCompare(b.taller_nombre, 'es', { sensitivity: 'base' });
+        return a.taller_nombre.localeCompare(b.taller_nombre, "es", {
+          sensitivity: "base",
+        });
       }
-      
+
       return ordenPorNivel;
     });
   };
@@ -173,13 +180,13 @@ const AcleTalleres: React.FC = () => {
       console.log("Enviando nuevo taller:", newTaller);
       const response = await saveNewTaller(newTaller as TallerType);
       console.log("Respuesta del servidor:", response);
-      
+
       if (response) {
         const talleresResponse = await getTalleres();
         if (talleresResponse) {
           setTalleres(ordenarTalleresPorNivel(talleresResponse.data));
         }
-        
+
         toast({
           title: "Éxito",
           description: "Taller creado correctamente",
@@ -267,7 +274,7 @@ const AcleTalleres: React.FC = () => {
     try {
       await saveEditTaller(currentTaller);
 
-      setTalleres((curr) => 
+      setTalleres((curr) =>
         ordenarTalleresPorNivel(
           curr.map((taller) =>
             taller.taller_id === currentTaller.taller_id
@@ -391,6 +398,16 @@ const AcleTalleres: React.FC = () => {
     }
   };
 
+  const handleOpenAsistenciaModal = (taller: TallerType) => {
+    setCurrentTaller(taller);
+    setIsModalAsistenciaOpen(true);
+  };
+
+  const handleCloseAsistenciaModal = () => {
+    setIsModalAsistenciaOpen(false);
+    setCurrentTaller(null);
+  };
+
   return (
     <>
       <LoadingErrorHandler loading={loading} error={error}>
@@ -411,6 +428,7 @@ const AcleTalleres: React.FC = () => {
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
             onOpenCursosModal={handleOpenCursosModal}
+            onOpenAsistenciaModal={handleOpenAsistenciaModal}
           />
         </div>
 
@@ -499,6 +517,13 @@ const AcleTalleres: React.FC = () => {
           asignacionesActuales={asignacionesActuales}
           onCursoChange={handleCursoChange}
           errorMessage={errorMessage}
+        />
+
+        {/* Modal para informe de asistencia */}
+        <ModalAsistencia
+          isOpen={isModalAsistenciaOpen}
+          onClose={handleCloseAsistenciaModal}
+          taller={currentTaller}
         />
 
         {/* Diálogo de confirmación para eliminar */}
