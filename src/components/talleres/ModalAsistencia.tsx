@@ -118,7 +118,10 @@ export const ModalAsistencia: React.FC<ModalAsistenciaProps> = ({
       doc.setFontSize(12);
       doc.text(`Taller: ${taller.taller_nombre}`, 14, 25);
       doc.text(
-        `Mes: ${meses.find((m) => m.value === mesSeleccionado)?.label}`,
+        `Mes: ${
+          meses.find((m) => m.value === mesSeleccionado)?.label ||
+          mesSeleccionado
+        }`,
         14,
         32
       );
@@ -128,11 +131,10 @@ export const ModalAsistencia: React.FC<ModalAsistenciaProps> = ({
       doc.setDrawColor(200, 200, 200);
       doc.line(14, 45, 196, 45);
 
-      // Agrupar registros por fecha y sesión
+      // Agrupar registros por sesión
       const registrosPorSesion = data.reduce(
         (acc: { [key: string]: RegistroAsistencia[] }, registro) => {
-          const fechaISO = registro.fecha;
-          const key = `${registro.sesion_id}-${fechaISO}`;
+          const key = `${registro.sesion_id}`;
           if (!acc[key]) {
             acc[key] = [];
           }
@@ -142,94 +144,75 @@ export const ModalAsistencia: React.FC<ModalAsistenciaProps> = ({
         {}
       );
 
-      // Agrupar sesiones por fecha
-      const sesionesPorFecha = Object.entries(registrosPorSesion).reduce(
-        (
-          acc: { [key: string]: { [key: string]: RegistroAsistencia[] } },
-          [key, registros]
-        ) => {
-          const [fechaISO] = key.split("-");
-          if (!acc[fechaISO]) {
-            acc[fechaISO] = {};
-          }
-          acc[fechaISO][key] = registros;
-          return acc;
-        },
-        {}
+      // Ordenar sesiones por ID
+      const sesionesOrdenadas = Object.keys(registrosPorSesion).sort(
+        (a, b) => parseInt(a) - parseInt(b)
       );
-
-      // Ordenar fechas
-      const fechasOrdenadas = Object.keys(sesionesPorFecha).sort();
 
       let startY = 50;
       let pageNumber = 1;
 
-      // Generar tabla para cada fecha
-      fechasOrdenadas.forEach((fechaISO, fechaIndex) => {
-        const sesionesDeFecha = sesionesPorFecha[fechaISO];
-        const sesionesOrdenadas = Object.keys(sesionesDeFecha).sort();
+      // Generar tabla para cada sesión
+      sesionesOrdenadas.forEach((sesionId, index) => {
+        const registros = registrosPorSesion[sesionId];
+        if (!registros || registros.length === 0) return;
 
         // Si no es la primera página y el espacio es limitado, agregar nueva página
-        if (fechaIndex > 0 && startY > 250) {
+        if (index > 0 && startY > 250) {
           doc.addPage();
           startY = 20;
           pageNumber++;
         }
 
-        // Título de la fecha
+        // Título de la sesión
         doc.setFontSize(12);
-        // doc.text(`Fecha: ${formatearFecha(fechaISO)}`, 14, startY);
-        startY += 10;
+        doc.text(
+          `Sesión ${index + 1} - ${formatearFecha(registros[0].fecha)}`,
+          14,
+          startY
+        );
+        startY += 7;
 
-        // Generar tabla para cada sesión de la fecha
-        sesionesOrdenadas.forEach((key, sesionIndex) => {
-          const registros = sesionesDeFecha[key];
-          const estado = registros[0].estado;
+        // Estado de la sesión
+        doc.setFontSize(10);
+        const estado =
+          registros[0].estado.charAt(0).toUpperCase() +
+          registros[0].estado.slice(1);
+        doc.text(`Estado: ${estado}`, 14, startY);
+        startY += 7;
 
-          // Estado de la sesión
-          doc.setFontSize(10);
-          doc.text(
-            `Sesión ${sesionIndex + 1} (${formatearFecha(
-              registros[0].fecha
-            )}): ${estado.charAt(0).toUpperCase() + estado.slice(1)}`,
-            14,
-            startY
-          );
-          startY += 7;
+        // Tabla para la sesión actual
+        const tableData = registros.map((registro) => [
+          registro.nombre,
+          registro.rut,
+          registro.asistio ? "Presente" : "Ausente",
+        ]);
 
-          // Tabla para la sesión actual
-          const tableData = registros.map((registro) => [
-            registro.nombre,
-            registro.rut,
-            registro.asistio ? "Presente" : "Ausente",
-          ]);
-
-          autoTable(doc, {
-            startY: startY,
-            head: [["Estudiante", "RUT", "Asistencia"]],
-            body: tableData,
-            theme: "grid",
-            headStyles: { fillColor: [41, 128, 185] },
-            styles: { fontSize: 10 },
-            columnStyles: {
-              0: { cellWidth: 70 },
-              1: { cellWidth: 35 },
-              2: { cellWidth: 25 },
-            },
-            didDrawPage: function (data) {
-              // Agregar número de página
-              doc.setFontSize(10);
-              doc.text(
-                `Página ${pageNumber}`,
-                data.settings.margin.left,
-                doc.internal.pageSize.height - 10
-              );
-            },
-          });
-
-          // Actualizar startY para la próxima tabla
-          startY = doc.lastAutoTable.finalY + 10;
+        autoTable(doc, {
+          startY: startY,
+          head: [["Estudiante", "RUT", "Asistencia"]],
+          body: tableData,
+          theme: "grid",
+          headStyles: { fillColor: [41, 128, 185] },
+          styles: { fontSize: 10 },
+          columnStyles: {
+            0: { cellWidth: 70 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 25 },
+          },
+          didDrawPage: function (data) {
+            // Agregar número de página
+            doc.setFontSize(10);
+            doc.text(
+              `Página ${pageNumber}`,
+              data.settings.margin.left,
+              doc.internal.pageSize.height - 10
+            );
+          },
         });
+
+        // Actualizar startY para la próxima tabla
+        startY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 10;
       });
 
       // Guardar el PDF
