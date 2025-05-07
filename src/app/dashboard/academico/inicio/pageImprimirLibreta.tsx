@@ -436,9 +436,9 @@ const AcademicoImprimirLibreta: React.FC = () => {
     doc.setTextColor(0, 0, 0);
 
     const promedio1S =
-      promedioFinal1S !== null ? Math.round(promedioFinal1S) : "-";
+      promedioFinal1S !== null ? Math.floor(promedioFinal1S) : "-";
     const promedio2S =
-      promedioFinal2S !== null ? Math.round(promedioFinal2S) : "-";
+      promedioFinal2S !== null ? Math.floor(promedioFinal2S) : "-";
 
     doc.text(`Promedio General 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
     doc.text(`Promedio General 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
