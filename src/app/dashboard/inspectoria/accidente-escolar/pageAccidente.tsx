@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { PDFDocument } from "pdf-lib";
 
@@ -237,9 +238,29 @@ const PageAccidenteEscolar = () => {
     if (!estudianteData) return;
 
     try {
-      // Cargar el PDF existente
-      const response = await fetch("/Declaracion-Individual-de-Accidente.pdf");
+      // Usar una ruta que no requiera autenticación
+      const response = await fetch(
+        "/static/Declaracion-Individual-de-Accidente.pdf",
+        {
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Error al cargar el PDF: ${response.status} ${response.statusText}`
+        );
+      }
+
       const pdfBytes = await response.arrayBuffer();
+
+      // Verificar que el PDF sea válido
+      if (pdfBytes.byteLength === 0) {
+        throw new Error("El archivo PDF está vacío");
+      }
 
       // Cargar el PDF en pdf-lib
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -725,6 +746,10 @@ const PageAccidenteEscolar = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registro de Accidente Escolar</DialogTitle>
+            <DialogDescription>
+              Complete los datos del accidente escolar para generar el PDF
+              correspondiente.
+            </DialogDescription>
             <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
               <div className="flex items-start gap-2">
                 <svg

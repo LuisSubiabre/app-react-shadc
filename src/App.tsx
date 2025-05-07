@@ -1,9 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import { routerConfig } from "./router.config";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/context/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute"; // Asegúrate de que ProtectedRoute está correctamente importado
 import Spinner from "./components/Spinner";
 import ErrorBoundary from "@/components/ErrorBoundary"; // Importa el ErrorBoundary
@@ -66,7 +66,7 @@ const PageAccidenteEscolar = lazy(
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <AuthProvider>
+
         <ErrorBoundary>
           <Suspense
             fallback={
@@ -80,7 +80,7 @@ function App() {
               </>
             }
           >
-            <Routes>
+            <Routes {...routerConfig}>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/logout" element={<Logout />} />
@@ -93,6 +93,7 @@ function App() {
                 path="/reset-password/:token"
                 element={<PasswordReset />}
               />
+  
 
               {/* Protected Routes */}
               <Route
@@ -326,7 +327,7 @@ function App() {
             <Toaster />
           </Suspense>
         </ErrorBoundary>
-      </AuthProvider>
+
     </ThemeProvider>
   );
 }

@@ -83,21 +83,30 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
 
       switch (e.key) {
         case "ArrowRight":
-          nextInput = inputs[currentIndex + 1] as HTMLInputElement;
+          if (colIndex === getColumnRange.length - 1) {
+            // Si estamos en la última columna, ir al primer input de la siguiente fila
+            nextInput = inputs[currentIndex + 1] as HTMLInputElement;
+          } else {
+            nextInput = inputs[currentIndex + 1] as HTMLInputElement;
+          }
           break;
         case "ArrowLeft":
           nextInput = inputs[currentIndex - 1] as HTMLInputElement;
           break;
         case "ArrowDown":
         case "Enter":
-          nextInput = inputs[
-            currentIndex + getColumnRange.length
-          ] as HTMLInputElement;
+          if (rowIndex === estudiantes.length - 1) {
+            // Si estamos en la última fila, ir al primer input de la siguiente columna
+            const nextColumnIndex = colIndex + 1;
+            if (nextColumnIndex < getColumnRange.length) {
+              nextInput = inputs[nextColumnIndex] as HTMLInputElement;
+            }
+          } else {
+            nextInput = inputs[currentIndex + getColumnRange.length] as HTMLInputElement;
+          }
           break;
         case "ArrowUp":
-          nextInput = inputs[
-            currentIndex - getColumnRange.length
-          ] as HTMLInputElement;
+          nextInput = inputs[currentIndex - getColumnRange.length] as HTMLInputElement;
           break;
         default:
           return;
@@ -363,6 +372,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
                             MozAppearance: "textfield",
                           }}
                           onKeyDown={(e) => handleKeyDown(e, rowIndex, index)}
+                          onWheel={(e) => e.currentTarget.blur()}
                           onChange={(e) => {
                             const newValue = e.target.value;
                             setStudentGrades((prev) => ({
