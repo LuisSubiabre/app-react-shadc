@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.9.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.9.0...v2.9.1) (2025-05-07)
+
+
+### Features
+
+* agregar archivo PDF de Declaración Individual de Accidente y mejorar la carga del mismo con manejo de errores en la página de accidente escolar ([525f5f2](https://github.com/LuisSubiabre/app-react-shadc/commit/525f5f29144252c85068aa6e477593b59899672f))
+* agregar configuración de Vercel para el manejo de archivos PDF y redirección a la página de accidente escolar desde la ruta del PDF ([ccc514e](https://github.com/LuisSubiabre/app-react-shadc/commit/ccc514e252dc4e94574e2ff5b56ae3d21353e1e1))
+* mejorar la navegación en la tabla de calificaciones al manejar correctamente el enfoque de los inputs en las filas y columnas ([bfb219f](https://github.com/LuisSubiabre/app-react-shadc/commit/bfb219f538da09993cb0fb1f5e5a5560feb9eda3))
+
+
+### Bug Fixes
+
+* corregir el cálculo de promedios en la impresión de la libreta utilizando Math.floor en lugar de Math.round ([5a1e945](https://github.com/LuisSubiabre/app-react-shadc/commit/5a1e9450ce3539ce7b75392b322fb297cb03efac))
+
 ## [2.9.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.8.1...v2.9.0) (2025-05-05)
 
 
