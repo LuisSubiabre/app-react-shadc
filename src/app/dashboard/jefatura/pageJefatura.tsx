@@ -134,7 +134,6 @@ const PageJefatura = () => {
   const [loadingInforme, setLoadingInforme] = useState<number | null>(null);
   const [isModalInformeOpen, setIsModalInformeOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [informePersonalidad, setInformePersonalidad] = useState<InformePersonalidad | null>(null);
   const [informePersonalidadTemp, setInformePersonalidadTemp] = useState<InformePersonalidad | null>(null);
 
   useEffect(() => {
@@ -361,12 +360,11 @@ const PageJefatura = () => {
     setAsistencia(asistenciaDelMes || null);
   };
 
-  const handleInformePersonalidad = async (estudianteId: number) => {
-    setLoadingInforme(estudianteId);
+  const handleInformePersonalidad = async (estudiante: EstudianteType) => {
+    setLoadingInforme(estudiante.id);
     try {
-      const id = estudiantes.find(e => e.id === estudianteId)?.estudiante_id || estudianteId;
+      const id = estudiante.estudiante_id || estudiante.id;
       const informe = await getInformePersonalidad(id);
-      setInformePersonalidad(informe);
       setInformePersonalidadTemp(informe);
       setIsModalInformeOpen(true);
     } catch (error) {
@@ -383,7 +381,6 @@ const PageJefatura = () => {
 
   const handleCloseModalInforme = () => {
     setIsModalInformeOpen(false);
-    setInformePersonalidad(null);
     setInformePersonalidadTemp(null);
   };
 
@@ -394,7 +391,6 @@ const PageJefatura = () => {
     try {
       const id = estudiantes.find(e => e.id === informePersonalidadTemp.estudiante_id)?.estudiante_id || informePersonalidadTemp.estudiante_id;
       const updatedInforme = await updateInformePersonalidad(id, informePersonalidadTemp);
-      setInformePersonalidad(updatedInforme);
       setInformePersonalidadTemp(updatedInforme);
       toast({
         title: "Éxito",
@@ -510,7 +506,7 @@ const PageJefatura = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleInformePersonalidad(estudiante.id)}
+                      onClick={() => handleInformePersonalidad(estudiante)}
                       disabled={loadingInforme === estudiante.id}
                       className="hover:bg-primary/10 hover:text-primary"
                     >

@@ -52,7 +52,6 @@ interface JsPDFWithAutoTable extends jsPDF {
 const AcademicoCursoAsignaturas: React.FC = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<CursoApiResponseType | null>(null);
@@ -70,7 +69,6 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
   const handleOpenModal = async (curso: CursoApiResponseType) => {
     setSelectedCurso(curso);
-    setSelectedCursoId(curso.id);
     setIsModalOpen(true);
     setLoadingPromedios(true);
     try {
