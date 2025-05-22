@@ -31,6 +31,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getPromedioPorCurso } from "@/services/infoService";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
 
 interface PromedioData {
   curso: string;
@@ -39,12 +43,19 @@ interface PromedioData {
   promedio_general: string;
 }
 
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
 const AcademicoCursoAsignaturas: React.FC = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
+  const [selectedCurso, setSelectedCurso] = useState<CursoApiResponseType | null>(null);
 
   useEffect(() => {
     if (funcionarioCursos) {
@@ -57,18 +68,93 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     throw new Error("authToken is null");
   }
 
-  const handleOpenModal = async (cursoId: number) => {
-    setSelectedCursoId(cursoId);
+  const handleOpenModal = async (curso: CursoApiResponseType) => {
+    setSelectedCurso(curso);
+    setSelectedCursoId(curso.id);
     setIsModalOpen(true);
     setLoadingPromedios(true);
     try {
-      const response = await getPromedioPorCurso(cursoId);
+      const response = await getPromedioPorCurso(curso.id);
       setPromediosData(response.data);
     } catch (error) {
       console.error("Error al cargar los promedios:", error);
     } finally {
       setLoadingPromedios(false);
     }
+  };
+
+  const handleExportExcel = () => {
+    if (!promediosData.length || !selectedCurso) return;
+
+    const excelData = promediosData.map((promedio) => ({
+      "Nombre del Curso": promedio.curso,
+      "Asignatura": promedio.asignatura,
+      "Cantidad de Estudiantes": promedio.cantidad_estudiantes,
+      "Promedio General": promedio.promedio_general,
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    const colWidths = [
+      { wch: 30 }, // Nombre del Curso
+      { wch: 40 }, // Asignatura
+      { wch: 20 }, // Cantidad de Estudiantes
+      { wch: 20 }, // Promedio General
+    ];
+    ws["!cols"] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, "Promedios");
+    XLSX.writeFile(wb, `Promedios_${selectedCurso.nombre}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    if (!promediosData.length || !selectedCurso) return;
+
+    const doc = new jsPDF() as JsPDFWithAutoTable;
+
+    // Título
+    doc.setFontSize(16);
+    doc.text("Informe de Promedios", 14, 15);
+    doc.setFontSize(12);
+    doc.text(`Curso: ${selectedCurso.nombre}`, 14, 25);
+    doc.text(`Jefatura: ${selectedCurso.jefatura}`, 14, 32);
+    doc.text(`Fecha: ${format(new Date(), "dd-MM-yyyy")}`, 14, 39);
+
+    // Línea horizontal
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 45, 196, 45);
+
+    // Tabla de promedios
+    const tableData = promediosData.map((promedio) => [
+      promedio.asignatura,
+      promedio.cantidad_estudiantes,
+      promedio.promedio_general,
+    ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [["Asignatura", "Cantidad de Estudiantes", "Promedio General"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 100 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 45 },
+      },
+      didDrawPage: function (data) {
+        doc.setFontSize(10);
+        doc.text(
+          `Página ${data.pageNumber}`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 10
+        );
+      },
+    });
+
+    doc.save(`promedios-${selectedCurso.nombre.toLowerCase().replace(/\s+/g, "-")}.pdf`);
   };
 
   if (loading)
@@ -142,7 +228,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleOpenModal(c.id)}
+                        onClick={() => handleOpenModal(c)}
                         className="hover:bg-primary/10 hover:text-primary"
                       >
                         <svg
@@ -204,28 +290,76 @@ const AcademicoCursoAsignaturas: React.FC = () => {
               <Spinner />
             </div>
           ) : (
-            <div className="mt-4 overflow-auto flex-1">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow>
-                    <TableHead className="w-[50%]">Asignatura</TableHead>
-                    <TableHead className="text-right w-[25%]">Cantidad de Estudiantes</TableHead>
-                    <TableHead className="text-right w-[25%]">Promedio General</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {promediosData.map((promedio, index) => (
-                    <TableRow key={index} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">{promedio.asignatura}</TableCell>
-                      <TableCell className="text-right">{promedio.cantidad_estudiantes}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        {promedio.promedio_general}
-                      </TableCell>
+            <>
+              <div className="flex justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  Exportar a Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportPDF}
+                  className="flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                    />
+                  </svg>
+                  Exportar a PDF
+                </Button>
+              </div>
+              <div className="mt-4 overflow-auto flex-1">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow>
+                      <TableHead className="w-[50%]">Asignatura</TableHead>
+                      <TableHead className="text-right w-[25%]">Cantidad de Estudiantes</TableHead>
+                      <TableHead className="text-right w-[25%]">Promedio General</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {promediosData.map((promedio, index) => (
+                      <TableRow key={index} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">{promedio.asignatura}</TableCell>
+                        <TableCell className="text-right">{promedio.cantidad_estudiantes}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {promedio.promedio_general}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
