@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 /* refactory */
@@ -24,9 +24,27 @@ import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hoo
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CursoApiResponseType } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getPromedioPorCurso } from "@/services/infoService";
+
+interface PromedioData {
+  curso: string;
+  asignatura: string;
+  cantidad_estudiantes: string;
+  promedio_general: string;
+}
 
 const AcademicoCursoAsignaturas: React.FC = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null);
+  const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
+  const [loadingPromedios, setLoadingPromedios] = useState(false);
 
   useEffect(() => {
     if (funcionarioCursos) {
@@ -39,7 +57,19 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     throw new Error("authToken is null");
   }
 
-
+  const handleOpenModal = async (cursoId: number) => {
+    setSelectedCursoId(cursoId);
+    setIsModalOpen(true);
+    setLoadingPromedios(true);
+    try {
+      const response = await getPromedioPorCurso(cursoId);
+      setPromediosData(response.data);
+    } catch (error) {
+      console.error("Error al cargar los promedios:", error);
+    } finally {
+      setLoadingPromedios(false);
+    }
+  };
 
   if (loading)
     return (
@@ -112,7 +142,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                      
+                        onClick={() => handleOpenModal(c.id)}
                         className="hover:bg-primary/10 hover:text-primary"
                       >
                         <svg
@@ -164,7 +194,41 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         </div>
       </div>
 
-    
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Promedios por Asignatura</DialogTitle>
+          </DialogHeader>
+          {loadingPromedios ? (
+            <div className="flex justify-center items-center py-8">
+              <Spinner />
+            </div>
+          ) : (
+            <div className="mt-4 overflow-auto flex-1">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="w-[50%]">Asignatura</TableHead>
+                    <TableHead className="text-right w-[25%]">Cantidad de Estudiantes</TableHead>
+                    <TableHead className="text-right w-[25%]">Promedio General</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {promediosData.map((promedio, index) => (
+                    <TableRow key={index} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{promedio.asignatura}</TableCell>
+                      <TableCell className="text-right">{promedio.cantidad_estudiantes}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {promedio.promedio_general}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
