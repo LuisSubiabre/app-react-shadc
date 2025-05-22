@@ -104,10 +104,7 @@ const data = {
           title: "Cursos",
           url: "/dashboard/academico/cursos",
         },
-        {
-          title: "Asignaturas",
-          url: "/dashboard/academico/asignaturas",
-        },
+   
         {
           title: "Calificaciones",
           url: "/dashboard/academico/notas",
@@ -115,6 +112,10 @@ const data = {
         {
           title: "Imprimir Libreta",
           url: "/dashboard/academico/imprimir-libreta",
+        },
+             {
+          title: "Promedios",
+          url: "/dashboard/academico/asignaturas",
         },
       ],
     },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 /* refactory */
@@ -6,7 +6,6 @@ import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts"; // Aseg
 /* refactory */
 
 import { AlertCircle } from "lucide-react";
-import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 import {
   Table,
   TableBody,
@@ -15,39 +14,47 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
-import { Curso } from "./types"; // Importa la interfaz desde el archivo types.ts
-import { User } from "@/app/dashboard/toor/usuarios/types"; // Importa la interfaz desde el archivo types.ts
-import { AsignaturaCurso } from "./types";
+
 
 import { Button } from "@/components/ui/button";
+
+import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
+import Spinner from "@/components/Spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CursoApiResponseType } from "@/types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { getPromedioPorCurso } from "@/services/infoService";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
-import { useFetch } from "@/hooks/useFetch"; // Importamos correctamente desde hooks
-import { API_BASE_URL } from "@/config/config";
-import Spinner from "@/components/Spinner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CursoApiResponseType } from "@/types";
+interface PromedioData {
+  curso: string;
+  asignatura: string;
+  cantidad_estudiantes: string;
+  promedio_general: string;
+}
+
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
 
 const AcademicoCursoAsignaturas: React.FC = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
+  const [loadingPromedios, setLoadingPromedios] = useState(false);
+  const [selectedCurso, setSelectedCurso] = useState<CursoApiResponseType | null>(null);
 
   useEffect(() => {
     if (funcionarioCursos) {
@@ -55,58 +62,98 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     }
   }, [funcionarioCursos]);
 
-  const [isModalSubjectsOpen, setIsModalSubjectsOpen] =
-    useState<boolean>(false);
-  const [isLoadingModal, setIsLoadingModal] = useState<boolean>(false);
-
-  const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
-  const [selectedSubject, setSelectedSubject] =
-    useState<AsignaturaCurso | null>(null);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
-  const [subjectsForCourse, setSubjectsForCourse] = useState<AsignaturaCurso[]>(
-    []
-  );
-  const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
-  const [totalEstudiantes, setTotalEstudiantes] = useState<number>(0);
-  const [enrolledStudents, setEnrolledStudents] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [confirmationData, setConfirmationData] = useState<{
-    show: boolean;
-    estudiante_id?: number;
-    asignatura_id?: number;
-  }>({ show: false });
-  //const { user } = useAuth() || {}; // Si es null, devuelve un objeto vacío
-  const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
-  /* token para enviar al backend */
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
     throw new Error("authToken is null");
   }
-  const token = getTokenFromContext.authToken;
-  const { toast } = useToast();
 
-  const { data: dataUsuarios } = useFetch<User[]>("usuarios", token); // Trae los datos de la API (usuarios)
+  const handleOpenModal = async (curso: CursoApiResponseType) => {
+    setSelectedCurso(curso);
+    setIsModalOpen(true);
+    setLoadingPromedios(true);
+    try {
+      const response = await getPromedioPorCurso(curso.id);
+      setPromediosData(response.data);
+    } catch (error) {
+      console.error("Error al cargar los promedios:", error);
+    } finally {
+      setLoadingPromedios(false);
+    }
+  };
 
-  useEffect(() => {
-    const loadEnrollments = async () => {
-      if (selectedSubject && Array.isArray(dataEstudiantes)) {
-        const enrollments: { [key: string]: boolean } = {};
+  const handleExportExcel = () => {
+    if (!promediosData.length || !selectedCurso) return;
 
-        for (const estudiante of dataEstudiantes) {
-          const isEnrolled = await checkStudentEnrollment(
-            estudiante.id,
-            selectedSubject.id
-          );
-          enrollments[`${estudiante.id}-${selectedSubject.id}`] = isEnrolled;
-        }
+    const excelData = promediosData.map((promedio) => ({
+      "Nombre del Curso": promedio.curso,
+      "Asignatura": promedio.asignatura,
+      "Cantidad de Estudiantes": promedio.cantidad_estudiantes,
+      "Promedio General": promedio.promedio_general,
+    }));
 
-        setEnrolledStudents(enrollments);
-      }
-    };
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
 
-    loadEnrollments();
-  }, [selectedSubject, dataEstudiantes]);
+    const colWidths = [
+      { wch: 30 }, // Nombre del Curso
+      { wch: 40 }, // Asignatura
+      { wch: 20 }, // Cantidad de Estudiantes
+      { wch: 20 }, // Promedio General
+    ];
+    ws["!cols"] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, "Promedios");
+    XLSX.writeFile(wb, `Promedios_${selectedCurso.nombre}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    if (!promediosData.length || !selectedCurso) return;
+
+    const doc = new jsPDF() as JsPDFWithAutoTable;
+
+    // Título
+    doc.setFontSize(16);
+    doc.text("Informe de Promedios", 14, 15);
+    doc.setFontSize(12);
+    doc.text(`Curso: ${selectedCurso.nombre}`, 14, 25);
+    doc.text(`Jefatura: ${selectedCurso.jefatura}`, 14, 32);
+    doc.text(`Fecha: ${format(new Date(), "dd-MM-yyyy")}`, 14, 39);
+
+    // Línea horizontal
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 45, 196, 45);
+
+    // Tabla de promedios
+    const tableData = promediosData.map((promedio) => [
+      promedio.asignatura,
+      promedio.cantidad_estudiantes,
+      promedio.promedio_general,
+    ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [["Asignatura", "Cantidad de Estudiantes", "Promedio General"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 100 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 45 },
+      },
+      didDrawPage: function (data) {
+        doc.setFontSize(10);
+        doc.text(
+          `Página ${data.pageNumber}`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 10
+        );
+      },
+    });
+
+    doc.save(`promedios-${selectedCurso.nombre.toLowerCase().replace(/\s+/g, "-")}.pdf`);
+  };
 
   if (loading)
     return (
@@ -126,262 +173,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       </div>
     ); // Mensaje de error al cargar los datos de la API
 
-  const handleAsignaturasClick = async (curso: Curso) => {
-    setIsModalSubjectsOpen(true);
-    setIsLoadingModal(true);
-    try {
-      // Cargar asignaturas
-      const response = await fetch(
-        `${API_BASE_URL}/asignaturascursos/curso/${curso.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) throw new Error("Error al cargar asignaturas");
-      const data = await response.json();
 
-      const mappedSubjects = data.data.map(
-        (item: {
-          asignatura_id: number;
-          asignatura_nombre: string;
-          asignatura_descripcion: string;
-          curso_id: number;
-          profesor_id: number;
-        }) => ({
-          id: item.asignatura_id,
-          nombre: item.asignatura_nombre,
-          descripcion: item.asignatura_descripcion,
-          curso_id: item.curso_id,
-          profesor_jefe_id: item.profesor_id,
-          inscritos: 0,
-        })
-      );
-
-      // Cargar estudiantes para contar inscritos
-      const estudiantesResponse = await fetch(
-        `${API_BASE_URL}/cursos/estudiantes/${curso.id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const estudiantesData = await estudiantesResponse.json();
-      const estudiantes = Array.isArray(estudiantesData)
-        ? estudiantesData.map((estudiante) => ({
-            ...estudiante,
-            id: estudiante.estudiante_id,
-          }))
-        : [];
-
-      setTotalEstudiantes(estudiantes.length);
-
-      // Contar inscritos para cada asignatura
-      const subjectsWithCount = await Promise.all(
-        mappedSubjects.map(async (subject: AsignaturaCurso) => {
-          let inscritosCount = 0;
-          for (const estudiante of estudiantes) {
-            const isEnrolled = await checkStudentEnrollment(
-              estudiante.id,
-              subject.id
-            );
-            if (isEnrolled) inscritosCount++;
-          }
-          return {
-            ...subject,
-            inscritos: inscritosCount,
-          };
-        })
-      );
-
-      setSubjectsForCourse(subjectsWithCount);
-      setCurrentCurso(curso);
-    } catch (error) {
-      console.error("Error:", error);
-      setSubjectsForCourse([]);
-    } finally {
-      setIsLoadingModal(false);
-    }
-  };
-
-  const handleSubjectSelect = async (asignatura: AsignaturaCurso) => {
-    setIsLoadingModal(true);
-    setSelectedSubject(asignatura);
-    setSelectedSubjectId(asignatura.id.toString());
-
-    try {
-      // Cargar estudiantes solo cuando se selecciona una asignatura
-      const estudiantesResponse = await fetch(
-        `${API_BASE_URL}/cursos/estudiantes/${asignatura.curso_id}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const estudiantesData = await estudiantesResponse.json();
-      const estudiantes = Array.isArray(estudiantesData)
-        ? estudiantesData.map((estudiante) => ({
-            ...estudiante,
-            id: estudiante.estudiante_id,
-          }))
-        : [];
-      setDataEstudiantes(estudiantes);
-
-      // Cargar inscripciones para la asignatura seleccionada
-      const enrollments: { [key: string]: boolean } = {};
-      let inscritosCount = 0;
-
-      for (const estudiante of estudiantes) {
-        const isEnrolled = await checkStudentEnrollment(
-          estudiante.id,
-          asignatura.id
-        );
-        enrollments[`${estudiante.id}-${asignatura.id}`] = isEnrolled;
-        if (isEnrolled) {
-          inscritosCount++;
-        }
-      }
-
-      setEnrolledStudents(enrollments);
-
-      // Actualizar el contador de inscritos en subjectsForCourse
-      setSubjectsForCourse((prevSubjects) =>
-        prevSubjects.map((subject) =>
-          subject.id === asignatura.id
-            ? { ...subject, inscritos: inscritosCount }
-            : subject
-        )
-      );
-    } catch (error) {
-      console.error("Error al cargar estudiantes:", error);
-      toast({
-        title: "Error",
-        description: "Error al cargar los estudiantes",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingModal(false);
-    }
-  };
-
-  const checkStudentEnrollment = async (
-    estudiante_id: number,
-    asignatura_id: number
-  ) => {
-    // console.log(estudiante_id, asignatura_id);
-    try {
-      setLoadingEstudiantes(true); // Inicia la carga
-      const response = await fetch(
-        `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return response.ok;
-    } catch (error) {
-      console.error("Error checking enrollment:", error);
-      return false;
-    } finally {
-      setLoadingEstudiantes(false); // Finaliza la carga
-    }
-  };
-
-  const handleStudentEnrollment = async (
-    estudiante_id: number,
-    asignatura_id: number,
-    isChecked: boolean
-  ) => {
-    try {
-      if (isChecked) {
-        // Enroll student
-        const response = await fetch(
-          `${API_BASE_URL}/estudiantes-asignaturas`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ estudiante_id, asignatura_id }),
-          }
-        );
-
-        if (!response.ok) throw new Error("Error al inscribir estudiante");
-      } else {
-        // Unenroll student
-        const response = await fetch(
-          `${API_BASE_URL}/estudiantes-asignaturas/${estudiante_id}/${asignatura_id}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) throw new Error("Error al desinscribir estudiante");
-      }
-
-      // Actualizar el estado manteniendo las inscripciones existentes
-      setEnrolledStudents((prev) => ({
-        ...prev,
-        [`${estudiante_id}-${asignatura_id}`]: isChecked,
-      }));
-
-      // Actualizar el contador de inscritos en subjectsForCourse
-      setSubjectsForCourse((prevSubjects) =>
-        prevSubjects.map((subject) =>
-          subject.id === asignatura_id
-            ? {
-                ...subject,
-                inscritos: isChecked
-                  ? (subject.inscritos || 0) + 1
-                  : (subject.inscritos || 1) - 1,
-              }
-            : subject
-        )
-      );
-
-      toast({
-        title: isChecked ? "Estudiante inscrito" : "Estudiante desinscrito",
-        description: isChecked
-          ? "El estudiante ha sido inscrito exitosamente"
-          : "El estudiante ha sido desinscrito exitosamente",
-      });
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Hubo un error al procesar la inscripción",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCheckboxChange = (
-    estudiante_id: number,
-    asignatura_id: number,
-    isChecked: boolean
-  ) => {
-    if (isChecked) {
-      // Si está marcando el checkbox, proceder normalmente
-      handleStudentEnrollment(estudiante_id, asignatura_id, true);
-    } else {
-      // Si está desmarcando, mostrar diálogo de confirmación
-      setConfirmationData({
-        show: true,
-        estudiante_id,
-        asignatura_id,
-      });
-    }
-  };
 
   return (
     <>
@@ -396,10 +188,10 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Gestión de Asignaturas
+              Promedios
             </h1>
             <p className="text-muted-foreground">
-              Administra las asignaturas por curso
+              Visualiza los promedios de asignaturas por curso
             </p>
           </div>
         </div>
@@ -434,7 +226,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleAsignaturasClick(c)}
+                        onClick={() => handleOpenModal(c)}
                         className="hover:bg-primary/10 hover:text-primary"
                       >
                         <svg
@@ -451,7 +243,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                             d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
                           />
                         </svg>
-                        Asignaturas
+                        Promedio Consolidado
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -486,350 +278,87 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal para gestión de asignaturas */}
-      <Dialog
-        open={isModalSubjectsOpen}
-        onOpenChange={(open) => {
-          // Solo permitir cerrar el modal si se hace clic en el botón de cerrar
-          if (!open) {
-            return;
-          }
-          setIsModalSubjectsOpen(open);
-        }}
-      >
-        <DialogContent className="max-w-4xl w-full [&>button]:hidden">
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              Gestión de Asignaturas - {currentCurso?.nombre}
-            </DialogTitle>
+            <DialogTitle>Promedios por Asignatura</DialogTitle>
           </DialogHeader>
-
-          <div className="grid gap-6 py-4">
-            {isLoadingModal ? (
-              <div className="flex justify-center items-center py-8">
-                <Spinner />
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">
-                    Seleccionar Asignatura
-                  </Label>
-                  <span className="text-sm text-muted-foreground">
-                    {subjectsForCourse.length} asignaturas disponibles
-                  </span>
-                </div>
-                <Select
-                  value={selectedSubjectId}
-                  onValueChange={(value) => {
-                    setSelectedSubjectId(value);
-                    const asignatura = subjectsForCourse.find(
-                      (a) => a.id.toString() === value
-                    );
-                    if (asignatura) handleSubjectSelect(asignatura);
-                  }}
+          {loadingPromedios ? (
+            <div className="flex justify-center items-center py-8">
+              <Spinner />
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2"
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccione una asignatura" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjectsForCourse.map((asignatura) => (
-                      <SelectItem
-                        key={asignatura.id}
-                        value={asignatura.id.toString()}
-                        className="flex flex-col items-start"
-                      >
-                        <span className="font-medium">
-                          {asignatura.nombre}{" "}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {asignatura.inscritos} inscritos •{" "}
-                          {totalEstudiantes - (asignatura.inscritos || 0)} no
-                          inscritos
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {selectedSubject && (
-                  <>
-                    <div className="grid gap-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">
-                          Profesor Asignatura
-                        </Label>
-                        <span className="text-sm text-muted-foreground">
-                          {dataEstudiantes.length} estudiantes en el curso
-                        </span>
-                      </div>
-                      <Select
-                        value={selectedSubject.profesor_jefe_id?.toString()}
-                        onValueChange={async (value) => {
-                          try {
-                            const response = await fetch(
-                              `${API_BASE_URL}/asignaturascursos/${selectedSubject.id}/${selectedSubject.curso_id}`,
-                              {
-                                method: "PUT",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                  Authorization: `Bearer ${token}`,
-                                },
-                                body: JSON.stringify({
-                                  profesor_id: parseInt(value),
-                                }),
-                              }
-                            );
-
-                            if (!response.ok)
-                              throw new Error("Error al actualizar profesor");
-
-                            setSubjectsForCourse((prevSubjects) =>
-                              prevSubjects.map((subject) =>
-                                subject.id === selectedSubject.id
-                                  ? {
-                                      ...subject,
-                                      profesor_jefe_id: parseInt(value),
-                                    }
-                                  : subject
-                              )
-                            );
-
-                            setSelectedSubject({
-                              ...selectedSubject,
-                              profesor_jefe_id: parseInt(value),
-                            });
-
-                            toast({
-                              title: "Éxito",
-                              description: "Profesor actualizado correctamente",
-                            });
-                          } catch (error) {
-                            console.error("Error:", error);
-                            toast({
-                              title: "Error",
-                              description: "Error al actualizar profesor",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Seleccione profesor jefe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dataUsuarios
-                            ?.filter((user) => user.activo)
-                            .map((profesor) => (
-                              <SelectItem
-                                key={profesor.id}
-                                value={profesor.id.toString()}
-                                className="flex flex-col items-start"
-                              >
-                                <span className="font-medium">
-                                  {profesor.nombre}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {profesor.email}
-                                </span>
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {loadingEstudiantes ? (
-                      <div className="flex justify-center items-center py-8">
-                        <Spinner />
-                      </div>
-                    ) : (
-                      <div className="grid gap-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium">
-                            Inscripción de Estudiantes
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                if (selectedSubject) {
-                                  const allSelected = dataEstudiantes.every(
-                                    (estudiante) =>
-                                      enrolledStudents[
-                                        `${estudiante.id}-${selectedSubject.id}`
-                                      ]
-                                  );
-
-                                  if (!allSelected) {
-                                    const updatedEnrolledStudents = {
-                                      ...enrolledStudents,
-                                    };
-
-                                    dataEstudiantes.forEach((estudiante) => {
-                                      updatedEnrolledStudents[
-                                        `${estudiante.id}-${selectedSubject.id}`
-                                      ] = true;
-                                    });
-
-                                    setEnrolledStudents(
-                                      updatedEnrolledStudents
-                                    );
-
-                                    dataEstudiantes.forEach((estudiante) => {
-                                      handleCheckboxChange(
-                                        estudiante.id,
-                                        selectedSubject.id,
-                                        true
-                                      );
-                                    });
-                                  }
-                                }
-                              }}
-                              className="flex items-center gap-2"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                />
-                              </svg>
-                              Seleccionar Todos
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 max-h-96 overflow-y-auto">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {Array.isArray(dataEstudiantes) &&
-                              dataEstudiantes.map((estudiante) => (
-                                <div
-                                  key={estudiante.id}
-                                  className="flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                  <div className="flex-shrink-0">
-                                    <input
-                                      type="checkbox"
-                                      id={`estudiante-${estudiante.id}`}
-                                      checked={
-                                        enrolledStudents[
-                                          `${estudiante.id}-${selectedSubject?.id}`
-                                        ] || false
-                                      }
-                                      onChange={(e) => {
-                                        if (selectedSubject) {
-                                          handleCheckboxChange(
-                                            estudiante.id,
-                                            selectedSubject.id,
-                                            e.target.checked
-                                          );
-                                        }
-                                      }}
-                                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                    />
-                                  </div>
-                                  <div className="flex-grow">
-                                    <label
-                                      htmlFor={`estudiante-${estudiante.id}`}
-                                      className="flex flex-col cursor-pointer"
-                                    >
-                                      <span className="font-medium text-sm">
-                                        {estudiante.nombre}
-                                      </span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        RUT: {estudiante.rut}
-                                      </span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        Lista: {estudiante.numlista}
-                                      </span>
-                                    </label>
-                                  </div>
-                                  <div className="flex-shrink-0">
-                                    {enrolledStudents[
-                                      `${estudiante.id}-${selectedSubject?.id}`
-                                    ] && (
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        Inscrito
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  Exportar a Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportPDF}
+                  className="flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                    />
+                  </svg>
+                  Exportar a PDF
+                </Button>
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsModalSubjectsOpen(false);
-                setSelectedSubject(null);
-                setSelectedSubjectId("");
-                setDataEstudiantes([]);
-                setEnrolledStudents({});
-                setTotalEstudiantes(0);
-                setIsLoadingModal(false);
-              }}
-            >
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* Modal de confirmación para desinscribir */}
-      <Dialog
-        open={confirmationData.show}
-        onOpenChange={(open) => setConfirmationData({ show: open })}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar desinscripción</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p>¿Está seguro de realizar esta acción?</p>
-            <p className="text-red-500">
-              Las calificaciones se eliminarán para el estudiante.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmationData({ show: false })}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (
-                  confirmationData.estudiante_id &&
-                  confirmationData.asignatura_id
-                ) {
-                  handleStudentEnrollment(
-                    confirmationData.estudiante_id,
-                    confirmationData.asignatura_id,
-                    false
-                  );
-                }
-                setConfirmationData({ show: false });
-              }}
-            >
-              Confirmar
-            </Button>
-          </DialogFooter>
+              <div className="mt-4 overflow-auto flex-1">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow>
+                      <TableHead className="w-[50%]">Asignatura</TableHead>
+                      <TableHead className="text-right w-[25%]">Cantidad de Estudiantes</TableHead>
+                      <TableHead className="text-right w-[25%]">Promedio General</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {promediosData.map((promedio, index) => (
+                      <TableRow key={index} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">{promedio.asignatura}</TableCell>
+                        <TableCell className="text-right">{promedio.cantidad_estudiantes}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {promedio.promedio_general}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
