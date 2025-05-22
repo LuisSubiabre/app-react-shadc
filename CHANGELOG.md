@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.9.2...v3.0.0) (2025-05-22)
+
+
+### Features
+
+* agregar funcionalidad para gestionar informes de personalidad, incluyendo carga, edición y guardado de datos, así como la visualización de información relevante en un modal. ([14250e1](https://github.com/LuisSubiabre/app-react-shadc/commit/14250e194f39257bad777ff5cf14239a7a363021))
+* agregar funcionalidades de exportación a Excel y PDF para los promedios de asignaturas, mejorando la visualización y accesibilidad de los datos. ([79a9507](https://github.com/LuisSubiabre/app-react-shadc/commit/79a9507f6ee9636f7c52cfa225bf9e79bc49f6b7))
+
 ### [2.9.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.9.1...v2.9.2) (2025-05-07)
 
 ### [2.9.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.9.0...v2.9.1) (2025-05-07)
