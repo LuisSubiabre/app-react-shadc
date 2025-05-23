@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.0.1...v3.1.0) (2025-05-23)
+
+
+### Features
+
+* agregar funcionalidad para mostrar promedios por estudiante en un modal, incluyendo la carga de datos y la agrupación por asignaturas, mejorando la visualización de los resultados académicos. ([58d47dc](https://github.com/LuisSubiabre/app-react-shadc/commit/58d47dc8e46b25cd0a31a0cb8b174ea0020d664d))
+* implementar ordenamiento y conversión de promedios a letras en la visualización de promedios por estudiante, además de agregar funcionalidad para exportar datos a Excel. ([4d187b1](https://github.com/LuisSubiabre/app-react-shadc/commit/4d187b187411f02bb6e467cbeee144858e2e1c6d))
+
 ### [3.0.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.0.0...v3.0.1) (2025-05-22)
 
 ## [3.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v2.9.2...v3.0.0) (2025-05-22)
