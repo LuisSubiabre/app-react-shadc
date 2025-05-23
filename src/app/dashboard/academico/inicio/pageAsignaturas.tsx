@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getPromedioPorCurso } from "@/services/infoService";
+import { getPromedioPorCurso, getPromedioPorAsignatura } from "@/services/infoService";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -43,6 +43,26 @@ interface PromedioData {
   promedio_general: string;
 }
 
+interface PromedioEstudianteData {
+  curso: string;
+  estudiante_nombre: string;
+  estudiante_rut: string;
+  asignatura: string;
+  indice: number;
+  promedio_asignatura: string;
+  promedio_general_estudiante: string;
+}
+
+interface PromedioEstudianteAgrupado {
+  curso: string;
+  estudiante_nombre: string;
+  estudiante_rut: string;
+  promedio_general_estudiante: string;
+  asignaturas: {
+    [key: string]: string;
+  };
+}
+
 interface JsPDFWithAutoTable extends jsPDF {
   lastAutoTable: {
     finalY: number;
@@ -52,8 +72,11 @@ interface JsPDFWithAutoTable extends jsPDF {
 const AcademicoCursoAsignaturas: React.FC = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalEstudiantesOpen, setIsModalEstudiantesOpen] = useState(false);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
+  const [promediosEstudiantesData, setPromediosEstudiantesData] = useState<PromedioEstudianteAgrupado[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
+  const [loadingPromediosEstudiantes, setLoadingPromediosEstudiantes] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<CursoApiResponseType | null>(null);
 
   useEffect(() => {
@@ -78,6 +101,44 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       console.error("Error al cargar los promedios:", error);
     } finally {
       setLoadingPromedios(false);
+    }
+  };
+
+  const handleOpenModalEstudiantes = async (curso: CursoApiResponseType) => {
+    setSelectedCurso(curso);
+    setIsModalEstudiantesOpen(true);
+    setLoadingPromediosEstudiantes(true);
+    try {
+      const response = await getPromedioPorAsignatura(curso.id);
+      const data = response.data as PromedioEstudianteData[];
+      
+      // Obtener todas las asignaturas únicas
+      const todasLasAsignaturas = Array.from(new Set(data.map(item => item.asignatura)));
+      
+      // Agrupar datos por estudiante
+      const estudiantesAgrupados = data.reduce((acc: { [key: string]: PromedioEstudianteAgrupado }, curr) => {
+        if (!acc[curr.estudiante_rut]) {
+          acc[curr.estudiante_rut] = {
+            curso: curr.curso,
+            estudiante_nombre: curr.estudiante_nombre,
+            estudiante_rut: curr.estudiante_rut,
+            promedio_general_estudiante: curr.promedio_general_estudiante,
+            asignaturas: {}
+          };
+          // Inicializar todas las asignaturas como vacías
+          todasLasAsignaturas.forEach(asignatura => {
+            acc[curr.estudiante_rut].asignaturas[asignatura] = "";
+          });
+        }
+        acc[curr.estudiante_rut].asignaturas[curr.asignatura] = curr.promedio_asignatura;
+        return acc;
+      }, {});
+
+      setPromediosEstudiantesData(Object.values(estudiantesAgrupados));
+    } catch (error) {
+      console.error("Error al cargar los promedios de estudiantes:", error);
+    } finally {
+      setLoadingPromediosEstudiantes(false);
     }
   };
 
@@ -223,28 +284,52 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       {c.jefatura}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenModal(c)}
-                        className="hover:bg-primary/10 hover:text-primary"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-4 h-4 mr-2"
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenModal(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
-                          />
-                        </svg>
-                        Promedio Consolidado
-                      </Button>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4 mr-2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                            />
+                          </svg>
+                          Promedio Consolidado
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenModalEstudiantes(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4 mr-2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+                            />
+                          </svg>
+                          Promedio Estudiantes
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -358,6 +443,54 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                 </Table>
               </div>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isModalEstudiantesOpen} onOpenChange={setIsModalEstudiantesOpen}>
+        <DialogContent className="max-w-6xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Promedios por Estudiante</DialogTitle>
+          </DialogHeader>
+          {loadingPromediosEstudiantes ? (
+            <div className="flex justify-center items-center py-8">
+              <Spinner />
+            </div>
+          ) : (
+            <div className="mt-4 overflow-auto flex-1">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="w-[200px]">Estudiante</TableHead>
+                    {promediosEstudiantesData.length > 0 && 
+                      Object.keys(promediosEstudiantesData[0].asignaturas).map((asignatura) => (
+                        <TableHead key={asignatura} className="text-right">
+                          {asignatura}
+                        </TableHead>
+                      ))
+                    }
+                    <TableHead className="text-right">Promedio General</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {promediosEstudiantesData.map((estudiante) => (
+                    <TableRow key={estudiante.estudiante_rut} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {estudiante.estudiante_nombre}
+                      </TableCell>
+                      {Object.entries(estudiante.asignaturas).map(([asignatura, promedio]) => (
+                        <TableCell key={asignatura} className="text-right">
+                          {promedio || "-"}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right font-medium">
+                        {estudiante.promedio_general_estudiante}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </DialogContent>
       </Dialog>
