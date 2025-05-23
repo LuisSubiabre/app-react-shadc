@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getPromedioPorCurso } from "@/services/infoService";
+import { getPromedioPorCurso, getPromedioPorAsignatura } from "@/services/infoService";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -41,7 +41,31 @@ interface PromedioData {
   asignatura: string;
   cantidad_estudiantes: string;
   promedio_general: string;
+  concepto?: boolean;
 }
+
+interface PromedioEstudianteData {
+  curso: string;
+  estudiante_nombre: string;
+  estudiante_rut: string;
+  asignatura: string;
+  indice: number;
+  promedio_asignatura: string;
+  promedio_general_estudiante: string;
+}
+
+interface PromedioEstudianteAgrupado {
+  curso: string;
+  estudiante_nombre: string;
+  estudiante_rut: string;
+  promedio_general_estudiante: string;
+  asignaturas: {
+    [key: string]: string;
+  };
+}
+
+type SortDirection = 'asc' | 'desc';
+type SortField = 'estudiante' | 'promedio_general' | string;
 
 interface JsPDFWithAutoTable extends jsPDF {
   lastAutoTable: {
@@ -52,9 +76,14 @@ interface JsPDFWithAutoTable extends jsPDF {
 const AcademicoCursoAsignaturas: React.FC = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalEstudiantesOpen, setIsModalEstudiantesOpen] = useState(false);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
+  const [promediosEstudiantesData, setPromediosEstudiantesData] = useState<PromedioEstudianteAgrupado[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
+  const [loadingPromediosEstudiantes, setLoadingPromediosEstudiantes] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<CursoApiResponseType | null>(null);
+  const [sortField, setSortField] = useState<SortField>('estudiante');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
     if (funcionarioCursos) {
@@ -67,17 +96,74 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     throw new Error("authToken is null");
   }
 
+  const convertirPromedioALetra = (promedio: string): string => {
+    const numPromedio = parseFloat(promedio);
+    if (isNaN(numPromedio)) return promedio;
+
+    if (numPromedio >= 70) return "MB";
+    if (numPromedio >= 50) return "B";
+    if (numPromedio >= 40) return "S";
+    if (numPromedio >= 30) return "I";
+    return promedio;
+  };
+
   const handleOpenModal = async (curso: CursoApiResponseType) => {
     setSelectedCurso(curso);
     setIsModalOpen(true);
     setLoadingPromedios(true);
     try {
       const response = await getPromedioPorCurso(curso.id);
-      setPromediosData(response.data);
+      const data = response.data as PromedioData[];
+      
+      // Convertir promedios a letras si tienen concepto
+      const dataConvertida = data.map(item => ({
+        ...item,
+        promedio_general: item.concepto ? convertirPromedioALetra(item.promedio_general) : item.promedio_general
+      }));
+
+      setPromediosData(dataConvertida);
     } catch (error) {
       console.error("Error al cargar los promedios:", error);
     } finally {
       setLoadingPromedios(false);
+    }
+  };
+
+  const handleOpenModalEstudiantes = async (curso: CursoApiResponseType) => {
+    setSelectedCurso(curso);
+    setIsModalEstudiantesOpen(true);
+    setLoadingPromediosEstudiantes(true);
+    try {
+      const response = await getPromedioPorAsignatura(curso.id);
+      const data = response.data as PromedioEstudianteData[];
+      
+      // Obtener todas las asignaturas únicas
+      const todasLasAsignaturas = Array.from(new Set(data.map(item => item.asignatura)));
+      
+      // Agrupar datos por estudiante
+      const estudiantesAgrupados = data.reduce((acc: { [key: string]: PromedioEstudianteAgrupado }, curr) => {
+        if (!acc[curr.estudiante_rut]) {
+          acc[curr.estudiante_rut] = {
+            curso: curr.curso,
+            estudiante_nombre: curr.estudiante_nombre,
+            estudiante_rut: curr.estudiante_rut,
+            promedio_general_estudiante: curr.promedio_general_estudiante,
+            asignaturas: {}
+          };
+          // Inicializar todas las asignaturas como vacías
+          todasLasAsignaturas.forEach(asignatura => {
+            acc[curr.estudiante_rut].asignaturas[asignatura] = "";
+          });
+        }
+        acc[curr.estudiante_rut].asignaturas[curr.asignatura] = curr.promedio_asignatura;
+        return acc;
+      }, {});
+
+      setPromediosEstudiantesData(Object.values(estudiantesAgrupados));
+    } catch (error) {
+      console.error("Error al cargar los promedios de estudiantes:", error);
+    } finally {
+      setLoadingPromediosEstudiantes(false);
     }
   };
 
@@ -155,6 +241,71 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     doc.save(`promedios-${selectedCurso.nombre.toLowerCase().replace(/\s+/g, "-")}.pdf`);
   };
 
+  const handleExportExcelEstudiantes = () => {
+    if (!promediosEstudiantesData.length || !selectedCurso) return;
+
+    // Preparar los datos para Excel
+    const excelData = promediosEstudiantesData.map((estudiante) => {
+      const rowData: any = {
+        "Estudiante": estudiante.estudiante_nombre,
+      };
+
+      // Agregar cada asignatura como una columna
+      Object.entries(estudiante.asignaturas).forEach(([asignatura, promedio]) => {
+        rowData[asignatura] = promedio || "-";
+      });
+
+      // Agregar el promedio general al final
+      rowData["Promedio General"] = estudiante.promedio_general_estudiante;
+
+      return rowData;
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Ajustar el ancho de las columnas
+    const colWidths = [
+      { wch: 40 }, // Estudiante
+      ...Object.keys(promediosEstudiantesData[0].asignaturas).map(() => ({ wch: 15 })), // Asignaturas
+      { wch: 15 }, // Promedio General
+    ];
+    ws["!cols"] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, "Promedios por Estudiante");
+    XLSX.writeFile(wb, `Promedios_Estudiantes_${selectedCurso.nombre}.xlsx`);
+  };
+
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedData = () => {
+    return [...promediosEstudiantesData].sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortField === 'estudiante') {
+        comparison = a.estudiante_nombre.localeCompare(b.estudiante_nombre);
+      } else if (sortField === 'promedio_general') {
+        const aValue = parseFloat(a.promedio_general_estudiante) || 0;
+        const bValue = parseFloat(b.promedio_general_estudiante) || 0;
+        comparison = aValue - bValue;
+      } else {
+        // Ordenar por asignatura específica
+        const aValue = parseFloat(a.asignaturas[sortField]) || 0;
+        const bValue = parseFloat(b.asignaturas[sortField]) || 0;
+        comparison = aValue - bValue;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  };
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-full w-2/5 mx-auto">
@@ -223,28 +374,52 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                       {c.jefatura}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenModal(c)}
-                        className="hover:bg-primary/10 hover:text-primary"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-4 h-4 mr-2"
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenModal(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
-                          />
-                        </svg>
-                        Promedio Consolidado
-                      </Button>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4 mr-2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                            />
+                          </svg>
+                          Promedio Consolidado
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenModalEstudiantes(c)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-4 h-4 mr-2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+                            />
+                          </svg>
+                          Promedio Estudiantes
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -351,6 +526,109 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         <TableCell className="text-right">{promedio.cantidad_estudiantes}</TableCell>
                         <TableCell className="text-right font-medium">
                           {promedio.promedio_general}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isModalEstudiantesOpen} onOpenChange={setIsModalEstudiantesOpen}>
+        <DialogContent className="max-w-6xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Promedios por Estudiante</DialogTitle>
+          </DialogHeader>
+          {loadingPromediosEstudiantes ? (
+            <div className="flex justify-center items-center py-8">
+              <Spinner />
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-end gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportExcelEstudiantes}
+                  className="flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  Exportar a Excel
+                </Button>
+              </div>
+              <div className="mt-4 overflow-auto flex-1">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow>
+                      <TableHead 
+                        className="w-[200px] cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('estudiante')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Estudiante
+                          {sortField === 'estudiante' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </TableHead>
+                      {promediosEstudiantesData.length > 0 && 
+                        Object.keys(promediosEstudiantesData[0].asignaturas).map((asignatura) => (
+                          <TableHead 
+                            key={asignatura} 
+                            className="text-right cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort(asignatura)}
+                          >
+                            <div className="flex items-center justify-end gap-2">
+                              {asignatura}
+                              {sortField === asignatura && (
+                                <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                              )}
+                            </div>
+                          </TableHead>
+                        ))
+                      }
+                      <TableHead 
+                        className="text-right cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('promedio_general')}
+                      >
+                        <div className="flex items-center justify-end gap-2">
+                          Promedio General
+                          {sortField === 'promedio_general' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getSortedData().map((estudiante) => (
+                      <TableRow key={estudiante.estudiante_rut} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
+                          {estudiante.estudiante_nombre}
+                        </TableCell>
+                        {Object.entries(estudiante.asignaturas).map(([asignatura, promedio]) => (
+                          <TableCell key={asignatura} className="text-right">
+                            {promedio || "-"}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right font-medium">
+                          {estudiante.promedio_general_estudiante}
                         </TableCell>
                       </TableRow>
                     ))}

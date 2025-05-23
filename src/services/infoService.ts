@@ -13,3 +13,6 @@ export const getUltimosRetirados = async () => {
 export const getPromedioPorCurso = async (curso_id: number) => {
   return api.get(`/info/promedioporcurso/${curso_id}`).then((response) => response);
 }
+export const getPromedioPorAsignatura = async (asignatura_id: number) => {
+  return api.get(`/info/pormedioporasignatura/${asignatura_id}`).then((response) => response);
+}
