@@ -32,6 +32,29 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { PDFDocument } from "pdf-lib";
+import { insertAccidente } from "@/services/inspectoriaService";
+import { HistorialAccidentes } from "@/components/HistorialAccidentes";
+
+// Función para calcular la edad
+const calcularEdad = (fechaNacimiento: string): number => {
+  const hoy = new Date();
+  const fechaNac = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - fechaNac.getFullYear();
+  const mesActual = hoy.getMonth();
+  const mesNacimiento = fechaNac.getMonth();
+  
+  if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNac.getDate())) {
+    edad--;
+  }
+  
+  return edad;
+};
+
+// Función para obtener el día de la semana
+const obtenerDiaSemana = (fecha: Date): string => {
+  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  return dias[fecha.getDay()];
+};
 
 interface EstudianteData {
   unico: number;
@@ -235,10 +258,53 @@ const PageAccidenteEscolar = () => {
   };
 
   const generarPDF = async () => {
-    if (!estudianteData) return;
+    if (!estudianteData || !selectedEstudiante) return;
 
     try {
-      // Usar una ruta que no requiera autenticación
+      console.log('Estudiante seleccionado:', selectedEstudiante); // Debug log
+
+      // Obtener el ID del estudiante y asegurarnos de que sea un número válido
+      const estudianteId = Number(selectedEstudiante.id || selectedEstudiante.estudiante_id);
+      
+      if (isNaN(estudianteId)) {
+        throw new Error('No se pudo obtener un ID válido del estudiante');
+      }
+
+      // Preparar los datos del accidente
+      const accidenteData = {
+        estudiante_id: estudianteId,
+        rut_estudiante: String(estudianteData.rutalum).trim(),
+        nombre_estudiante: `${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`.trim(),
+        fecha_nacimiento: estudianteData.fecnac,
+        edad: Number(estudianteData.edad_calculada),
+        sexo: String(estudianteData.sexo).trim(),
+        direccion: String(estudianteData.dirpar).trim(),
+        celular: String(estudianteData.celular || "").trim(),
+        curso: `${estudianteData.cursole} ${estudianteData.letra}`.trim(),
+        fecha_registro: new Date().toISOString().split('T')[0],
+        fecha_accidente: fechaAccidente.toISOString().split('T')[0],
+        hora_accidente: `${horaAccidente}:${minutoAccidente}`,
+        dia_semana: obtenerDiaSemana(fechaAccidente),
+        tipo_accidente: tipoAccidente,
+        horario: horario,
+        circunstancia: circunstanciaAccidente.trim(),
+        testigo1_nombre: (testigos[0]?.nombre || "").trim(),
+        testigo1_cedula: (testigos[0]?.cedula || "").trim(),
+        testigo2_nombre: (testigos[1]?.nombre || "").trim(),
+        testigo2_cedula: (testigos[1]?.cedula || "").trim()
+      } as const;
+
+      console.log('Datos a enviar:', accidenteData);
+
+      try {
+        // Enviar datos al backend
+        await insertAccidente(accidenteData);
+      } catch (error: any) {
+        console.error('Error al enviar datos al backend:', error.response?.data || error.message);
+        throw new Error('Error al guardar los datos del accidente. Por favor, intente nuevamente.');
+      }
+
+      // Continuar con la generación del PDF
       const response = await fetch(
         "/static/Declaracion-Individual-de-Accidente.pdf",
         {
@@ -694,14 +760,17 @@ const PageAccidenteEscolar = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRegistrarAccidente(estudiante)}
-                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                          >
-                            Registrar Accidente
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <HistorialAccidentes estudianteId={estudiante.id} />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRegistrarAccidente(estudiante)}
+                              className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                            >
+                              Registrar Accidente
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

@@ -42,6 +42,12 @@ export const insertAccidente = async (accidente: Accidente) => {
     .then((response) => response.data);
 };
 
+export const getAccidenteByEstudiante = async (estudiante_id: number) => {
+  return api
+    .get(`/accidentes/estudiante/${estudiante_id}`)
+    .then((response) => response.data);
+};
+
 // export const getAtrasosRangoFecha = async (fechaInicio: string, fechaFin: string) => {
 //   console.log("Llamando a getAtrasosRangoFecha con:", { fechaInicio, fechaFin });
   
