@@ -1,5 +1,28 @@
 import api from "../config/api.ts";
 
+interface Accidente {
+  estudiante_id: number;
+  rut_estudiante: string;
+  nombre_estudiante: string;
+  fecha_nacimiento: string;
+  edad: number;
+  sexo: string;
+  direccion: string;
+  celular: string;
+  curso: string;
+  fecha_registro: string;
+  fecha_accidente: string;
+  hora_accidente: string;
+  dia_semana: string;
+  tipo_accidente: string;
+  horario: string;
+  circunstancia: string;
+  testigo1_nombre: string;
+  testigo1_cedula: string;
+  testigo2_nombre: string;
+  testigo2_cedula: string;
+}
+
 // ** Rutas Públicas **
 
 // ** Rutas Privadas (requieren autenticación) **
@@ -10,6 +33,12 @@ export const getAsistencia = async (
 ) => {
   return api
     .get(`/asistencias/${estudiante_id}/${mes}/${anio}`)
+    .then((response) => response.data);
+};
+
+export const insertAccidente = async (accidente: Accidente) => {
+  return api
+    .post("/accidentes", accidente)
     .then((response) => response.data);
 };
 
