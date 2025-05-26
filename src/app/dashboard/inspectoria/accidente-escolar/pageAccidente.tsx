@@ -35,21 +35,6 @@ import { PDFDocument } from "pdf-lib";
 import { insertAccidente } from "@/services/inspectoriaService";
 import { HistorialAccidentes } from "@/components/HistorialAccidentes";
 
-// Función para calcular la edad
-const calcularEdad = (fechaNacimiento: string): number => {
-  const hoy = new Date();
-  const fechaNac = new Date(fechaNacimiento);
-  let edad = hoy.getFullYear() - fechaNac.getFullYear();
-  const mesActual = hoy.getMonth();
-  const mesNacimiento = fechaNac.getMonth();
-  
-  if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNac.getDate())) {
-    edad--;
-  }
-  
-  return edad;
-};
-
 // Función para obtener el día de la semana
 const obtenerDiaSemana = (fecha: Date): string => {
   const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -299,8 +284,11 @@ const PageAccidenteEscolar = () => {
       try {
         // Enviar datos al backend
         await insertAccidente(accidenteData);
-      } catch (error: any) {
-        console.error('Error al enviar datos al backend:', error.response?.data || error.message);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'Error al guardar los datos del accidente';
+        console.error('Error al enviar datos al backend:', errorMessage);
         throw new Error('Error al guardar los datos del accidente. Por favor, intente nuevamente.');
       }
 

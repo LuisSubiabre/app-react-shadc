@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getAccidenteByEstudiante } from "@/services/inspectoriaService";
+import { PDFDocument } from "pdf-lib";
 
 interface HistorialAccidentesProps {
   estudianteId: number | undefined;
@@ -23,8 +24,28 @@ interface HistorialAccidentesProps {
 
 interface Accidente {
   accidente_id: number;
+  estudiante_id: number;
+  rut_estudiante: string;
+  nombre_estudiante: string;
+  fecha_nacimiento: string;
+  edad: number;
+  sexo: string;
+  direccion: string;
+  celular: string;
+  curso: string;
   fecha_registro: string;
   fecha_accidente: string;
+  hora_accidente: string;
+  dia_semana: string;
+  tipo_accidente: string;
+  horario: string;
+  circunstancia: string;
+  testigo1_nombre: string;
+  testigo1_cedula: string;
+  testigo2_nombre: string;
+  testigo2_cedula: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) {
@@ -57,7 +78,6 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
     if (open) {
       cargarAccidentes();
     } else {
-      // Limpiar los datos cuando se cierra el modal
       setAccidentes([]);
       setError(null);
     }
@@ -67,14 +87,12 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
     if (!fecha) return 'Fecha no disponible';
     
     try {
-      // Crear la fecha y ajustar a la zona horaria local
       const fechaObj = new Date(fecha);
       
       if (isNaN(fechaObj.getTime())) {
         return 'Fecha inválida';
       }
 
-      // Obtener los componentes de la fecha en la zona horaria local
       const dia = fechaObj.getUTCDate().toString().padStart(2, '0');
       const mes = (fechaObj.getUTCMonth() + 1).toString().padStart(2, '0');
       const año = fechaObj.getUTCFullYear();
@@ -83,6 +101,299 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
     } catch (error) {
       console.error('Error al formatear fecha:', error);
       return 'Error en fecha';
+    }
+  };
+
+  const generarPDF = async (accidente: Accidente) => {
+    try {
+      // Cargar el PDF base
+      const response = await fetch(
+        "/static/Declaracion-Individual-de-Accidente.pdf",
+        {
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Error al cargar el PDF: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const pdfBytes = await response.arrayBuffer();
+
+      // Verificar que el PDF sea válido
+      if (pdfBytes.byteLength === 0) {
+        throw new Error("El archivo PDF está vacío");
+      }
+
+      // Cargar el PDF en pdf-lib
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const page = pdfDoc.getPages()[0];
+
+      // Información del curso
+      page.drawText(accidente.curso, {
+        x: 60,
+        y: 670,
+        size: 10,
+      });
+
+      // Nombre completo del estudiante
+      page.drawText(accidente.nombre_estudiante, {
+        x: 60,
+        y: 613,
+        size: 10,
+      });
+
+      // Dirección
+      page.drawText(accidente.direccion, {
+        x: 60,
+        y: 560,
+        size: 10,
+      });
+
+      // Sexo
+      const estudianteGenero = `${accidente.sexo === "M" ? "1" : "2"} `;
+      page.drawText(estudianteGenero, {
+        x: 422,
+        y: 600,
+        size: 8,
+      });
+
+      // Fecha de nacimiento
+      const fechaNacimiento = new Date(accidente.fecha_nacimiento);
+      const diaNac = fechaNacimiento.getUTCDate().toString().padStart(2, "0");
+      const mesNac = (fechaNacimiento.getUTCMonth() + 1).toString().padStart(2, "0");
+      const añoNac = fechaNacimiento.getUTCFullYear().toString();
+
+      page.drawText(diaNac, {
+        x: 450,
+        y: 600,
+        size: 8,
+      });
+
+      page.drawText("/", {
+        x: 462,
+        y: 600,
+        size: 8,
+      });
+
+      page.drawText(mesNac, {
+        x: 467,
+        y: 600,
+        size: 8,
+      });
+
+      page.drawText("/", {
+        x: 479,
+        y: 600,
+        size: 8,
+      });
+
+      page.drawText(añoNac, {
+        x: 484,
+        y: 600,
+        size: 8,
+      });
+
+      // Edad
+      page.drawText(accidente.edad.toString(), {
+        x: 512,
+        y: 600,
+        size: 8,
+      });
+
+      // Hora del accidente
+      const [hora, minuto] = accidente.hora_accidente.split(":");
+      const horaFormateada = hora.split("").join("   ");
+      const minutoFormateado = minuto.split("").join("   ");
+
+      page.drawText(horaFormateada, {
+        x: 65,
+        y: 480,
+        size: 10,
+      });
+
+      page.drawText(minutoFormateado, {
+        x: 90,
+        y: 480,
+        size: 10,
+      });
+
+      // Fecha del accidente
+      const fecha = new Date(accidente.fecha_accidente);
+      const dia = fecha.getUTCDate().toString().padStart(2, "0").split("").join("   ");
+      const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, "0").split("").join("   ");
+      const año = fecha.getUTCFullYear().toString();
+
+      page.drawText(dia, {
+        x: 270,
+        y: 480,
+        size: 10,
+      });
+
+      page.drawText(mes, {
+        x: 205,
+        y: 480,
+        size: 10,
+      });
+
+      page.drawText(año, {
+        x: 140,
+        y: 480,
+        size: 10,
+      });
+
+      // Fecha de Registro
+      const fechaReg = new Date(accidente.fecha_registro);
+      const diaReg = fechaReg.getUTCDate().toString().padStart(2, "0").split("").join("   ");
+      const mesReg = (fechaReg.getUTCMonth() + 1).toString().padStart(2, "0").split("").join("   ");
+      const añoReg = fechaReg.getUTCFullYear().toString();
+
+      page.drawText(diaReg, {
+        x: 330,
+        y: 655,
+        size: 10,
+      });
+
+      page.drawText(mesReg, {
+        x: 355,
+        y: 655,
+        size: 10,
+      });
+
+      page.drawText(añoReg, {
+        x: 390,
+        y: 655,
+        size: 10,
+      });
+
+      // Día semana accidente
+      const getNumeroDiaSemana = (dia: string): string => {
+        const map: { [key: string]: string } = {
+          Lunes: "1",
+          Martes: "2",
+          Miércoles: "3",
+          Jueves: "4",
+          Viernes: "5",
+          Sábado: "6",
+          Domingo: "7",
+        };
+        return map[dia] || "";
+      };
+
+      const getCodigoTipoAccidente = (tipo: string): string => {
+        const map: { [key: string]: string } = {
+          "De Trayecto": "1",
+          "En La escuela": "2",
+        };
+        return map[tipo] || "";
+      };
+
+      const numeroDiaSemana = getNumeroDiaSemana(accidente.dia_semana);
+      const codigoTipoAccidente = getCodigoTipoAccidente(accidente.tipo_accidente);
+
+      page.drawText(numeroDiaSemana, {
+        x: 135,
+        y: 430,
+        size: 10,
+      });
+
+      // Tipo de accidente
+      page.drawText(codigoTipoAccidente, {
+        x: 250,
+        y: 430,
+        size: 10,
+      });
+
+      // Horario
+      page.drawText(accidente.horario, {
+        x: 190,
+        y: 670,
+        size: 10,
+      });
+
+      // Testigos
+      if (accidente.testigo1_nombre) {
+        page.drawText(accidente.testigo1_nombre, {
+          x: 290,
+          y: 445,
+          size: 10,
+        });
+
+        if (accidente.testigo1_cedula) {
+          page.drawText(accidente.testigo1_cedula, {
+            x: 420,
+            y: 445,
+            size: 10,
+          });
+        }
+      }
+
+      if (accidente.testigo2_nombre) {
+        page.drawText(accidente.testigo2_nombre, {
+          x: 290,
+          y: 410,
+          size: 10,
+        });
+
+        if (accidente.testigo2_cedula) {
+          page.drawText(accidente.testigo2_cedula, {
+            x: 420,
+            y: 410,
+            size: 10,
+          });
+        }
+      }
+
+      // Circunstancia del accidente
+      const wrapText = (text: string, maxChars: number): string[] => {
+        const words = text.split(" ");
+        const lines: string[] = [];
+        let currentLine = "";
+
+        words.forEach((word) => {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          if (testLine.length <= maxChars) {
+            currentLine = testLine;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        return lines;
+      };
+
+      const lineasCircunstancia = wrapText(accidente.circunstancia, 75);
+      lineasCircunstancia.forEach((linea, index) => {
+        page.drawText(linea, {
+          x: 60,
+          y: 360 - index * 17,
+          size: 10,
+        });
+      });
+
+      // Guardar el PDF modificado
+      const modifiedPdfBytes = await pdfDoc.save();
+      const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Crear enlace y descargar
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Declaracion-Individual-de-Accidente-${accidente.nombre_estudiante}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error al modificar el PDF:", error);
     }
   };
 
@@ -119,6 +430,7 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
                   <TableHead>ID</TableHead>
                   <TableHead>Fecha Registro</TableHead>
                   <TableHead>Fecha Accidente</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -127,6 +439,15 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
                     <TableCell>{accidente.accidente_id}</TableCell>
                     <TableCell>{formatearFecha(accidente.fecha_registro)}</TableCell>
                     <TableCell>{formatearFecha(accidente.fecha_accidente)}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => generarPDF(accidente)}
+                      >
+                        Descargar PDF
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
