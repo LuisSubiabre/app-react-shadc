@@ -48,6 +48,12 @@ export const getAccidenteByEstudiante = async (estudiante_id: number) => {
     .then((response) => response.data);
 };
 
+export const deleteAccidente = async (accidente_id: number) => {
+  return api
+    .delete(`/accidentes/${accidente_id}`)
+    .then((response) => response.data);
+};
+
 // export const getAtrasosRangoFecha = async (fechaInicio: string, fechaFin: string) => {
 //   console.log("Llamando a getAtrasosRangoFecha con:", { fechaInicio, fechaFin });
   

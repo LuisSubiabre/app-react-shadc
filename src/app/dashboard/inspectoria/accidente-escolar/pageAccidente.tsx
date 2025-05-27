@@ -82,6 +82,7 @@ const PageAccidenteEscolar = () => {
   const [selectedEstudiante, setSelectedEstudiante] =
     useState<EstudianteType | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Nuevos estados para el formulario de accidente con valores por defecto
   const [fechaRegistro, setFechaRegistro] = useState<Date>(new Date());
@@ -246,7 +247,7 @@ const PageAccidenteEscolar = () => {
     if (!estudianteData || !selectedEstudiante) return;
 
     try {
-      console.log('Estudiante seleccionado:', selectedEstudiante); // Debug log
+      console.log('Estudiante seleccionado:', selectedEstudiante);
 
       // Obtener el ID del estudiante y asegurarnos de que sea un número válido
       const estudianteId = Number(selectedEstudiante.id || selectedEstudiante.estudiante_id);
@@ -567,8 +568,19 @@ const PageAccidenteEscolar = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+
+      // Cerrar el diálogo y mostrar mensaje de éxito
+      setIsDialogOpen(false);
+      setSuccessMessage("Archivo generado exitosamente");
+      
+      // Limpiar el mensaje de éxito después de 3 segundos
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+
     } catch (error) {
       console.error("Error al modificar el PDF:", error);
+      setErrorMessage("Error al generar el PDF. Por favor, intente nuevamente.");
     }
   };
 
@@ -584,6 +596,14 @@ const PageAccidenteEscolar = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-4 py-2 rounded-md shadow-md flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+          {successMessage}
+        </div>
+      )}
       <header className="flex h-16 shrink-0 items-center border-b bg-white dark:bg-gray-800">
         <div className="flex items-center gap-2 px-4">
           <Breadcrumbs />
@@ -807,29 +827,7 @@ const PageAccidenteEscolar = () => {
               Complete los datos del accidente escolar para generar el PDF
               correspondiente.
             </DialogDescription>
-            <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
-              <div className="flex items-start gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                  />
-                </svg>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  Atención: el archivo de Accidente Escolar solo es generado
-                  como archivo PDF, la información por el momento no queda
-                  almacenada para posterior recuperación.
-                </p>
-              </div>
-            </div>
+          
           </DialogHeader>
           {errorMessage ? (
             <div className="flex flex-col items-center justify-center py-8">

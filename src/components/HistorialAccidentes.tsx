@@ -15,8 +15,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAccidenteByEstudiante } from "@/services/inspectoriaService";
+import { getAccidenteByEstudiante, deleteAccidente } from "@/services/inspectoriaService";
 import { PDFDocument } from "pdf-lib";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface HistorialAccidentesProps {
   estudianteId: number | undefined;
@@ -53,6 +63,7 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accidenteAEliminar, setAccidenteAEliminar] = useState<number | null>(null);
 
   const cargarAccidentes = async () => {
     if (!estudianteId) {
@@ -397,12 +408,25 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
     }
   };
 
+  const handleEliminarAccidente = async (accidenteId: number) => {
+    try {
+      await deleteAccidente(accidenteId);
+      setAccidentes(accidentes.filter(acc => acc.accidente_id !== accidenteId));
+      setAccidenteAEliminar(null);
+    } catch (error) {
+      console.error("Error al eliminar el accidente:", error);
+      setError("Error al eliminar el accidente");
+    }
+  };
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="w-full"
+          size="sm"
+          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
           disabled={!estudianteId}
         >
           Historial
@@ -439,7 +463,7 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
                     <TableCell>{accidente.accidente_id}</TableCell>
                     <TableCell>{formatearFecha(accidente.fecha_registro)}</TableCell>
                     <TableCell>{formatearFecha(accidente.fecha_accidente)}</TableCell>
-                    <TableCell>
+                      <TableCell className="space-x-2">
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -447,6 +471,13 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
                       >
                         Descargar PDF
                       </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => setAccidenteAEliminar(accidente.accidente_id)}
+                        >
+                          Eliminar
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -456,5 +487,26 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
         </div>
       </DialogContent>
     </Dialog>
+
+      <AlertDialog open={accidenteAEliminar !== null} onOpenChange={() => setAccidenteAEliminar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el registro del accidente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => accidenteAEliminar && handleEliminarAccidente(accidenteAEliminar)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 } 
