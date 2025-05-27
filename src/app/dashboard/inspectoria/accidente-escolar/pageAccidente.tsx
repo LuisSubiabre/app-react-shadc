@@ -35,10 +35,29 @@ import { PDFDocument } from "pdf-lib";
 import { insertAccidente } from "@/services/inspectoriaService";
 import { HistorialAccidentes } from "@/components/HistorialAccidentes";
 
-// Función para obtener el día de la semana
-const obtenerDiaSemana = (fecha: Date): string => {
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  return dias[fecha.getDay()];
+
+
+// Función para obtener el número del día de la semana
+const getNumeroDiaSemana = (dia: string): string => {
+  const map: { [key: string]: string } = {
+    Lunes: "1",
+    Martes: "2",
+    Miercoles: "3",
+    Jueves: "4",
+    Viernes: "5",
+    Sabado: "6",
+    Domingo: "7",
+  };
+  return map[dia] || "";
+};
+
+// Función para obtener el código del tipo de accidente
+const getCodigoTipoAccidente = (tipo: string): string => {
+  const map: { [key: string]: string } = {
+    "De Trayecto": "1",
+    "En La escuela": "2",
+  };
+  return map[tipo] || "";
 };
 
 interface EstudianteData {
@@ -247,50 +266,56 @@ const PageAccidenteEscolar = () => {
     if (!estudianteData || !selectedEstudiante) return;
 
     try {
-      console.log('Estudiante seleccionado:', selectedEstudiante);
+      console.log("Estudiante seleccionado:", selectedEstudiante);
 
       // Obtener el ID del estudiante y asegurarnos de que sea un número válido
-      const estudianteId = Number(selectedEstudiante.id || selectedEstudiante.estudiante_id);
-      
+      const estudianteId = Number(
+        selectedEstudiante.id || selectedEstudiante.estudiante_id
+      );
+
       if (isNaN(estudianteId)) {
-        throw new Error('No se pudo obtener un ID válido del estudiante');
+        throw new Error("No se pudo obtener un ID válido del estudiante");
       }
 
       // Preparar los datos del accidente
       const accidenteData = {
         estudiante_id: estudianteId,
         rut_estudiante: String(estudianteData.rutalum).trim(),
-        nombre_estudiante: `${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`.trim(),
+        nombre_estudiante:
+          `${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`.trim(),
         fecha_nacimiento: estudianteData.fecnac,
         edad: Number(estudianteData.edad_calculada),
         sexo: String(estudianteData.sexo).trim(),
         direccion: String(estudianteData.dirpar).trim(),
         celular: String(estudianteData.celular || "").trim(),
         curso: `${estudianteData.cursole} ${estudianteData.letra}`.trim(),
-        fecha_registro: new Date().toISOString().split('T')[0],
-        fecha_accidente: fechaAccidente.toISOString().split('T')[0],
+        fecha_registro: new Date().toISOString().split("T")[0],
+        fecha_accidente: fechaAccidente.toISOString().split("T")[0],
         hora_accidente: `${horaAccidente}:${minutoAccidente}`,
-        dia_semana: obtenerDiaSemana(fechaAccidente),
+        dia_semana: diaSemanaAccidente,
         tipo_accidente: tipoAccidente,
         horario: horario,
         circunstancia: circunstanciaAccidente.trim(),
         testigo1_nombre: (testigos[0]?.nombre || "").trim(),
         testigo1_cedula: (testigos[0]?.cedula || "").trim(),
         testigo2_nombre: (testigos[1]?.nombre || "").trim(),
-        testigo2_cedula: (testigos[1]?.cedula || "").trim()
+        testigo2_cedula: (testigos[1]?.cedula || "").trim(),
       } as const;
 
-      console.log('Datos a enviar:', accidenteData);
+      console.log("Datos a enviar:", accidenteData);
 
       try {
         // Enviar datos al backend
         await insertAccidente(accidenteData);
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : 'Error al guardar los datos del accidente';
-        console.error('Error al enviar datos al backend:', errorMessage);
-        throw new Error('Error al guardar los datos del accidente. Por favor, intente nuevamente.');
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Error al guardar los datos del accidente";
+        console.error("Error al enviar datos al backend:", errorMessage);
+        throw new Error(
+          "Error al guardar los datos del accidente. Por favor, intente nuevamente."
+        );
       }
 
       // Continuar con la generación del PDF
@@ -421,7 +446,7 @@ const PageAccidenteEscolar = () => {
         y: 480,
         size: 10,
       });
-      console.log(selectedEstudiante);
+      //console.log(selectedEstudiante);
       // Fecha de Registro
       const fechaReg = new Date(fechaRegistro);
       // Ajustar la fecha para evitar problemas de zona horaria
@@ -460,27 +485,6 @@ const PageAccidenteEscolar = () => {
       });
 
       // Dia semana accidente
-      const getNumeroDiaSemana = (dia: string): string => {
-        const map: { [key: string]: string } = {
-          Lunes: "1",
-          Martes: "2",
-          Miércoles: "3",
-          Jueves: "4",
-          Viernes: "5",
-          Sábado: "6",
-          Domingo: "7",
-        };
-        return map[dia] || "";
-      };
-
-      const getCodigoTipoAccidente = (tipo: string): string => {
-        const map: { [key: string]: string } = {
-          "De Trayecto": "1",
-          "En La escuela": "2",
-        };
-        return map[tipo] || "";
-      };
-
       const numeroDiaSemana = getNumeroDiaSemana(diaSemanaAccidente);
       const codigoTipoAccidente = getCodigoTipoAccidente(tipoAccidente);
 
@@ -572,15 +576,16 @@ const PageAccidenteEscolar = () => {
       // Cerrar el diálogo y mostrar mensaje de éxito
       setIsDialogOpen(false);
       setSuccessMessage("Archivo generado exitosamente");
-      
+
       // Limpiar el mensaje de éxito después de 3 segundos
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
-
     } catch (error) {
       console.error("Error al modificar el PDF:", error);
-      setErrorMessage("Error al generar el PDF. Por favor, intente nuevamente.");
+      setErrorMessage(
+        "Error al generar el PDF. Por favor, intente nuevamente."
+      );
     }
   };
 
@@ -598,8 +603,19 @@ const PageAccidenteEscolar = () => {
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       {successMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-4 py-2 rounded-md shadow-md flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
           </svg>
           {successMessage}
         </div>
@@ -773,7 +789,9 @@ const PageAccidenteEscolar = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleRegistrarAccidente(estudiante)}
+                              onClick={() =>
+                                handleRegistrarAccidente(estudiante)
+                              }
                               className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                             >
                               Registrar Accidente
@@ -827,7 +845,6 @@ const PageAccidenteEscolar = () => {
               Complete los datos del accidente escolar para generar el PDF
               correspondiente.
             </DialogDescription>
-          
           </DialogHeader>
           {errorMessage ? (
             <div className="flex flex-col items-center justify-center py-8">
@@ -1023,10 +1040,10 @@ const PageAccidenteEscolar = () => {
                       <SelectContent>
                         <SelectItem value="Lunes">Lunes</SelectItem>
                         <SelectItem value="Martes">Martes</SelectItem>
-                        <SelectItem value="Miércoles">Miércoles</SelectItem>
+                        <SelectItem value="Miercoles">Miércoles</SelectItem>
                         <SelectItem value="Jueves">Jueves</SelectItem>
                         <SelectItem value="Viernes">Viernes</SelectItem>
-                        <SelectItem value="Sábado">Sábado</SelectItem>
+                        <SelectItem value="Sabado">Sábado</SelectItem>
                         <SelectItem value="Domingo">Domingo</SelectItem>
                       </SelectContent>
                     </Select>

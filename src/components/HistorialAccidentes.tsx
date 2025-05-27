@@ -283,25 +283,25 @@ export function HistorialAccidentes({ estudianteId }: HistorialAccidentesProps) 
       });
 
       // Día semana accidente
-      const getNumeroDiaSemana = (dia: string): string => {
-        const map: { [key: string]: string } = {
-          Lunes: "1",
-          Martes: "2",
-          Miércoles: "3",
-          Jueves: "4",
-          Viernes: "5",
-          Sábado: "6",
-          Domingo: "7",
-        };
-        return map[dia] || "";
-      };
-
       const getCodigoTipoAccidente = (tipo: string): string => {
         const map: { [key: string]: string } = {
           "De Trayecto": "1",
           "En La escuela": "2",
         };
         return map[tipo] || "";
+      };
+
+      const getNumeroDiaSemana = (dia: string): string => {
+        const map: { [key: string]: string } = {
+          "Lunes": "1",
+          "Martes": "2",
+          "Miercoles": "3",
+          "Jueves": "4",
+          "Viernes": "5",
+          "Sabado": "6",
+          "Domingo": "7"
+        };
+        return map[dia] || "";
       };
 
       const numeroDiaSemana = getNumeroDiaSemana(accidente.dia_semana);
