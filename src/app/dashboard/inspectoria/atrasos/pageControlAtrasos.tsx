@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/select";
 import { CursoApiResponseType, EstudianteType, Atraso } from "@/types";
 import { ModalAtrasos } from "@/components/atrasos/ModalAtrasos";
-
 import { Clock } from "lucide-react";
 import { getCursos } from "@/services/cursosService";
 import {
@@ -29,6 +28,12 @@ import {
   getEstudiantes,
 } from "@/services/estudiantesService";
 import { getAtrasosByEstudiante } from "@/services/atrasosService";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: typeof autoTable;
+}
 
 const PageControlAtrasos = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
@@ -175,6 +180,52 @@ const PageControlAtrasos = () => {
       // Si el término está en la misma posición, ordenar alfabéticamente
       return nombreANormalized.localeCompare(nombreBNormalized);
     });
+
+  const exportarPDFAtrasos = (
+    estudiante: EstudianteType,
+    atrasos: Atraso[]
+  ) => {
+    if (!estudiante || !atrasos || atrasos.length === 0) return;
+
+    const doc = new jsPDF() as JsPDFWithAutoTable;
+
+    // Título
+    doc.setFontSize(16);
+    doc.text("Historial de Atrasos", 14, 15);
+    doc.setFontSize(12);
+    doc.text(`Estudiante: ${estudiante.nombre}`, 14, 25);
+    doc.text(`RUT: ${estudiante.rut || "No disponible"}`, 14, 32);
+    doc.text(`Curso: ${estudiante.curso_nombre || "No disponible"}`, 14, 39);
+    doc.text(`Total Atrasos: ${atrasos.length}`, 14, 46);
+
+    // Tabla
+    const tableData = atrasos.map((atraso) => [
+      new Date(atraso.fecha).toLocaleDateString(),
+      atraso.hora,
+      atraso.tipo === "llegada" ? "Llegada" : "Jornada",
+      atraso.observaciones || "Sin observaciones",
+    ]);
+
+    autoTable(doc, {
+      startY: 51,
+      head: [["Fecha", "Hora", "Tipo", "Observaciones"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 90 },
+      },
+    });
+
+    // Guardar el PDF
+    doc.save(
+      `atrasos-${estudiante.nombre.toLowerCase().replace(/\s+/g, "-")}.pdf`
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -403,6 +454,9 @@ const PageControlAtrasos = () => {
         estudiante={selectedEstudiante}
         atrasos={atrasos}
         onAtrasosChange={handleAtrasosChange}
+        onExportPDF={() =>
+          selectedEstudiante && exportarPDFAtrasos(selectedEstudiante, atrasos)
+        }
       />
     </div>
   );
