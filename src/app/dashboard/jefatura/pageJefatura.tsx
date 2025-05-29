@@ -26,7 +26,10 @@ import { Atraso } from "@/types";
 import { ModalVerAsistencia } from "@/components/asistencia/ModalVerAsistencia";
 import { getAsistenciaEstudiante } from "@/services/asistenciaService";
 import { AsistenciaEstudiante } from "@/types/asistencia";
-import { getInformePersonalidad, updateInformePersonalidad } from "@/services/informePersonalidadService";
+import {
+  getInformePersonalidad,
+  updateInformePersonalidad,
+} from "@/services/informePersonalidadService";
 import { InformePersonalidad } from "@/types/informePersonalidad";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -42,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ModalVerNotas from "@/components/notas/ModalVerNotas";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -65,7 +69,7 @@ const FORMACION_ETICA_ITEMS = [
   "Respeta las normas de convivencia establecidas",
   "Respeta ideas y creencias distintas a las propias",
   "Es un alumno(a) solidario(a) y generoso(a) con los demás",
-  "Utiliza el diálogo como medio de resolución de conflictos"
+  "Utiliza el diálogo como medio de resolución de conflictos",
 ];
 
 const CRECIMIENTO_ITEMS = [
@@ -73,7 +77,7 @@ const CRECIMIENTO_ITEMS = [
   "Es responsable con los compromisos que adquiere",
   "Se preocupa por su higiene y presentación personal",
   "Reacciona positivamente frente a situaciones nuevas o conflictivas",
-  "Reconoce sus errores y trata de superarlos"
+  "Reconoce sus errores y trata de superarlos",
 ];
 
 const ENTORNO_ITEMS = [
@@ -83,7 +87,7 @@ const ENTORNO_ITEMS = [
   "Se ofrece voluntario(a) en las actividades a realizar",
   "Actúa con responsabilidad en el cuidado del medio ambiente",
   "Participa en actividades que el Liceo programa en la comunidad",
-  "Respeta las normas disciplinarias y seguridad vigentes en el Liceo"
+  "Respeta las normas disciplinarias y seguridad vigentes en el Liceo",
 ];
 
 const APRENDIZAJE_ITEMS = [
@@ -93,7 +97,7 @@ const APRENDIZAJE_ITEMS = [
   "Desarrolla al máximo sus capacidades",
   "Demuestra sentido de superación",
   "Participa activamente durante la clase y/o actividades",
-  "Asiste regularmente a rendir sus evaluaciones, en fecha indicada"
+  "Asiste regularmente a rendir sus evaluaciones, en fecha indicada",
 ];
 
 const CONDUCTAS_ITEMS = [
@@ -103,7 +107,7 @@ const CONDUCTAS_ITEMS = [
   "Aislamiento, soledad",
   "Episodios de ansiedad inmanejables",
   "Excesiva pasividad",
-  "Desinterés en labores académicas"
+  "Desinterés en labores académicas",
 ];
 
 const EVALUACION_OPTIONS = [
@@ -134,7 +138,9 @@ const PageJefatura = () => {
   const [loadingInforme, setLoadingInforme] = useState<number | null>(null);
   const [isModalInformeOpen, setIsModalInformeOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [informePersonalidadTemp, setInformePersonalidadTemp] = useState<InformePersonalidad | null>(null);
+  const [informePersonalidadTemp, setInformePersonalidadTemp] =
+    useState<InformePersonalidad | null>(null);
+  const [isModalNotasOpen, setIsModalNotasOpen] = useState(false);
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -386,11 +392,16 @@ const PageJefatura = () => {
 
   const handleSaveInforme = async () => {
     if (!informePersonalidadTemp) return;
-    
+
     setIsSaving(true);
     try {
-      const id = estudiantes.find(e => e.id === informePersonalidadTemp.estudiante_id)?.estudiante_id || informePersonalidadTemp.estudiante_id;
-      const updatedInforme = await updateInformePersonalidad(id, informePersonalidadTemp);
+      const id =
+        estudiantes.find((e) => e.id === informePersonalidadTemp.estudiante_id)
+          ?.estudiante_id || informePersonalidadTemp.estudiante_id;
+      const updatedInforme = await updateInformePersonalidad(
+        id,
+        informePersonalidadTemp
+      );
       setInformePersonalidadTemp(updatedInforme);
       toast({
         title: "Éxito",
@@ -408,12 +419,25 @@ const PageJefatura = () => {
     }
   };
 
-  const handleValueChange = (field: keyof InformePersonalidad, value: string) => {
+  const handleValueChange = (
+    field: keyof InformePersonalidad,
+    value: string
+  ) => {
     if (!informePersonalidadTemp) return;
     setInformePersonalidadTemp({
       ...informePersonalidadTemp,
-      [field]: value
+      [field]: value,
     });
+  };
+
+  const handleOpenModalNotas = (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalNotasOpen(true);
+  };
+
+  const handleCloseModalNotas = () => {
+    setIsModalNotasOpen(false);
+    setSelectedEstudiante(null);
   };
 
   if (loading) return <div>Cargando...</div>;
@@ -500,7 +524,14 @@ const PageJefatura = () => {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    {/* <BookOpenText /> */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenModalNotas(estudiante)}
+                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Button
@@ -547,46 +578,91 @@ const PageJefatura = () => {
               Informe de Personalidad
             </DialogTitle>
           </DialogHeader>
-          
+
           {informePersonalidadTemp && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Información General</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    Información General
+                  </h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Estudiante:</span> {informePersonalidadTemp.estudiante_nombre}</p>
-                    <p><span className="font-medium">Curso:</span> {informePersonalidadTemp.curso_nombre}</p>
-                    <p><span className="font-medium">Año:</span> {informePersonalidadTemp.anio}</p>
+                    <p>
+                      <span className="font-medium">Estudiante:</span>{" "}
+                      {informePersonalidadTemp.estudiante_nombre}
+                    </p>
+                    <p>
+                      <span className="font-medium">Curso:</span>{" "}
+                      {informePersonalidadTemp.curso_nombre}
+                    </p>
+                    <p>
+                      <span className="font-medium">Año:</span>{" "}
+                      {informePersonalidadTemp.anio}
+                    </p>
                   </div>
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Estado</h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Estado:</span> {informePersonalidadTemp.estado}</p>
-                    <p><span className="font-medium">Fecha Creación:</span> {new Date(informePersonalidadTemp.fecha_creacion).toLocaleDateString()}</p>
-                    <p><span className="font-medium">Última Actualización:</span> {new Date(informePersonalidadTemp.fecha_actualizacion).toLocaleDateString()}</p>
+                    <p>
+                      <span className="font-medium">Estado:</span>{" "}
+                      {informePersonalidadTemp.estado}
+                    </p>
+                    <p>
+                      <span className="font-medium">Fecha Creación:</span>{" "}
+                      {new Date(
+                        informePersonalidadTemp.fecha_creacion
+                      ).toLocaleDateString()}
+                    </p>
+                    <p>
+                      <span className="font-medium">Última Actualización:</span>{" "}
+                      {new Date(
+                        informePersonalidadTemp.fecha_actualizacion
+                      ).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">I. FORMACIÓN ÉTICA</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    I. FORMACIÓN ÉTICA
+                  </h3>
                   <div className="space-y-2">
                     {FORMACION_ETICA_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`formacion_etica_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`formacion_etica_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `formacion_etica_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `formacion_etica_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -599,22 +675,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
+                  </h3>
                   <div className="space-y-2">
                     {CRECIMIENTO_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`crecimiento_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`crecimiento_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `crecimiento_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `crecimiento_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -627,22 +724,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">III. LA PERSONA Y SU ENTORNO</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    III. LA PERSONA Y SU ENTORNO
+                  </h3>
                   <div className="space-y-2">
                     {ENTORNO_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`entorno_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`entorno_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `entorno_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `entorno_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -655,22 +773,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">IV. ÁREA DE APRENDIZAJE</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    IV. ÁREA DE APRENDIZAJE
+                  </h3>
                   <div className="space-y-2">
                     {APRENDIZAJE_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`aprendizaje_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`aprendizaje_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `aprendizaje_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `aprendizaje_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -683,22 +822,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">V. CONDUCTAS PREOCUPANTES</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    V. CONDUCTAS PREOCUPANTES
+                  </h3>
                   <div className="space-y-2">
                     {CONDUCTAS_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`conductas_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`conductas_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `conductas_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `conductas_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -716,12 +876,15 @@ const PageJefatura = () => {
                     <textarea
                       className="w-full min-h-[100px] p-2 border rounded-md"
                       value={informePersonalidadTemp.observaciones || ""}
-                      onChange={(e) => handleValueChange("observaciones", e.target.value)}
+                      onChange={(e) =>
+                        handleValueChange("observaciones", e.target.value)
+                      }
                       placeholder="Ingrese observaciones adicionales (máximo 250 caracteres)"
                       maxLength={250}
                     />
                     <p className="text-xs text-muted-foreground mt-2">
-                      {(informePersonalidadTemp.observaciones?.length || 0)}/250 caracteres
+                      {informePersonalidadTemp.observaciones?.length || 0}/250
+                      caracteres
                     </p>
                   </div>
                 </div>
@@ -734,10 +897,7 @@ const PageJefatura = () => {
                   >
                     Cancelar
                   </Button>
-                  <Button
-                    onClick={handleSaveInforme}
-                    disabled={isSaving}
-                  >
+                  <Button onClick={handleSaveInforme} disabled={isSaving}>
                     {isSaving ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     ) : null}
@@ -749,6 +909,12 @@ const PageJefatura = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ModalVerNotas
+        isOpen={isModalNotasOpen}
+        onClose={handleCloseModalNotas}
+        estudiante={selectedEstudiante}
+      />
     </>
   );
 };
