@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ModalVerNotas from "@/components/notas/ModalVerNotas";
+import { getPromedioPorCurso } from "@/services/infoService";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -58,6 +59,14 @@ interface TallerACLE {
 
 interface JsPDFWithAutoTable extends jsPDF {
   autoTable: typeof autoTable;
+}
+
+interface PromedioData {
+  curso: string;
+  asignatura: string;
+  cantidad_estudiantes: string;
+  promedio_general: string;
+  concepto?: boolean;
 }
 
 const FORMACION_ETICA_ITEMS = [
@@ -140,6 +149,9 @@ const PageJefatura = () => {
   const [informePersonalidadTemp, setInformePersonalidadTemp] =
     useState<InformePersonalidad | null>(null);
   const [isModalNotasOpen, setIsModalNotasOpen] = useState(false);
+  const [isModalPromediosOpen, setIsModalPromediosOpen] = useState(false);
+  const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
+  const [loadingPromedios, setLoadingPromedios] = useState(false);
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -439,6 +451,46 @@ const PageJefatura = () => {
     setSelectedEstudiante(null);
   };
 
+  const convertirPromedioALetra = (promedio: string): string => {
+    const numPromedio = parseFloat(promedio);
+    if (isNaN(numPromedio)) return promedio;
+
+    if (numPromedio >= 70) return "MB";
+    if (numPromedio >= 50) return "B";
+    if (numPromedio >= 40) return "S";
+    if (numPromedio >= 30) return "I";
+    return promedio;
+  };
+
+  const handleOpenModalPromedios = async () => {
+    if (!curso) return;
+    setIsModalPromediosOpen(true);
+    setLoadingPromedios(true);
+    try {
+      const response = await getPromedioPorCurso(curso.curso_id);
+      const data = response.data as PromedioData[];
+
+      // Convertir promedios a letras si tienen concepto
+      const dataConvertida = data.map((item) => ({
+        ...item,
+        promedio_general: item.concepto
+          ? convertirPromedioALetra(item.promedio_general)
+          : item.promedio_general,
+      }));
+
+      setPromediosData(dataConvertida);
+    } catch (error) {
+      console.error("Error al cargar los promedios:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los promedios",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPromedios(false);
+    }
+  };
+
   if (loading) return <div>Cargando...</div>;
 
   if (!curso)
@@ -466,10 +518,33 @@ const PageJefatura = () => {
             <h1 className="text-3xl font-bold tracking-tight">Jefatura</h1>
             <p className="text-muted-foreground mt-1">{curso?.curso_nombre}</p>
           </div>
-          <Button onClick={exportarACLEs} className="flex items-center gap-2">
-            <FileDown className="h-4 w-4" />
-            Exportar Listado ACLES
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleOpenModalPromedios}
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                />
+              </svg>
+              Promedios Consolidados
+            </Button>
+            <Button onClick={exportarACLEs} className="flex items-center gap-2">
+              <FileDown className="h-4 w-4" />
+              Exportar Listado ACLES
+            </Button>
+          </div>
         </div>
 
         {loadingEstudiantes && (
@@ -931,6 +1006,53 @@ const PageJefatura = () => {
         onClose={handleCloseModalNotas}
         estudiante={selectedEstudiante}
       />
+
+      <Dialog
+        open={isModalPromediosOpen}
+        onOpenChange={setIsModalPromediosOpen}
+      >
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Promedios por Asignatura</DialogTitle>
+          </DialogHeader>
+          {loadingPromedios ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="mt-4 overflow-auto flex-1">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="w-[50%]">Asignatura</TableHead>
+                    <TableHead className="text-right w-[25%]">
+                      Cantidad de Estudiantes
+                    </TableHead>
+                    <TableHead className="text-right w-[25%]">
+                      Promedio General
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {promediosData.map((promedio, index) => (
+                    <TableRow key={index} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {promedio.asignatura}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {promedio.cantidad_estudiantes}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {promedio.promedio_general}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
