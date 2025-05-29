@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Clock, Calendar, FileText } from "lucide-react";
+import { Clock, Calendar, FileText, BookOpen } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, FileDown } from "lucide-react";
 import { estudiantesCurso } from "@/services/estudiantesService";
@@ -530,7 +530,7 @@ const PageJefatura = () => {
                       onClick={() => handleOpenModalNotas(estudiante)}
                       className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                     >
-                      <FileText className="h-4 w-4" />
+                      <BookOpen className="h-4 w-4" />
                     </Button>
                   </TableCell>
                   <TableCell>
