@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -462,18 +461,24 @@ const PageJefatura = () => {
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Jefatura</h1>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Jefatura</h1>
+            <p className="text-muted-foreground mt-1">{curso?.curso_nombre}</p>
+          </div>
           <Button onClick={exportarACLEs} className="flex items-center gap-2">
             <FileDown className="h-4 w-4" />
-            Listado ACLES
+            Exportar Listado ACLES
           </Button>
         </div>
-        <h2>{curso?.curso_nombre}</h2>
 
-        {loadingEstudiantes && <div>Cargando...</div>}
+        {loadingEstudiantes && (
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
         {errorEstudiantes && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{errorEstudiantes}</AlertDescription>
@@ -481,77 +486,88 @@ const PageJefatura = () => {
         )}
 
         {!loadingEstudiantes && !errorEstudiantes && (
-          <Table>
-            <TableCaption>Lista de estudiantes</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>N°</TableHead>
-                <TableHead>Estudiante</TableHead>
-                <TableHead>RUN</TableHead>
-                <TableHead>Atrasos</TableHead>
-                <TableHead>Asistencia</TableHead>
-                <TableHead>Notas</TableHead>
-                <TableHead>Inf. Personalidad</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {estudiantes.map((estudiante: EstudianteType, index: number) => (
-                <TableRow key={estudiante.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    {estudiante.nombre} <br />{" "}
-                    <span className="text-xs">{estudiante.email}</span>
-                  </TableCell>
-                  <TableCell>{estudiante.rut}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenModal(estudiante)}
-                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                    >
-                      <Clock className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenModalAsistencia(estudiante)}
-                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                    >
-                      <Calendar className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenModalNotas(estudiante)}
-                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                    >
-                      <BookOpen className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleInformePersonalidad(estudiante)}
-                      disabled={loadingInforme === estudiante.id}
-                      className="hover:bg-primary/10 hover:text-primary"
-                    >
-                      {loadingInforme === estudiante.id ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      ) : (
-                        <FileText className="size-5" />
-                      )}
-                    </Button>
-                  </TableCell>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[50px]">N°</TableHead>
+                  <TableHead>Estudiante</TableHead>
+                  <TableHead>RUN</TableHead>
+                  <TableHead className="text-center">Atrasos</TableHead>
+                  <TableHead className="text-center">Asistencia</TableHead>
+                  <TableHead className="text-center">Notas</TableHead>
+                  <TableHead className="text-center">
+                    Inf. Personalidad
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {estudiantes.map(
+                  (estudiante: EstudianteType, index: number) => (
+                    <TableRow key={estudiante.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{estudiante.nombre}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {estudiante.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>{estudiante.rut}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModal(estudiante)}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          title="Ver atrasos"
+                        >
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModalAsistencia(estudiante)}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          title="Ver asistencia"
+                        >
+                          <Calendar className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModalNotas(estudiante)}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          title="Ver notas"
+                        >
+                          <BookOpen className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleInformePersonalidad(estudiante)}
+                          disabled={loadingInforme === estudiante.id}
+                          className="hover:bg-primary/10 hover:text-primary"
+                          title="Ver informe de personalidad"
+                        >
+                          {loadingInforme === estudiante.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          ) : (
+                            <FileText className="size-5" />
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </div>
 
