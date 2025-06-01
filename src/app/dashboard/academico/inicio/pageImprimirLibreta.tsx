@@ -135,9 +135,14 @@ const AcademicoImprimirLibreta: React.FC = () => {
           dataUsuarios.find((user) => user.id === curso.profesor_jefe_id)
             ?.nombre || "S/N",
       }));
-      setFuncionarioCursos(cursosActualizados);
+      const hayCambios = cursosActualizados.some(
+        (curso, index) => curso.jefatura !== funcionarioCursos[index].jefatura
+      );
+      if (hayCambios) {
+        setFuncionarioCursos(cursosActualizados);
+      }
     }
-  }, [funcionarioCursos, dataUsuarios]);
+  }, [dataUsuarios]);
 
   const handleEstudiantesClick = async (curso: Curso) => {
     setIsModalEstudiantesOpen(true);

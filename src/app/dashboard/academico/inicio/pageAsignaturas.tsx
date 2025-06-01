@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/table";
 import { Toaster } from "@/components/ui/toaster";
 
-
-
 import { Button } from "@/components/ui/button";
 
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
@@ -30,7 +28,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getPromedioPorCurso, getPromedioPorAsignatura } from "@/services/infoService";
+import {
+  getPromedioPorCurso,
+  getPromedioPorAsignatura,
+} from "@/services/infoService";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -64,8 +65,8 @@ interface PromedioEstudianteAgrupado {
   };
 }
 
-type SortDirection = 'asc' | 'desc';
-type SortField = 'estudiante' | 'promedio_general' | string;
+type SortDirection = "asc" | "desc";
+type SortField = "estudiante" | "promedio_general" | string;
 
 interface JsPDFWithAutoTable extends jsPDF {
   lastAutoTable: {
@@ -78,12 +79,16 @@ const AcademicoCursoAsignaturas: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalEstudiantesOpen, setIsModalEstudiantesOpen] = useState(false);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
-  const [promediosEstudiantesData, setPromediosEstudiantesData] = useState<PromedioEstudianteAgrupado[]>([]);
+  const [promediosEstudiantesData, setPromediosEstudiantesData] = useState<
+    PromedioEstudianteAgrupado[]
+  >([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
-  const [loadingPromediosEstudiantes, setLoadingPromediosEstudiantes] = useState(false);
-  const [selectedCurso, setSelectedCurso] = useState<CursoApiResponseType | null>(null);
-  const [sortField, setSortField] = useState<SortField>('estudiante');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [loadingPromediosEstudiantes, setLoadingPromediosEstudiantes] =
+    useState(false);
+  const [selectedCurso, setSelectedCurso] =
+    useState<CursoApiResponseType | null>(null);
+  const [sortField, setSortField] = useState<SortField>("estudiante");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   useEffect(() => {
     if (funcionarioCursos) {
@@ -114,11 +119,13 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     try {
       const response = await getPromedioPorCurso(curso.id);
       const data = response.data as PromedioData[];
-      
+
       // Convertir promedios a letras si tienen concepto
-      const dataConvertida = data.map(item => ({
+      const dataConvertida = data.map((item) => ({
         ...item,
-        promedio_general: item.concepto ? convertirPromedioALetra(item.promedio_general) : item.promedio_general
+        promedio_general: item.concepto
+          ? convertirPromedioALetra(item.promedio_general)
+          : item.promedio_general,
       }));
 
       setPromediosData(dataConvertida);
@@ -136,28 +143,34 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     try {
       const response = await getPromedioPorAsignatura(curso.id);
       const data = response.data as PromedioEstudianteData[];
-      
+
       // Obtener todas las asignaturas únicas
-      const todasLasAsignaturas = Array.from(new Set(data.map(item => item.asignatura)));
-      
+      const todasLasAsignaturas = Array.from(
+        new Set(data.map((item) => item.asignatura))
+      );
+
       // Agrupar datos por estudiante
-      const estudiantesAgrupados = data.reduce((acc: { [key: string]: PromedioEstudianteAgrupado }, curr) => {
-        if (!acc[curr.estudiante_rut]) {
-          acc[curr.estudiante_rut] = {
-            curso: curr.curso,
-            estudiante_nombre: curr.estudiante_nombre,
-            estudiante_rut: curr.estudiante_rut,
-            promedio_general_estudiante: curr.promedio_general_estudiante,
-            asignaturas: {}
-          };
-          // Inicializar todas las asignaturas como vacías
-          todasLasAsignaturas.forEach(asignatura => {
-            acc[curr.estudiante_rut].asignaturas[asignatura] = "";
-          });
-        }
-        acc[curr.estudiante_rut].asignaturas[curr.asignatura] = curr.promedio_asignatura;
-        return acc;
-      }, {});
+      const estudiantesAgrupados = data.reduce(
+        (acc: { [key: string]: PromedioEstudianteAgrupado }, curr) => {
+          if (!acc[curr.estudiante_rut]) {
+            acc[curr.estudiante_rut] = {
+              curso: curr.curso,
+              estudiante_nombre: curr.estudiante_nombre,
+              estudiante_rut: curr.estudiante_rut,
+              promedio_general_estudiante: curr.promedio_general_estudiante,
+              asignaturas: {},
+            };
+            // Inicializar todas las asignaturas como vacías
+            todasLasAsignaturas.forEach((asignatura) => {
+              acc[curr.estudiante_rut].asignaturas[asignatura] = "";
+            });
+          }
+          acc[curr.estudiante_rut].asignaturas[curr.asignatura] =
+            curr.promedio_asignatura;
+          return acc;
+        },
+        {}
+      );
 
       setPromediosEstudiantesData(Object.values(estudiantesAgrupados));
     } catch (error) {
@@ -172,7 +185,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
     const excelData = promediosData.map((promedio) => ({
       "Nombre del Curso": promedio.curso,
-      "Asignatura": promedio.asignatura,
+      Asignatura: promedio.asignatura,
       "Cantidad de Estudiantes": promedio.cantidad_estudiantes,
       "Promedio General": promedio.promedio_general,
     }));
@@ -238,7 +251,9 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       },
     });
 
-    doc.save(`promedios-${selectedCurso.nombre.toLowerCase().replace(/\s+/g, "-")}.pdf`);
+    doc.save(
+      `promedios-${selectedCurso.nombre.toLowerCase().replace(/\s+/g, "-")}.pdf`
+    );
   };
 
   const handleExportExcelEstudiantes = () => {
@@ -246,14 +261,16 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
     // Preparar los datos para Excel
     const excelData = promediosEstudiantesData.map((estudiante) => {
-      const rowData: any = {
-        "Estudiante": estudiante.estudiante_nombre,
+      const rowData: Record<string, string> = {
+        Estudiante: estudiante.estudiante_nombre,
       };
 
       // Agregar cada asignatura como una columna
-      Object.entries(estudiante.asignaturas).forEach(([asignatura, promedio]) => {
-        rowData[asignatura] = promedio || "-";
-      });
+      Object.entries(estudiante.asignaturas).forEach(
+        ([asignatura, promedio]) => {
+          rowData[asignatura] = promedio || "-";
+        }
+      );
 
       // Agregar el promedio general al final
       rowData["Promedio General"] = estudiante.promedio_general_estudiante;
@@ -267,7 +284,9 @@ const AcademicoCursoAsignaturas: React.FC = () => {
     // Ajustar el ancho de las columnas
     const colWidths = [
       { wch: 40 }, // Estudiante
-      ...Object.keys(promediosEstudiantesData[0].asignaturas).map(() => ({ wch: 15 })), // Asignaturas
+      ...Object.keys(promediosEstudiantesData[0].asignaturas).map(() => ({
+        wch: 15,
+      })), // Asignaturas
       { wch: 15 }, // Promedio General
     ];
     ws["!cols"] = colWidths;
@@ -278,20 +297,20 @@ const AcademicoCursoAsignaturas: React.FC = () => {
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const getSortedData = () => {
     return [...promediosEstudiantesData].sort((a, b) => {
       let comparison = 0;
-      
-      if (sortField === 'estudiante') {
+
+      if (sortField === "estudiante") {
         comparison = a.estudiante_nombre.localeCompare(b.estudiante_nombre);
-      } else if (sortField === 'promedio_general') {
+      } else if (sortField === "promedio_general") {
         const aValue = parseFloat(a.promedio_general_estudiante) || 0;
         const bValue = parseFloat(b.promedio_general_estudiante) || 0;
         comparison = aValue - bValue;
@@ -302,7 +321,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         comparison = aValue - bValue;
       }
 
-      return sortDirection === 'asc' ? comparison : -comparison;
+      return sortDirection === "asc" ? comparison : -comparison;
     });
   };
 
@@ -324,8 +343,6 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       </div>
     ); // Mensaje de error al cargar los datos de la API
 
-
-
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -338,9 +355,7 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Promedios
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Promedios</h1>
             <p className="text-muted-foreground">
               Visualiza los promedios de asignaturas por curso
             </p>
@@ -515,15 +530,23 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                   <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
                       <TableHead className="w-[50%]">Asignatura</TableHead>
-                      <TableHead className="text-right w-[25%]">Cantidad de Estudiantes</TableHead>
-                      <TableHead className="text-right w-[25%]">Promedio General</TableHead>
+                      <TableHead className="text-right w-[25%]">
+                        Cantidad de Estudiantes
+                      </TableHead>
+                      <TableHead className="text-right w-[25%]">
+                        Promedio General
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {promediosData.map((promedio, index) => (
                       <TableRow key={index} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">{promedio.asignatura}</TableCell>
-                        <TableCell className="text-right">{promedio.cantidad_estudiantes}</TableCell>
+                        <TableCell className="font-medium">
+                          {promedio.asignatura}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {promedio.cantidad_estudiantes}
+                        </TableCell>
                         <TableCell className="text-right font-medium">
                           {promedio.promedio_general}
                         </TableCell>
@@ -537,7 +560,10 @@ const AcademicoCursoAsignaturas: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isModalEstudiantesOpen} onOpenChange={setIsModalEstudiantesOpen}>
+      <Dialog
+        open={isModalEstudiantesOpen}
+        onOpenChange={setIsModalEstudiantesOpen}
+      >
         <DialogContent className="max-w-6xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Promedios por Estudiante</DialogTitle>
@@ -576,41 +602,44 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                 <Table>
                   <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
-                      <TableHead 
+                      <TableHead
                         className="w-[200px] cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('estudiante')}
+                        onClick={() => handleSort("estudiante")}
                       >
                         <div className="flex items-center gap-2">
                           Estudiante
-                          {sortField === 'estudiante' && (
-                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          {sortField === "estudiante" && (
+                            <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
                           )}
                         </div>
                       </TableHead>
-                      {promediosEstudiantesData.length > 0 && 
-                        Object.keys(promediosEstudiantesData[0].asignaturas).map((asignatura) => (
-                          <TableHead 
-                            key={asignatura} 
+                      {promediosEstudiantesData.length > 0 &&
+                        Object.keys(
+                          promediosEstudiantesData[0].asignaturas
+                        ).map((asignatura) => (
+                          <TableHead
+                            key={asignatura}
                             className="text-right cursor-pointer hover:bg-muted/50"
                             onClick={() => handleSort(asignatura)}
                           >
                             <div className="flex items-center justify-end gap-2">
                               {asignatura}
                               {sortField === asignatura && (
-                                <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                                <span>
+                                  {sortDirection === "asc" ? "↑" : "↓"}
+                                </span>
                               )}
                             </div>
                           </TableHead>
-                        ))
-                      }
-                      <TableHead 
+                        ))}
+                      <TableHead
                         className="text-right cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('promedio_general')}
+                        onClick={() => handleSort("promedio_general")}
                       >
                         <div className="flex items-center justify-end gap-2">
                           Promedio General
-                          {sortField === 'promedio_general' && (
-                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          {sortField === "promedio_general" && (
+                            <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
                           )}
                         </div>
                       </TableHead>
@@ -618,15 +647,20 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {getSortedData().map((estudiante) => (
-                      <TableRow key={estudiante.estudiante_rut} className="hover:bg-muted/50">
+                      <TableRow
+                        key={estudiante.estudiante_rut}
+                        className="hover:bg-muted/50"
+                      >
                         <TableCell className="font-medium">
                           {estudiante.estudiante_nombre}
                         </TableCell>
-                        {Object.entries(estudiante.asignaturas).map(([asignatura, promedio]) => (
-                          <TableCell key={asignatura} className="text-right">
-                            {promedio || "-"}
-                          </TableCell>
-                        ))}
+                        {Object.entries(estudiante.asignaturas).map(
+                          ([asignatura, promedio]) => (
+                            <TableCell key={asignatura} className="text-right">
+                              {promedio || "-"}
+                            </TableCell>
+                          )
+                        )}
                         <TableCell className="text-right font-medium">
                           {estudiante.promedio_general_estudiante}
                         </TableCell>

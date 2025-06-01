@@ -5,13 +5,12 @@ import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Clock, Calendar, FileText } from "lucide-react";
+import { Clock, Calendar, FileText, BookOpen } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, FileDown } from "lucide-react";
 import { estudiantesCurso } from "@/services/estudiantesService";
@@ -26,7 +25,10 @@ import { Atraso } from "@/types";
 import { ModalVerAsistencia } from "@/components/asistencia/ModalVerAsistencia";
 import { getAsistenciaEstudiante } from "@/services/asistenciaService";
 import { AsistenciaEstudiante } from "@/types/asistencia";
-import { getInformePersonalidad, updateInformePersonalidad } from "@/services/informePersonalidadService";
+import {
+  getInformePersonalidad,
+  updateInformePersonalidad,
+} from "@/services/informePersonalidadService";
 import { InformePersonalidad } from "@/types/informePersonalidad";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -42,6 +44,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ModalVerNotas from "@/components/notas/ModalVerNotas";
+import { getPromedioPorCurso } from "@/services/infoService";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -57,6 +61,14 @@ interface JsPDFWithAutoTable extends jsPDF {
   autoTable: typeof autoTable;
 }
 
+interface PromedioData {
+  curso: string;
+  asignatura: string;
+  cantidad_estudiantes: string;
+  promedio_general: string;
+  concepto?: boolean;
+}
+
 const FORMACION_ETICA_ITEMS = [
   "Es responsable con sus tareas, trabajos y demás obligaciones escolares.",
   "Asiste a clases en forma puntual y constante",
@@ -65,7 +77,7 @@ const FORMACION_ETICA_ITEMS = [
   "Respeta las normas de convivencia establecidas",
   "Respeta ideas y creencias distintas a las propias",
   "Es un alumno(a) solidario(a) y generoso(a) con los demás",
-  "Utiliza el diálogo como medio de resolución de conflictos"
+  "Utiliza el diálogo como medio de resolución de conflictos",
 ];
 
 const CRECIMIENTO_ITEMS = [
@@ -73,7 +85,7 @@ const CRECIMIENTO_ITEMS = [
   "Es responsable con los compromisos que adquiere",
   "Se preocupa por su higiene y presentación personal",
   "Reacciona positivamente frente a situaciones nuevas o conflictivas",
-  "Reconoce sus errores y trata de superarlos"
+  "Reconoce sus errores y trata de superarlos",
 ];
 
 const ENTORNO_ITEMS = [
@@ -83,7 +95,7 @@ const ENTORNO_ITEMS = [
   "Se ofrece voluntario(a) en las actividades a realizar",
   "Actúa con responsabilidad en el cuidado del medio ambiente",
   "Participa en actividades que el Liceo programa en la comunidad",
-  "Respeta las normas disciplinarias y seguridad vigentes en el Liceo"
+  "Respeta las normas disciplinarias y seguridad vigentes en el Liceo",
 ];
 
 const APRENDIZAJE_ITEMS = [
@@ -93,7 +105,7 @@ const APRENDIZAJE_ITEMS = [
   "Desarrolla al máximo sus capacidades",
   "Demuestra sentido de superación",
   "Participa activamente durante la clase y/o actividades",
-  "Asiste regularmente a rendir sus evaluaciones, en fecha indicada"
+  "Asiste regularmente a rendir sus evaluaciones, en fecha indicada",
 ];
 
 const CONDUCTAS_ITEMS = [
@@ -103,7 +115,7 @@ const CONDUCTAS_ITEMS = [
   "Aislamiento, soledad",
   "Episodios de ansiedad inmanejables",
   "Excesiva pasividad",
-  "Desinterés en labores académicas"
+  "Desinterés en labores académicas",
 ];
 
 const EVALUACION_OPTIONS = [
@@ -134,7 +146,12 @@ const PageJefatura = () => {
   const [loadingInforme, setLoadingInforme] = useState<number | null>(null);
   const [isModalInformeOpen, setIsModalInformeOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [informePersonalidadTemp, setInformePersonalidadTemp] = useState<InformePersonalidad | null>(null);
+  const [informePersonalidadTemp, setInformePersonalidadTemp] =
+    useState<InformePersonalidad | null>(null);
+  const [isModalNotasOpen, setIsModalNotasOpen] = useState(false);
+  const [isModalPromediosOpen, setIsModalPromediosOpen] = useState(false);
+  const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
+  const [loadingPromedios, setLoadingPromedios] = useState(false);
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -386,11 +403,16 @@ const PageJefatura = () => {
 
   const handleSaveInforme = async () => {
     if (!informePersonalidadTemp) return;
-    
+
     setIsSaving(true);
     try {
-      const id = estudiantes.find(e => e.id === informePersonalidadTemp.estudiante_id)?.estudiante_id || informePersonalidadTemp.estudiante_id;
-      const updatedInforme = await updateInformePersonalidad(id, informePersonalidadTemp);
+      const id =
+        estudiantes.find((e) => e.id === informePersonalidadTemp.estudiante_id)
+          ?.estudiante_id || informePersonalidadTemp.estudiante_id;
+      const updatedInforme = await updateInformePersonalidad(
+        id,
+        informePersonalidadTemp
+      );
       setInformePersonalidadTemp(updatedInforme);
       toast({
         title: "Éxito",
@@ -408,12 +430,65 @@ const PageJefatura = () => {
     }
   };
 
-  const handleValueChange = (field: keyof InformePersonalidad, value: string) => {
+  const handleValueChange = (
+    field: keyof InformePersonalidad,
+    value: string
+  ) => {
     if (!informePersonalidadTemp) return;
     setInformePersonalidadTemp({
       ...informePersonalidadTemp,
-      [field]: value
+      [field]: value,
     });
+  };
+
+  const handleOpenModalNotas = (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalNotasOpen(true);
+  };
+
+  const handleCloseModalNotas = () => {
+    setIsModalNotasOpen(false);
+    setSelectedEstudiante(null);
+  };
+
+  const convertirPromedioALetra = (promedio: string): string => {
+    const numPromedio = parseFloat(promedio);
+    if (isNaN(numPromedio)) return promedio;
+
+    if (numPromedio >= 70) return "MB";
+    if (numPromedio >= 50) return "B";
+    if (numPromedio >= 40) return "S";
+    if (numPromedio >= 30) return "I";
+    return promedio;
+  };
+
+  const handleOpenModalPromedios = async () => {
+    if (!curso) return;
+    setIsModalPromediosOpen(true);
+    setLoadingPromedios(true);
+    try {
+      const response = await getPromedioPorCurso(curso.curso_id);
+      const data = response.data as PromedioData[];
+
+      // Convertir promedios a letras si tienen concepto
+      const dataConvertida = data.map((item) => ({
+        ...item,
+        promedio_general: item.concepto
+          ? convertirPromedioALetra(item.promedio_general)
+          : item.promedio_general,
+      }));
+
+      setPromediosData(dataConvertida);
+    } catch (error) {
+      console.error("Error al cargar los promedios:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los promedios",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPromedios(false);
+    }
   };
 
   if (loading) return <div>Cargando...</div>;
@@ -438,18 +513,47 @@ const PageJefatura = () => {
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Jefatura</h1>
-          <Button onClick={exportarACLEs} className="flex items-center gap-2">
-            <FileDown className="h-4 w-4" />
-            Listado ACLES
-          </Button>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Jefatura</h1>
+            <p className="text-muted-foreground mt-1">{curso?.curso_nombre}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleOpenModalPromedios}
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                />
+              </svg>
+              Promedios Consolidados
+            </Button>
+            <Button onClick={exportarACLEs} className="flex items-center gap-2">
+              <FileDown className="h-4 w-4" />
+              Exportar Listado ACLES
+            </Button>
+          </div>
         </div>
-        <h2>{curso?.curso_nombre}</h2>
 
-        {loadingEstudiantes && <div>Cargando...</div>}
+        {loadingEstudiantes && (
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
         {errorEstudiantes && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{errorEstudiantes}</AlertDescription>
@@ -457,70 +561,88 @@ const PageJefatura = () => {
         )}
 
         {!loadingEstudiantes && !errorEstudiantes && (
-          <Table>
-            <TableCaption>Lista de estudiantes</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>N°</TableHead>
-                <TableHead>Estudiante</TableHead>
-                <TableHead>RUN</TableHead>
-                <TableHead>Atrasos</TableHead>
-                <TableHead>Asistencia</TableHead>
-                <TableHead>Notas</TableHead>
-                <TableHead>Inf. Personalidad</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {estudiantes.map((estudiante: EstudianteType, index: number) => (
-                <TableRow key={estudiante.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    {estudiante.nombre} <br />{" "}
-                    <span className="text-xs">{estudiante.email}</span>
-                  </TableCell>
-                  <TableCell>{estudiante.rut}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenModal(estudiante)}
-                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                    >
-                      <Clock className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleOpenModalAsistencia(estudiante)}
-                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                    >
-                      <Calendar className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    {/* <BookOpenText /> */}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleInformePersonalidad(estudiante)}
-                      disabled={loadingInforme === estudiante.id}
-                      className="hover:bg-primary/10 hover:text-primary"
-                    >
-                      {loadingInforme === estudiante.id ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      ) : (
-                        <FileText className="size-5" />
-                      )}
-                    </Button>
-                  </TableCell>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[50px]">N°</TableHead>
+                  <TableHead>Estudiante</TableHead>
+                  <TableHead>RUN</TableHead>
+                  <TableHead className="text-center">Atrasos</TableHead>
+                  <TableHead className="text-center">Asistencia</TableHead>
+                  <TableHead className="text-center">Notas</TableHead>
+                  <TableHead className="text-center">
+                    Inf. Personalidad
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {estudiantes.map(
+                  (estudiante: EstudianteType, index: number) => (
+                    <TableRow key={estudiante.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{estudiante.nombre}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {estudiante.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>{estudiante.rut}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModal(estudiante)}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          title="Ver atrasos"
+                        >
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModalAsistencia(estudiante)}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          title="Ver asistencia"
+                        >
+                          <Calendar className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModalNotas(estudiante)}
+                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          title="Ver notas"
+                        >
+                          <BookOpen className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleInformePersonalidad(estudiante)}
+                          disabled={loadingInforme === estudiante.id}
+                          className="hover:bg-primary/10 hover:text-primary"
+                          title="Ver informe de personalidad"
+                        >
+                          {loadingInforme === estudiante.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          ) : (
+                            <FileText className="size-5" />
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </div>
 
@@ -547,46 +669,91 @@ const PageJefatura = () => {
               Informe de Personalidad
             </DialogTitle>
           </DialogHeader>
-          
+
           {informePersonalidadTemp && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Información General</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    Información General
+                  </h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Estudiante:</span> {informePersonalidadTemp.estudiante_nombre}</p>
-                    <p><span className="font-medium">Curso:</span> {informePersonalidadTemp.curso_nombre}</p>
-                    <p><span className="font-medium">Año:</span> {informePersonalidadTemp.anio}</p>
+                    <p>
+                      <span className="font-medium">Estudiante:</span>{" "}
+                      {informePersonalidadTemp.estudiante_nombre}
+                    </p>
+                    <p>
+                      <span className="font-medium">Curso:</span>{" "}
+                      {informePersonalidadTemp.curso_nombre}
+                    </p>
+                    <p>
+                      <span className="font-medium">Año:</span>{" "}
+                      {informePersonalidadTemp.anio}
+                    </p>
                   </div>
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Estado</h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Estado:</span> {informePersonalidadTemp.estado}</p>
-                    <p><span className="font-medium">Fecha Creación:</span> {new Date(informePersonalidadTemp.fecha_creacion).toLocaleDateString()}</p>
-                    <p><span className="font-medium">Última Actualización:</span> {new Date(informePersonalidadTemp.fecha_actualizacion).toLocaleDateString()}</p>
+                    <p>
+                      <span className="font-medium">Estado:</span>{" "}
+                      {informePersonalidadTemp.estado}
+                    </p>
+                    <p>
+                      <span className="font-medium">Fecha Creación:</span>{" "}
+                      {new Date(
+                        informePersonalidadTemp.fecha_creacion
+                      ).toLocaleDateString()}
+                    </p>
+                    <p>
+                      <span className="font-medium">Última Actualización:</span>{" "}
+                      {new Date(
+                        informePersonalidadTemp.fecha_actualizacion
+                      ).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">I. FORMACIÓN ÉTICA</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    I. FORMACIÓN ÉTICA
+                  </h3>
                   <div className="space-y-2">
                     {FORMACION_ETICA_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`formacion_etica_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`formacion_etica_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `formacion_etica_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `formacion_etica_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -599,22 +766,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
+                  </h3>
                   <div className="space-y-2">
                     {CRECIMIENTO_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`crecimiento_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`crecimiento_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `crecimiento_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `crecimiento_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -627,22 +815,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">III. LA PERSONA Y SU ENTORNO</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    III. LA PERSONA Y SU ENTORNO
+                  </h3>
                   <div className="space-y-2">
                     {ENTORNO_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`entorno_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`entorno_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `entorno_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `entorno_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -655,22 +864,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">IV. ÁREA DE APRENDIZAJE</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    IV. ÁREA DE APRENDIZAJE
+                  </h3>
                   <div className="space-y-2">
                     {APRENDIZAJE_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`aprendizaje_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`aprendizaje_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `aprendizaje_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `aprendizaje_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -683,22 +913,43 @@ const PageJefatura = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">V. CONDUCTAS PREOCUPANTES</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    V. CONDUCTAS PREOCUPANTES
+                  </h3>
                   <div className="space-y-2">
                     {CONDUCTAS_ITEMS.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
                           <Select
-                            defaultValue={informePersonalidadTemp[`conductas_${index + 1}` as keyof InformePersonalidad] as string}
-                            onValueChange={(value) => handleValueChange(`conductas_${index + 1}` as keyof InformePersonalidad, value)}
+                            defaultValue={
+                              informePersonalidadTemp[
+                                `conductas_${
+                                  index + 1
+                                }` as keyof InformePersonalidad
+                              ] as string
+                            }
+                            onValueChange={(value) =>
+                              handleValueChange(
+                                `conductas_${
+                                  index + 1
+                                }` as keyof InformePersonalidad,
+                                value
+                              )
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccione una opción" />
                             </SelectTrigger>
                             <SelectContent>
                               {EVALUACION_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -716,12 +967,15 @@ const PageJefatura = () => {
                     <textarea
                       className="w-full min-h-[100px] p-2 border rounded-md"
                       value={informePersonalidadTemp.observaciones || ""}
-                      onChange={(e) => handleValueChange("observaciones", e.target.value)}
+                      onChange={(e) =>
+                        handleValueChange("observaciones", e.target.value)
+                      }
                       placeholder="Ingrese observaciones adicionales (máximo 250 caracteres)"
                       maxLength={250}
                     />
                     <p className="text-xs text-muted-foreground mt-2">
-                      {(informePersonalidadTemp.observaciones?.length || 0)}/250 caracteres
+                      {informePersonalidadTemp.observaciones?.length || 0}/250
+                      caracteres
                     </p>
                   </div>
                 </div>
@@ -734,10 +988,7 @@ const PageJefatura = () => {
                   >
                     Cancelar
                   </Button>
-                  <Button
-                    onClick={handleSaveInforme}
-                    disabled={isSaving}
-                  >
+                  <Button onClick={handleSaveInforme} disabled={isSaving}>
                     {isSaving ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     ) : null}
@@ -745,6 +996,59 @@ const PageJefatura = () => {
                   </Button>
                 </div>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <ModalVerNotas
+        isOpen={isModalNotasOpen}
+        onClose={handleCloseModalNotas}
+        estudiante={selectedEstudiante}
+      />
+
+      <Dialog
+        open={isModalPromediosOpen}
+        onOpenChange={setIsModalPromediosOpen}
+      >
+        <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Promedios por Asignatura</DialogTitle>
+          </DialogHeader>
+          {loadingPromedios ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="mt-4 overflow-auto flex-1">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="w-[50%]">Asignatura</TableHead>
+                    <TableHead className="text-right w-[25%]">
+                      Cantidad de Estudiantes
+                    </TableHead>
+                    <TableHead className="text-right w-[25%]">
+                      Promedio General
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {promediosData.map((promedio, index) => (
+                    <TableRow key={index} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {promedio.asignatura}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {promedio.cantidad_estudiantes}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {promedio.promedio_general}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </DialogContent>

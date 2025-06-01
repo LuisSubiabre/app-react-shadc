@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.1.0...v3.2.0) (2025-06-01)
+
+
+### Features
+
+* add PDF generation for accident reports in HistorialAccidentes component ([3a4dade](https://github.com/LuisSubiabre/app-react-shadc/commit/3a4dadedbb879d4ad51666dc47d4d58c91568fb5))
+* agregar componente HistorialAccidentes y funciones para calcular edad y día de la semana, mejorando la gestión y visualización de datos de accidentes escolares. ([4b516c8](https://github.com/LuisSubiabre/app-react-shadc/commit/4b516c894934aa5946c1840568749eee83ff7bef))
+* agregar funcionalidad de exportación a PDF en el componente PageControlAtrasos ([0ae1c36](https://github.com/LuisSubiabre/app-react-shadc/commit/0ae1c365ea8c03121a3f27552567c39885fefb00))
+* agregar funcionalidad para eliminar accidentes en el componente HistorialAccidentes ([db72f38](https://github.com/LuisSubiabre/app-react-shadc/commit/db72f38d4dc45f824c794dad2e88c9d6f127bfca))
+* agregar funcionalidad para mostrar promedios consolidados en el componente PageJefatura ([c7452ba](https://github.com/LuisSubiabre/app-react-shadc/commit/c7452bac5fa09df71c0c044143c168ca6d1f91c9))
+* agregar ícono de libro abierto en el componente PageJefatura ([d4f38c8](https://github.com/LuisSubiabre/app-react-shadc/commit/d4f38c8f3bddf163653f5efeaf2a6a6509b5ee45))
+* agregar interfaz y funcionalidad para insertar accidentes en el servicio de inspectoria, mejorando la gestión de datos de incidentes. ([14cf79b](https://github.com/LuisSubiabre/app-react-shadc/commit/14cf79b7ff78434a95f5a823f0bae105c50beb24))
+* agregar modal para visualizar notas de estudiantes y mejorar la gestión de informes de personalidad ([8de08b0](https://github.com/LuisSubiabre/app-react-shadc/commit/8de08b09f4740683f571e6be37c3f82fe8168988))
+* mejorar diseño y funcionalidad en el componente PageJefatura ([da0e957](https://github.com/LuisSubiabre/app-react-shadc/commit/da0e957e7949d66c9cd139f50715b5dbb7fb68e1))
+* optimizar la actualización de cursos en el componente AcademicoImprimirLibreta ([ec6a1cc](https://github.com/LuisSubiabre/app-react-shadc/commit/ec6a1cc10ca8d3a370f1db48a2ba9cf65289fc6c))
+* refactor funciones para obtener día de la semana y código de tipo de accidente en el componente PageAccidenteEscolar ([76b5259](https://github.com/LuisSubiabre/app-react-shadc/commit/76b52591d4d2ab34fee644fef0e44e9fbf28f21a))
+* refactorizar y mejorar la legibilidad del componente PageAsignaturas ([72bc58c](https://github.com/LuisSubiabre/app-react-shadc/commit/72bc58c362919b86a3924a3cb47af6128a1fc391))
+
 ## [3.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.0.1...v3.1.0) (2025-05-23)
 
 

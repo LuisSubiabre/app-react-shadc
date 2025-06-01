@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { EstudianteType, Atraso } from "@/types";
 import { format } from "date-fns";
 import { createAtraso, deleteAtraso } from "@/services/atrasosService";
-import { Trash2 } from "lucide-react";
+import { Trash2, Download } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,7 @@ interface ModalAtrasosProps {
   estudiante: EstudianteType | null;
   atrasos: Atraso[];
   onAtrasosChange: () => void;
+  onExportPDF: () => void;
 }
 
 export function ModalAtrasos({
@@ -34,6 +35,7 @@ export function ModalAtrasos({
   estudiante,
   atrasos,
   onAtrasosChange,
+  onExportPDF,
 }: ModalAtrasosProps) {
   const [fecha, setFecha] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [hora, setHora] = useState(format(new Date(), "HH:mm"));
@@ -125,7 +127,12 @@ export function ModalAtrasos({
                 </div>
                 <div className="grid gap-2">
                   <label htmlFor="tipo">Tipo de Atraso</label>
-                  <Select value={tipo} onValueChange={(value: "llegada" | "jornada") => setTipo(value)}>
+                  <Select
+                    value={tipo}
+                    onValueChange={(value: "llegada" | "jornada") =>
+                      setTipo(value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
@@ -161,7 +168,8 @@ export function ModalAtrasos({
                         {formatearFecha(atraso.fecha)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Hora: {atraso.hora} - Tipo: {atraso.tipo === "llegada" ? "Llegada" : "Jornada"}
+                        Hora: {atraso.hora} - Tipo:{" "}
+                        {atraso.tipo === "llegada" ? "Llegada" : "Jornada"}
                       </p>
                       {atraso.observaciones && (
                         <p className="text-sm text-muted-foreground mt-1">
@@ -189,7 +197,15 @@ export function ModalAtrasos({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={onExportPDF}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exportar PDF
+          </Button>
           <Button variant="outline" onClick={onClose}>
             Cerrar
           </Button>
