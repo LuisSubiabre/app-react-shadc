@@ -236,17 +236,17 @@ const PageInformes = () => {
       y += 4;
     });
 
-    // OBSERVACIONES
-    if (informe.observaciones) {
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(41, 128, 185);
-      doc.text("OBSERVACIONES", 20, y + 3);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
-      y += 9;
+    // VI. COMENTARIOS
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+    doc.text("VI. OBSERVACIONES", 20, y + 3);
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    y += 9;
 
+    if (informe.observaciones) {
       const observaciones = doc.splitTextToSize(informe.observaciones, 170);
       doc.text(observaciones, 25, y);
       y += observaciones.length * 4;
@@ -257,45 +257,56 @@ const PageInformes = () => {
     doc.setLineWidth(0.5);
 
     // Línea izquierda (Profesor Jefe)
-    doc.line(20, 230, 100, 230);
+    doc.line(20, y + 20, 100, y + 20);
     doc.setFontSize(7);
     const nombreProfesor = cursoSeleccionado?.jefatura || "Profesor Jefe";
     const anchoProfesor = doc.getTextWidth(nombreProfesor);
     const xProfesor = 20 + (80 - anchoProfesor) / 2;
-    doc.text(nombreProfesor, xProfesor, 235);
+    doc.text(nombreProfesor, xProfesor, y + 25);
 
     doc.setFontSize(6);
     const textoProfesor = "PROFESOR JEFE";
     const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
     const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
-    doc.text(textoProfesor, xTextoProfesor, 240);
+    doc.text(textoProfesor, xTextoProfesor, y + 30);
 
     // Línea derecha (Director)
-    doc.line(110, 230, 190, 230);
-
-    // Agregar imagen de firma
-    const firmaUrl =
-      "https://res.cloudinary.com/dx219dazh/image/upload/v1746451823/varios/zrnowutpg5fgaijjxkpm.png";
-    const firmaWidth = 50;
-    const firmaHeight = 15;
-    doc.addImage(firmaUrl, "PNG", 120, 215, firmaWidth, firmaHeight);
+    doc.line(110, y + 20, 190, y + 20);
 
     doc.setFontSize(7);
-    const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
+    const nombreDirector =
+      cursoSeleccionado?.id &&
+      cursoSeleccionado.id >= 22 &&
+      cursoSeleccionado.id <= 33
+        ? "MAVIS OYARZÚN"
+        : cursoSeleccionado?.id &&
+          cursoSeleccionado.id >= 6 &&
+          cursoSeleccionado.id <= 21
+        ? "MARIBEL MANSILLA"
+        : "ORIENTADOR(A)";
     const anchoDirector = doc.getTextWidth(nombreDirector);
     const xDirector = 110 + (80 - anchoDirector) / 2;
-    doc.text(nombreDirector, xDirector, 235);
+    doc.text(nombreDirector, xDirector, y + 25);
 
     doc.setFontSize(6);
-    const textoDirector = "Orientación";
+    const textoDirector =
+      cursoSeleccionado?.id &&
+      cursoSeleccionado.id >= 22 &&
+      cursoSeleccionado.id <= 33
+        ? "ORIENTACIÓN E.M."
+        : cursoSeleccionado?.id &&
+          cursoSeleccionado.id >= 6 &&
+          cursoSeleccionado.id <= 21
+        ? "ORIENTACIÓN E.G.B."
+        : "ORIENTACIÓN";
     const anchoTextoDirector = doc.getTextWidth(textoDirector);
     const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
-    doc.text(textoDirector, xTextoDirector, 240);
+    doc.text(textoDirector, xTextoDirector, y + 30);
 
     // Pie de página
     doc.setFontSize(6);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Impreso el: ${fecha}`, 20, 250);
+    doc.text(`Impreso el: ${fecha}`, 20, y + 40);
 
     return informe.estudiante_nombre;
   };
