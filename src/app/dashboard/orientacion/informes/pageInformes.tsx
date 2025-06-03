@@ -23,6 +23,8 @@ import { CursoApiResponseType, EstudianteType } from "@/types";
 import { estudiantesCurso } from "@/services/estudiantesService";
 import { getInformePersonalidad } from "@/services/informePersonalidadService";
 import { jsPDF } from "jspdf";
+import { autoTable } from "jspdf-autotable";
+import { InformePersonalidad } from "@/types/informePersonalidad";
 
 const FORMACION_ETICA_ITEMS = [
   "Es responsable con sus tareas, trabajos y demás obligaciones escolares.",
@@ -73,6 +75,10 @@ const CONDUCTAS_ITEMS = [
   "Desinterés en labores académicas",
 ];
 
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: typeof autoTable;
+}
+
 const PageInformes = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
   const [isEstudiantesModalOpen, setIsEstudiantesModalOpen] =
@@ -109,130 +115,207 @@ const PageInformes = () => {
     }
   };
 
+  const generarPDFInformeEstudiante = async (
+    informe: InformePersonalidad,
+    doc: jsPDF,
+    fecha: string
+  ) => {
+    // Agregar logo
+    const logoUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
+    const logoWidth = 50;
+    const logoHeight = 15;
+    doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
+
+    // Establecer fuente y colores
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+
+    // Nombre de la institución
+    doc.setFontSize(12);
+    doc.text("Liceo Experimental UMAG", 80, 20);
+
+    // Título principal
+    doc.setFontSize(16);
+    doc.text("Informe de Personalidad", 105, 30, { align: "center" });
+
+    // Línea decorativa superior
+    doc.setDrawColor(41, 128, 185);
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+
+    // Información del estudiante
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+
+    const infoY = 45;
+    doc.text(`Estudiante: ${informe.estudiante_nombre}`, 20, infoY + 7);
+    doc.text(`Curso: ${informe.curso_nombre}`, 20, infoY + 14);
+    doc.text(`Año: ${informe.anio}`, 20, infoY + 21);
+    doc.text(`Fecha: ${fecha}`, 20, infoY + 28);
+
+    // I. FORMACIÓN ÉTICA
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+    doc.text("I. FORMACIÓN ÉTICA", 20, infoY + 45);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+
+    let y = infoY + 55;
+    FORMACION_ETICA_ITEMS.forEach((item, index) => {
+      const valor =
+        informe[`formacion_etica_${index + 1}` as keyof typeof informe];
+      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
+      y += 7;
+    });
+
+    // II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+    doc.text("II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL", 20, y + 10);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    y += 20;
+
+    CRECIMIENTO_ITEMS.forEach((item, index) => {
+      const valor = informe[`crecimiento_${index + 1}` as keyof typeof informe];
+      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
+      y += 7;
+    });
+
+    // III. LA PERSONA Y SU ENTORNO
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+    doc.text("III. LA PERSONA Y SU ENTORNO", 20, y + 10);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    y += 20;
+
+    ENTORNO_ITEMS.forEach((item, index) => {
+      const valor = informe[`entorno_${index + 1}` as keyof typeof informe];
+      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
+      y += 7;
+    });
+
+    // IV. ÁREA DE APRENDIZAJE
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+    doc.text("IV. ÁREA DE APRENDIZAJE", 20, y + 10);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    y += 20;
+
+    APRENDIZAJE_ITEMS.forEach((item, index) => {
+      const valor = informe[`aprendizaje_${index + 1}` as keyof typeof informe];
+      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
+      y += 7;
+    });
+
+    // V. CONDUCTAS PREOCUPANTES
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+    doc.text("V. CONDUCTAS PREOCUPANTES", 20, y + 10);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    y += 20;
+
+    CONDUCTAS_ITEMS.forEach((item, index) => {
+      const valor = informe[`conductas_${index + 1}` as keyof typeof informe];
+      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
+      y += 7;
+    });
+
+    // OBSERVACIONES
+    if (informe.observaciones) {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(41, 128, 185);
+      doc.text("OBSERVACIONES", 20, y + 10);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      y += 20;
+
+      const observaciones = doc.splitTextToSize(informe.observaciones, 170);
+      doc.text(observaciones, 25, y);
+      y += observaciones.length * 7;
+    }
+
+    // Espacio para firmas y timbres
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+
+    // Línea izquierda (Profesor Jefe)
+    doc.line(20, 250, 100, 250);
+    doc.setFontSize(8);
+    const nombreProfesor = "Profesor Jefe";
+    const anchoProfesor = doc.getTextWidth(nombreProfesor);
+    const xProfesor = 20 + (80 - anchoProfesor) / 2;
+    doc.text(nombreProfesor, xProfesor, 255);
+
+    doc.setFontSize(7);
+    const textoProfesor = "PROFESOR JEFE";
+    const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
+    const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
+    doc.text(textoProfesor, xTextoProfesor, 260);
+
+    // Línea derecha (Director)
+    doc.line(110, 250, 190, 250);
+
+    // Agregar imagen de firma
+    const firmaUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1746451823/varios/zrnowutpg5fgaijjxkpm.png";
+    const firmaWidth = 65;
+    const firmaHeight = 20;
+    doc.addImage(firmaUrl, "PNG", 120, 235, firmaWidth, firmaHeight);
+
+    doc.setFontSize(8);
+    const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
+    const anchoDirector = doc.getTextWidth(nombreDirector);
+    const xDirector = 110 + (80 - anchoDirector) / 2;
+    doc.text(nombreDirector, xDirector, 255);
+
+    doc.setFontSize(7);
+    const textoDirector = "DIRECTOR";
+    const anchoTextoDirector = doc.getTextWidth(textoDirector);
+    const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
+    doc.text(textoDirector, xTextoDirector, 260);
+
+    // Pie de página
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Impreso el: ${fecha}`, 20, 280);
+
+    return informe.estudiante_nombre;
+  };
+
   const generarPDFInforme = async (estudiante: EstudianteType) => {
     setLoadingPDF(estudiante.id);
     try {
       const informe = await getInformePersonalidad(
         estudiante.estudiante_id || estudiante.id
       );
-
-      const doc = new jsPDF();
+      const doc = new jsPDF() as JsPDFWithAutoTable;
       const fecha = new Date().toLocaleDateString();
 
-      // Configuración de página
-      doc.setProperties({
-        title: `Informe de Personalidad - ${informe.estudiante_nombre}`,
-        subject: "Informe de Personalidad",
-        author: "Sistema Liceo Experimental",
-        keywords: "informe, personalidad, estudiante",
-        creator: "Sistema Liceo Experimental",
-      });
-
-      // Título principal
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text("INFORME DE PERSONALIDAD", 14, 20);
-
-      // Información del estudiante
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Estudiante: ${informe.estudiante_nombre}`, 14, 30);
-      doc.text(`Curso: ${informe.curso_nombre}`, 14, 37);
-      doc.text(`Año: ${informe.anio}`, 14, 44);
-      doc.text(`Fecha: ${fecha}`, 14, 51);
-
-      // I. FORMACIÓN ÉTICA
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("I. FORMACIÓN ÉTICA", 14, 65);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-
-      let y = 75;
-      FORMACION_ETICA_ITEMS.forEach((item, index) => {
-        const valor =
-          informe[`formacion_etica_${index + 1}` as keyof typeof informe];
-        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
-        y += 7;
-      });
-
-      // II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL", 14, y + 10);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      y += 20;
-
-      CRECIMIENTO_ITEMS.forEach((item, index) => {
-        const valor =
-          informe[`crecimiento_${index + 1}` as keyof typeof informe];
-        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
-        y += 7;
-      });
-
-      // III. LA PERSONA Y SU ENTORNO
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("III. LA PERSONA Y SU ENTORNO", 14, y + 10);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      y += 20;
-
-      ENTORNO_ITEMS.forEach((item, index) => {
-        const valor = informe[`entorno_${index + 1}` as keyof typeof informe];
-        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
-        y += 7;
-      });
-
-      // IV. ÁREA DE APRENDIZAJE
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("IV. ÁREA DE APRENDIZAJE", 14, y + 10);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      y += 20;
-
-      APRENDIZAJE_ITEMS.forEach((item, index) => {
-        const valor =
-          informe[`aprendizaje_${index + 1}` as keyof typeof informe];
-        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
-        y += 7;
-      });
-
-      // V. CONDUCTAS PREOCUPANTES
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("V. CONDUCTAS PREOCUPANTES", 14, y + 10);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      y += 20;
-
-      CONDUCTAS_ITEMS.forEach((item, index) => {
-        const valor = informe[`conductas_${index + 1}` as keyof typeof informe];
-        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
-        y += 7;
-      });
-
-      // OBSERVACIONES
-      if (informe.observaciones) {
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("OBSERVACIONES", 14, y + 10);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        y += 20;
-
-        const observaciones = doc.splitTextToSize(informe.observaciones, 170);
-        doc.text(observaciones, 20, y);
-      }
-
-      // Guardar el PDF
+      const nombreEstudiante = await generarPDFInformeEstudiante(
+        informe,
+        doc,
+        fecha
+      );
       doc.save(
-        `informe_personalidad_${informe.estudiante_nombre.replace(
-          /\s+/g,
-          "_"
-        )}.pdf`
+        `informe_personalidad_${nombreEstudiante.replace(/\s+/g, "_")}.pdf`
       );
     } catch (error) {
       console.error("Error al generar el PDF:", error);
