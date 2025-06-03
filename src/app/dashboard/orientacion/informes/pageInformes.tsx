@@ -1,9 +1,9 @@
 import React from 'react'
 
-const pageInicio = () => {
+const pageInformes = () => {
   return (
     <div>Orientacion</div>
   )
 }
 
-export default pageInicio
+export default pageInformes
