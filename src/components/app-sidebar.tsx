@@ -13,6 +13,8 @@ import {
   SquareTerminal,
   LandPlot,
   Calendar,
+  Webhook,
+  HeartHandshake,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
@@ -148,6 +150,32 @@ const data = {
       ],
     },
     {
+      title: "Orientación",
+      url: "#",
+      icon: Webhook,
+      isActive: false,
+      items: [
+        {
+          title: "Informes",
+          url: "/dashboard/orientacion/informes",
+        },
+       
+      ],
+    },
+        {
+      title: "Convivencia",
+      url: "#",
+      icon: HeartHandshake,
+      isActive: false,
+      items: [
+        {
+          title: "Seguimiento",
+          url: "/dashboard/convivencia/seguimiento",
+        },
+       
+      ],
+    },
+    {
       title: "Acles",
       url: "#",
       icon: LandPlot,
@@ -220,6 +248,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       if (menu.title == "Monitor ACLE") {
         return user?.roles?.includes(11); // Mostrar "Monitor ACLE" solo si el usuario tiene el rol 11
+      }
+      if (menu.title == "Orientación") {
+        return user?.roles?.includes(13); // Mostrar "Orientación" solo si el usuario tiene el rol 5
+      }
+      if (menu.title == "Convivencia") {
+        return user?.roles?.includes(14); // Mostrar "Convivencia" solo si el usuario tiene el rol 6
       }
       return true; // Mostrar otros menús sin restricciones
     });
