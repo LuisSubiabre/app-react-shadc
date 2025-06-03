@@ -15,6 +15,7 @@ import {
   Calendar,
   Webhook,
   HeartHandshake,
+  Phone,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth"; // Importamos correctamente desde hooks
 
@@ -48,6 +49,11 @@ const data = {
       name: "Calendarios",
       url: "/calendarios",
       icon: Calendar,
+    },
+        {
+      name: "Anexos",
+      url: "/anexos",
+      icon: Phone,
     },
   ],
   teams: [

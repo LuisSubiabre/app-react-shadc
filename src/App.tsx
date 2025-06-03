@@ -39,7 +39,9 @@ const AcademicoInicio = lazy(
 const Calendarios = lazy(
   () => import("@/app/dashboard/calendarios/pageCalendarios")
 );
-
+const Anexos = lazy(
+  () => import("@/app/dashboard/anexos/pageAnexos")
+);
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
 );
@@ -128,6 +130,16 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Calendarios />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+                         <Route
+                path="/anexos"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Anexos />
                     </Layout>
                   </ProtectedRoute>
                 }
