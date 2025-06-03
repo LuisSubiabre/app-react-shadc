@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.3.0...v4.0.0) (2025-06-03)
+
+
+### Features
+
+* actualizar formato y contenido en la sección de observaciones del informe ([4dc3864](https://github.com/LuisSubiabre/app-react-shadc/commit/4dc38649b0b59d8030b51e2060ea92888b386f72))
+* add Convivencia cases management page and update Informes page layout ([d1f6747](https://github.com/LuisSubiabre/app-react-shadc/commit/d1f6747a13dc90c463dd297d792bcdd63d8ecf64))
+* agregar componente de informes en la sección de Orientación ([ba7e7a2](https://github.com/LuisSubiabre/app-react-shadc/commit/ba7e7a269d37a86125cd653fbe5f9c4d6ada2217))
+* agregar fila de promedio general en la tabla de asignaturas ([e303c7a](https://github.com/LuisSubiabre/app-react-shadc/commit/e303c7ad4a2f61fa4b00e9e1a1d3f580063e5ee4))
+* agregar funcionalidad para generar PDF consolidado de informes de estudiantes ([0a5a73b](https://github.com/LuisSubiabre/app-react-shadc/commit/0a5a73b694feaa11ca14bebbd9cd85f89a70e945))
+* agregar funcionalidad para visualizar y generar informes de personalidad de estudiantes ([5500119](https://github.com/LuisSubiabre/app-react-shadc/commit/55001198e6c22d26767a98994b8efe536c4e48dc))
+* agregar nueva pestaña para la Biblioteca CRA en la sección de Calendarios ([16e8bf1](https://github.com/LuisSubiabre/app-react-shadc/commit/16e8bf12b6f162c4d34a0142015328ebefb241c6))
+* agregar nueva ruta y componente para la sección de Anexos ([28770fc](https://github.com/LuisSubiabre/app-react-shadc/commit/28770fc0698bf5683ca1ba4c462e73dd53c96acc))
+* agregar nuevas secciones de menú "Orientación" y "Convivencia" en el componente AppSidebar ([17f64ac](https://github.com/LuisSubiabre/app-react-shadc/commit/17f64acd305010ce9b95cca76c428e564a05b7e1))
+* ajustar diseño y formato en la generación de informes de personalidad ([d932619](https://github.com/LuisSubiabre/app-react-shadc/commit/d93261933314bffe0876653fc278eb69c2cc8bc4))
+* implementar carga de cursos y manejo de errores en la página de informes ([865ef2e](https://github.com/LuisSubiabre/app-react-shadc/commit/865ef2ef36079132115b6b87cfa4028e6d3b1e0a))
+* mejorar generación de informes de personalidad con nuevo diseño y funcionalidad ([d677bdb](https://github.com/LuisSubiabre/app-react-shadc/commit/d677bdbaba5f2b7500a1e6aec26aefac6de163b8))
+* optimize course updates by conditionally setting jefatura only on changes ([6fc0759](https://github.com/LuisSubiabre/app-react-shadc/commit/6fc0759321b0d1c7a1ac434f143d0df95ba7748c))
+
+
+### Bug Fixes
+
+* corregir formato y estructura en las páginas de casos e informes ([12c7f0e](https://github.com/LuisSubiabre/app-react-shadc/commit/12c7f0ed6d2b121cdce22b6e75771a397b6e72c8))
+
 ## [3.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.2.0...v3.3.0) (2025-06-03)
 
 
