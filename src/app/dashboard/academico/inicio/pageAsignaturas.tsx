@@ -190,6 +190,20 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       "Promedio General": promedio.promedio_general,
     }));
 
+    // Agregar fila de promedio general
+    const promedioGeneral = {
+      "Nombre del Curso": selectedCurso.nombre,
+      Asignatura: "Promedio General",
+      "Cantidad de Estudiantes": "",
+      "Promedio General": (
+        promediosData
+          .filter((promedio) => !promedio.concepto)
+          .reduce((acc, curr) => acc + parseFloat(curr.promedio_general), 0) /
+        promediosData.filter((promedio) => !promedio.concepto).length
+      ).toFixed(1),
+    };
+    excelData.push(promedioGeneral);
+
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(excelData);
 
@@ -228,6 +242,19 @@ const AcademicoCursoAsignaturas: React.FC = () => {
       promedio.cantidad_estudiantes,
       promedio.promedio_general,
     ]);
+
+    // Agregar fila de promedio general
+    const promedioGeneral = [
+      "Promedio General",
+      "",
+      (
+        promediosData
+          .filter((promedio) => !promedio.concepto)
+          .reduce((acc, curr) => acc + parseFloat(curr.promedio_general), 0) /
+        promediosData.filter((promedio) => !promedio.concepto).length
+      ).toFixed(1),
+    ];
+    tableData.push(promedioGeneral);
 
     autoTable(doc, {
       startY: 50,
@@ -552,6 +579,33 @@ const AcademicoCursoAsignaturas: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     ))}
+                    <TableRow className="bg-muted/50 font-bold">
+                      <TableCell className="font-medium">
+                        Promedio General
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {/* {promediosData
+                          .reduce(
+                            (acc, curr) =>
+                              acc + parseInt(curr.cantidad_estudiantes),
+                            0
+                          )
+                          .toString()} */}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {(
+                          promediosData
+                            .filter((promedio) => !promedio.concepto)
+                            .reduce(
+                              (acc, curr) =>
+                                acc + parseFloat(curr.promedio_general),
+                              0
+                            ) /
+                          promediosData.filter((promedio) => !promedio.concepto)
+                            .length
+                        ).toFixed(1)}
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </div>
