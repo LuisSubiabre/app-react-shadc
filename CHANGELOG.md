@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.2.0...v3.3.0) (2025-06-03)
+
+
+### Features
+
+* agregar modal para informe de asistencia detallado en el componente PageTalleres ([fa6d442](https://github.com/LuisSubiabre/app-react-shadc/commit/fa6d442080129b242a6b8590f1a3fdedf55e738b))
+* agregar modal para informe de asistencia por mes en el componente PageTalleres ([6fbe235](https://github.com/LuisSubiabre/app-react-shadc/commit/6fbe235630a1f42f99d4002e9d0f539faa21512f))
+
 ## [3.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.1.0...v3.2.0) (2025-06-01)
 
 
