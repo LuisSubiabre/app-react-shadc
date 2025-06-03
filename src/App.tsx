@@ -39,7 +39,9 @@ const AcademicoInicio = lazy(
 const Calendarios = lazy(
   () => import("@/app/dashboard/calendarios/pageCalendarios")
 );
-
+const Anexos = lazy(
+  () => import("@/app/dashboard/anexos/pageAnexos")
+);
 const InspectoriaAsistencia = lazy(
   () => import("@/app/dashboard/inspectoria/asistencia/pageAsistencia")
 );
@@ -61,6 +63,12 @@ const MisTalleres = lazy(
 );
 const PageAccidenteEscolar = lazy(
   () => import("@/app/dashboard/inspectoria/accidente-escolar/pageAccidente")
+);
+const Orientacion = lazy(
+  () => import("@/app/dashboard/orientacion/informes/pageInformes")
+);
+const Convivencia = lazy(
+  () => import("@/app/dashboard/convivencia/casos/pageCasos")
 );
 
 function App() {
@@ -122,6 +130,16 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Calendarios />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+                         <Route
+                path="/anexos"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Anexos />
                     </Layout>
                   </ProtectedRoute>
                 }
@@ -316,6 +334,26 @@ function App() {
                   <ProtectedRoute requiredRoles={[11]}>
                     <Layout>
                       <MisTalleres />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/orientacion/informes"
+                element={
+                  <ProtectedRoute requiredRoles={[13]}>
+                    <Layout>
+                      <Orientacion />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+                            <Route
+                path="/dashboard/convivencia/seguimiento"
+                element={
+                  <ProtectedRoute requiredRoles={[14]}>
+                    <Layout>
+                      <Convivencia />
                     </Layout>
                   </ProtectedRoute>
                 }

@@ -79,15 +79,30 @@ const AcademicoCalificacionesCurso: React.FC = () => {
   useEffect(() => {
     if (funcionarioCursos && dataUsuarios.length > 0) {
       // Actualizar los cursos con la información completa de jefatura
-      const cursosActualizados = funcionarioCursos.map((curso) => ({
-        ...curso,
-        jefatura:
+      const cursosActualizados = funcionarioCursos.map((curso) => {
+        const jefatura =
           dataUsuarios.find((user) => user.id === curso.profesor_jefe_id)
-            ?.nombre || "S/N",
-      }));
-      setFuncionarioCursos(cursosActualizados);
+            ?.nombre || "S/N";
+        // Solo actualizar si la jefatura ha cambiado
+        if (curso.jefatura !== jefatura) {
+          return {
+            ...curso,
+            jefatura,
+          };
+        }
+        return curso;
+      });
+
+      // Solo actualizar si hay cambios reales
+      const hayCambios = cursosActualizados.some(
+        (curso, index) => curso.jefatura !== funcionarioCursos[index].jefatura
+      );
+
+      if (hayCambios) {
+        setFuncionarioCursos(cursosActualizados);
+      }
     }
-  }, [funcionarioCursos, dataUsuarios]);
+  }, [dataUsuarios]); // Solo dependemos de dataUsuarios
 
   if (loading || loadingUsuarios)
     return (
