@@ -89,6 +89,8 @@ const PageInformes = () => {
   const [cursoSeleccionado, setCursoSeleccionado] =
     useState<CursoApiResponseType | null>(null);
   const [loadingPDF, setLoadingPDF] = useState<number | null>(null);
+  const [loadingPDFConsolidado, setLoadingPDFConsolidado] =
+    useState<boolean>(false);
 
   const handleVerEstudiantes = async (curso: CursoApiResponseType) => {
     setCursoSeleccionado(curso);
@@ -335,6 +337,37 @@ const PageInformes = () => {
     }
   };
 
+  const generarPDFConsolidado = async () => {
+    if (!cursoSeleccionado || !estudiantes.length) return;
+
+    setLoadingPDFConsolidado(true);
+    try {
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+      const fecha = new Date().toLocaleDateString();
+
+      // Generar PDF para cada estudiante
+      for (let i = 0; i < estudiantes.length; i++) {
+        const estudiante = estudiantes[i];
+        if (i > 0) {
+          doc.addPage();
+        }
+        const informe = await getInformePersonalidad(
+          estudiante.estudiante_id || estudiante.id
+        );
+        await generarPDFInformeEstudiante(informe, doc, fecha);
+      }
+
+      // Guardar el PDF consolidado
+      doc.save(
+        `informes_personalidad_${cursoSeleccionado.nombre}_${fecha}.pdf`
+      );
+    } catch (error) {
+      console.error("Error al generar el PDF consolidado:", error);
+    } finally {
+      setLoadingPDFConsolidado(false);
+    }
+  };
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-full w-2/5 mx-auto">
@@ -450,10 +483,26 @@ const PageInformes = () => {
         onOpenChange={setIsEstudiantesModalOpen}
       >
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-semibold">
               Estudiantes del Curso {cursoSeleccionado?.nombre}
             </DialogTitle>
+            {estudiantes.length > 0 && (
+              <Button
+                onClick={generarPDFConsolidado}
+                variant="outline"
+                size="sm"
+                disabled={loadingPDFConsolidado}
+                className="flex items-center gap-2"
+              >
+                {loadingPDFConsolidado ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                Exportar PDF Consolidado
+              </Button>
+            )}
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto">
