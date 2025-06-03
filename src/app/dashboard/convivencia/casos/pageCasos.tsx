@@ -1,7 +1,7 @@
 import Breadcrumbs from '@/components/ui/Breadcrumbs'
 import React from 'react'
 
-const pageInformes = () => {
+const pageCasos = () => {
   return (
    <>
      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -14,10 +14,10 @@ const pageInformes = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Gestión de Usuarios
+              Gestión de Casos
             </h1>
             <p className="text-muted-foreground">
-              Administra los usuarios del sistema
+              Administra los casos de convivencia escolar
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -26,11 +26,11 @@ const pageInformes = () => {
         </div>
         <div className="flex-1">
           {/* Aquí puedes agregar el contenido principal de la página */}
-          <p>Contenido de informes de orientación</p>
+          <p>Contenido de gestión de casos de convivencia escolar</p>
         </div>
       </div>
       </>
   )
 }
 
-export default pageInformes
+export default pageCasos

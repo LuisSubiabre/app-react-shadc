@@ -65,6 +65,9 @@ const PageAccidenteEscolar = lazy(
 const Orientacion = lazy(
   () => import("@/app/dashboard/orientacion/informes/pageInformes")
 );
+const Convivencia = lazy(
+  () => import("@/app/dashboard/convivencia/casos/pageCasos")
+);
 
 function App() {
   return (
@@ -329,6 +332,16 @@ function App() {
                   <ProtectedRoute requiredRoles={[13]}>
                     <Layout>
                       <Orientacion />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+                            <Route
+                path="/dashboard/convivencia/seguimiento"
+                element={
+                  <ProtectedRoute requiredRoles={[14]}>
+                    <Layout>
+                      <Convivencia />
                     </Layout>
                   </ProtectedRoute>
                 }
