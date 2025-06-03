@@ -62,6 +62,9 @@ const MisTalleres = lazy(
 const PageAccidenteEscolar = lazy(
   () => import("@/app/dashboard/inspectoria/accidente-escolar/pageAccidente")
 );
+const Orientacion = lazy(
+  () => import("@/app/dashboard/orientacion/informes/pageInformes")
+);
 
 function App() {
   return (
@@ -316,6 +319,16 @@ function App() {
                   <ProtectedRoute requiredRoles={[11]}>
                     <Layout>
                       <MisTalleres />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/orientacion/informes"
+                element={
+                  <ProtectedRoute requiredRoles={[13]}>
+                    <Layout>
+                      <Orientacion />
                     </Layout>
                   </ProtectedRoute>
                 }
