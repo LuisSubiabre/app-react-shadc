@@ -41,6 +41,7 @@ import { TablaTalleres } from "@/components/talleres/TablaTalleres";
 import { ModalCursos } from "@/components/talleres/ModalCursos";
 import { ModalAsistencia } from "@/components/talleres/ModalAsistencia";
 import { ModalAsistenciaPorMes } from "@/components/talleres/ModalAsistenciaPorMes";
+import { ModalAsistenciaDetalle } from "@/components/talleres/ModalAsistenciaDetalle";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -49,6 +50,8 @@ const AcleTalleres: React.FC = () => {
   const [isModalAsistenciaOpen, setIsModalAsistenciaOpen] =
     useState<boolean>(false);
   const [isModalAsistenciaPorMesOpen, setIsModalAsistenciaPorMesOpen] =
+    useState<boolean>(false);
+  const [isModalAsistenciaDetalleOpen, setIsModalAsistenciaDetalleOpen] =
     useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -427,6 +430,9 @@ const AcleTalleres: React.FC = () => {
             <Button onClick={() => setIsModalAsistenciaPorMesOpen(true)}>
               Asistencia por Mes
             </Button>
+            <Button onClick={() => setIsModalAsistenciaDetalleOpen(true)}>
+              Asistencia con Detalle
+            </Button>
           </div>
 
           <TablaTalleres
@@ -536,6 +542,12 @@ const AcleTalleres: React.FC = () => {
         <ModalAsistenciaPorMes
           isOpen={isModalAsistenciaPorMesOpen}
           onClose={() => setIsModalAsistenciaPorMesOpen(false)}
+        />
+
+        {/* Modal para informe de asistencia con detalle */}
+        <ModalAsistenciaDetalle
+          isOpen={isModalAsistenciaDetalleOpen}
+          onClose={() => setIsModalAsistenciaDetalleOpen(false)}
         />
 
         {/* Diálogo de confirmación para eliminar */}
