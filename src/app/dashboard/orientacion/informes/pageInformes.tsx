@@ -123,133 +123,133 @@ const PageInformes = () => {
     // Agregar logo
     const logoUrl =
       "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
-    const logoWidth = 50;
-    const logoHeight = 15;
-    doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
+    const logoWidth = 35;
+    const logoHeight = 10;
+    doc.addImage(logoUrl, "PNG", 20, 8, logoWidth, logoHeight);
 
     // Establecer fuente y colores
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
 
     // Nombre de la institución
-    doc.setFontSize(12);
-    doc.text("Liceo Experimental UMAG", 80, 20);
+    doc.setFontSize(9);
+    //doc.text("Liceo Experimental UMAG", 65, 15);
 
     // Título principal
-    doc.setFontSize(16);
-    doc.text("Informe de Personalidad", 105, 30, { align: "center" });
+    doc.setFontSize(12);
+    doc.text("Informe de Personalidad", 105, 22, { align: "center" });
 
     // Línea decorativa superior
     doc.setDrawColor(41, 128, 185);
     doc.setLineWidth(0.5);
-    doc.line(20, 35, 190, 35);
+    doc.line(20, 26, 190, 26);
 
     // Información del estudiante
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
 
-    const infoY = 45;
-    doc.text(`Estudiante: ${informe.estudiante_nombre}`, 20, infoY + 7);
-    doc.text(`Curso: ${informe.curso_nombre}`, 20, infoY + 14);
-    doc.text(`Año: ${informe.anio}`, 20, infoY + 21);
-    doc.text(`Fecha: ${fecha}`, 20, infoY + 28);
+    const infoY = 32;
+    const nombreEstudiante = `Estudiante: ${informe.estudiante_nombre}`;
+    const curso = `Curso: ${informe.curso_nombre}`;
+    doc.text(nombreEstudiante, 20, infoY);
+    doc.text(curso, 20 + doc.getTextWidth(nombreEstudiante) + 10, infoY);
 
     // I. FORMACIÓN ÉTICA
-    doc.setFontSize(14);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
-    doc.text("I. FORMACIÓN ÉTICA", 20, infoY + 45);
-    doc.setFontSize(10);
+    doc.text("I. FORMACIÓN ÉTICA", 20, infoY + 10);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
 
-    let y = infoY + 55;
+    let y = infoY + 16;
     FORMACION_ETICA_ITEMS.forEach((item, index) => {
       const valor =
         informe[`formacion_etica_${index + 1}` as keyof typeof informe];
       doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 7;
+      y += 4;
     });
 
     // II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
-    doc.setFontSize(14);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
-    doc.text("II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL", 20, y + 10);
-    doc.setFontSize(10);
+    doc.text("II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL", 20, y + 3);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
-    y += 20;
+    y += 9;
 
     CRECIMIENTO_ITEMS.forEach((item, index) => {
       const valor = informe[`crecimiento_${index + 1}` as keyof typeof informe];
       doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 7;
+      y += 4;
     });
 
     // III. LA PERSONA Y SU ENTORNO
-    doc.setFontSize(14);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
-    doc.text("III. LA PERSONA Y SU ENTORNO", 20, y + 10);
-    doc.setFontSize(10);
+    doc.text("III. LA PERSONA Y SU ENTORNO", 20, y + 3);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
-    y += 20;
+    y += 9;
 
     ENTORNO_ITEMS.forEach((item, index) => {
       const valor = informe[`entorno_${index + 1}` as keyof typeof informe];
       doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 7;
+      y += 4;
     });
 
     // IV. ÁREA DE APRENDIZAJE
-    doc.setFontSize(14);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
-    doc.text("IV. ÁREA DE APRENDIZAJE", 20, y + 10);
-    doc.setFontSize(10);
+    doc.text("IV. ÁREA DE APRENDIZAJE", 20, y + 3);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
-    y += 20;
+    y += 9;
 
     APRENDIZAJE_ITEMS.forEach((item, index) => {
       const valor = informe[`aprendizaje_${index + 1}` as keyof typeof informe];
       doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 7;
+      y += 4;
     });
 
     // V. CONDUCTAS PREOCUPANTES
-    doc.setFontSize(14);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
-    doc.text("V. CONDUCTAS PREOCUPANTES", 20, y + 10);
-    doc.setFontSize(10);
+    doc.text("V. CONDUCTAS PREOCUPANTES", 20, y + 3);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
-    y += 20;
+    y += 9;
 
     CONDUCTAS_ITEMS.forEach((item, index) => {
       const valor = informe[`conductas_${index + 1}` as keyof typeof informe];
       doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 7;
+      y += 4;
     });
 
     // OBSERVACIONES
     if (informe.observaciones) {
-      doc.setFontSize(14);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(41, 128, 185);
-      doc.text("OBSERVACIONES", 20, y + 10);
-      doc.setFontSize(10);
+      doc.text("OBSERVACIONES", 20, y + 3);
+      doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0);
-      y += 20;
+      y += 9;
 
       const observaciones = doc.splitTextToSize(informe.observaciones, 170);
       doc.text(observaciones, 25, y);
-      y += observaciones.length * 7;
+      y += observaciones.length * 4;
     }
 
     // Espacio para firmas y timbres
@@ -257,45 +257,45 @@ const PageInformes = () => {
     doc.setLineWidth(0.5);
 
     // Línea izquierda (Profesor Jefe)
-    doc.line(20, 250, 100, 250);
-    doc.setFontSize(8);
-    const nombreProfesor = "Profesor Jefe";
+    doc.line(20, 230, 100, 230);
+    doc.setFontSize(7);
+    const nombreProfesor = cursoSeleccionado?.jefatura || "Profesor Jefe";
     const anchoProfesor = doc.getTextWidth(nombreProfesor);
     const xProfesor = 20 + (80 - anchoProfesor) / 2;
-    doc.text(nombreProfesor, xProfesor, 255);
+    doc.text(nombreProfesor, xProfesor, 235);
 
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     const textoProfesor = "PROFESOR JEFE";
     const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
     const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
-    doc.text(textoProfesor, xTextoProfesor, 260);
+    doc.text(textoProfesor, xTextoProfesor, 240);
 
     // Línea derecha (Director)
-    doc.line(110, 250, 190, 250);
+    doc.line(110, 230, 190, 230);
 
     // Agregar imagen de firma
     const firmaUrl =
       "https://res.cloudinary.com/dx219dazh/image/upload/v1746451823/varios/zrnowutpg5fgaijjxkpm.png";
-    const firmaWidth = 65;
-    const firmaHeight = 20;
-    doc.addImage(firmaUrl, "PNG", 120, 235, firmaWidth, firmaHeight);
+    const firmaWidth = 50;
+    const firmaHeight = 15;
+    doc.addImage(firmaUrl, "PNG", 120, 215, firmaWidth, firmaHeight);
 
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
     const anchoDirector = doc.getTextWidth(nombreDirector);
     const xDirector = 110 + (80 - anchoDirector) / 2;
-    doc.text(nombreDirector, xDirector, 255);
+    doc.text(nombreDirector, xDirector, 235);
 
-    doc.setFontSize(7);
-    const textoDirector = "DIRECTOR";
+    doc.setFontSize(6);
+    const textoDirector = "Orientación";
     const anchoTextoDirector = doc.getTextWidth(textoDirector);
     const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
-    doc.text(textoDirector, xTextoDirector, 260);
+    doc.text(textoDirector, xTextoDirector, 240);
 
     // Pie de página
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Impreso el: ${fecha}`, 20, 280);
+    doc.text(`Impreso el: ${fecha}`, 20, 250);
 
     return informe.estudiante_nombre;
   };
