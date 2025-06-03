@@ -1,6 +1,13 @@
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Building2, Laptop, Laptop2, GraduationCap } from "lucide-react";
+import {
+  Calendar,
+  Building2,
+  Laptop,
+  Laptop2,
+  GraduationCap,
+  BookOpen,
+} from "lucide-react";
 
 const Calendarios = () => {
   return (
@@ -24,22 +31,41 @@ const Calendarios = () => {
         </div>
 
         <Tabs defaultValue="institucional" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2">
-            <TabsTrigger value="institucional" className="flex items-center gap-2 text-xs md:text-sm">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2">
+            <TabsTrigger
+              value="institucional"
+              className="flex items-center gap-2 text-xs md:text-sm"
+            >
               <Building2 className="h-3 w-3 md:h-4 md:w-4" />
               Institucional
             </TabsTrigger>
-            <TabsTrigger value="computacion" className="flex items-center gap-2 text-xs md:text-sm">
+            <TabsTrigger
+              value="computacion"
+              className="flex items-center gap-2 text-xs md:text-sm"
+            >
               <Laptop className="h-3 w-3 md:h-4 md:w-4" />
               Computación
             </TabsTrigger>
-            <TabsTrigger value="movil" className="flex items-center gap-2 text-xs md:text-sm">
+            <TabsTrigger
+              value="movil"
+              className="flex items-center gap-2 text-xs md:text-sm"
+            >
               <Laptop2 className="h-3 w-3 md:h-4 md:w-4" />
               Móvil
             </TabsTrigger>
-            <TabsTrigger value="aula-magna" className="flex items-center gap-2 text-xs md:text-sm">
+            <TabsTrigger
+              value="aula-magna"
+              className="flex items-center gap-2 text-xs md:text-sm"
+            >
               <GraduationCap className="h-3 w-3 md:h-4 md:w-4" />
               Aula Magna
+            </TabsTrigger>
+            <TabsTrigger
+              value="biblioteca"
+              className="flex items-center gap-2 text-xs md:text-sm"
+            >
+              <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
+              Biblioteca CRA
             </TabsTrigger>
           </TabsList>
 
@@ -130,10 +156,32 @@ const Calendarios = () => {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="biblioteca" className="mt-4">
+            <div className="rounded-lg border bg-card shadow-sm">
+              <div className="p-2 md:p-4">
+                <h2 className="text-lg md:text-xl font-semibold mb-2 md:mb-4 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 md:h-5 md:w-5" />
+                  Calendario Biblioteca CRA
+                </h2>
+                <div className="aspect-[4/3] md:aspect-video w-full">
+                  <iframe
+                    src="https://calendar.google.com/calendar/embed?src=c3NhbmNoZXpAbGljZW9leHBlcmltZW50YWwuY2w&ctz=America%2FPunta_Arenas"
+                    style={{ border: 0 }}
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    scrolling="no"
+                    className="rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </>
   );
 };
 
-export default Calendarios; 
+export default Calendarios;
