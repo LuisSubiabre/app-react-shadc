@@ -40,12 +40,15 @@ import { FiltrosTalleres } from "@/components/talleres/FiltrosTalleres";
 import { TablaTalleres } from "@/components/talleres/TablaTalleres";
 import { ModalCursos } from "@/components/talleres/ModalCursos";
 import { ModalAsistencia } from "@/components/talleres/ModalAsistencia";
+import { ModalAsistenciaPorMes } from "@/components/talleres/ModalAsistenciaPorMes";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
   const [isModalAsistenciaOpen, setIsModalAsistenciaOpen] =
+    useState<boolean>(false);
+  const [isModalAsistenciaPorMesOpen, setIsModalAsistenciaPorMesOpen] =
     useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -419,8 +422,11 @@ const AcleTalleres: React.FC = () => {
         <Toaster />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <h1 className="text-2xl font-bold">Talleres ACLE</h1>
-          <div>
+          <div className="flex gap-2">
             <Button onClick={handleAddClick}>Agregar Taller</Button>
+            <Button onClick={() => setIsModalAsistenciaPorMesOpen(true)}>
+              Asistencia por Mes
+            </Button>
           </div>
 
           <TablaTalleres
@@ -524,6 +530,12 @@ const AcleTalleres: React.FC = () => {
           isOpen={isModalAsistenciaOpen}
           onClose={handleCloseAsistenciaModal}
           taller={currentTaller}
+        />
+
+        {/* Modal para informe de asistencia por mes */}
+        <ModalAsistenciaPorMes
+          isOpen={isModalAsistenciaPorMesOpen}
+          onClose={() => setIsModalAsistenciaPorMesOpen(false)}
         />
 
         {/* Diálogo de confirmación para eliminar */}
