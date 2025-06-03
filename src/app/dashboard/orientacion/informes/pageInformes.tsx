@@ -1,7 +1,7 @@
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import React from "react";
+import React, { useState } from "react";
 import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Users, FileDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,9 +12,234 @@ import {
 } from "@/components/ui/table";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CursoApiResponseType, EstudianteType } from "@/types";
+import { estudiantesCurso } from "@/services/estudiantesService";
+import { getInformePersonalidad } from "@/services/informePersonalidadService";
+import { jsPDF } from "jspdf";
+
+const FORMACION_ETICA_ITEMS = [
+  "Es responsable con sus tareas, trabajos y demás obligaciones escolares.",
+  "Asiste a clases en forma puntual y constante",
+  "Trata con respeto a sus compañeros/as, profesores/as y miembros de la comunidad",
+  "Es honesto(a) en su trabajo y en su vida escolar en general, asumiendo responsabilidades en sus acciones",
+  "Respeta las normas de convivencia establecidas",
+  "Respeta ideas y creencias distintas a las propias",
+  "Es un alumno(a) solidario(a) y generoso(a) con los demás",
+  "Utiliza el diálogo como medio de resolución de conflictos",
+];
+
+const CRECIMIENTO_ITEMS = [
+  "Reconoce sus virtudes y defectos",
+  "Es responsable con los compromisos que adquiere",
+  "Se preocupa por su higiene y presentación personal",
+  "Reacciona positivamente frente a situaciones nuevas o conflictivas",
+  "Reconoce sus errores y trata de superarlos",
+];
+
+const ENTORNO_ITEMS = [
+  "Tiene un grupo de amigos(as) estable",
+  "Ayuda a sus compañeros(as)",
+  "Propone ideas al grupo",
+  "Se ofrece voluntario(a) en las actividades a realizar",
+  "Actúa con responsabilidad en el cuidado del medio ambiente",
+  "Participa en actividades que el Liceo programa en la comunidad",
+  "Respeta las normas disciplinarias y seguridad vigentes en el Liceo",
+];
+
+const APRENDIZAJE_ITEMS = [
+  "Atiende en clases",
+  "Se concentra adecuadamente en el trabajo",
+  "Demuestra interés y compromiso por su aprendizaje",
+  "Desarrolla al máximo sus capacidades",
+  "Demuestra sentido de superación",
+  "Participa activamente durante la clase y/o actividades",
+  "Asiste regularmente a rendir sus evaluaciones, en fecha indicada",
+];
+
+const CONDUCTAS_ITEMS = [
+  "Agresividad",
+  "Estado de ánimo decaído",
+  "Conflictos interpersonales",
+  "Aislamiento, soledad",
+  "Episodios de ansiedad inmanejables",
+  "Excesiva pasividad",
+  "Desinterés en labores académicas",
+];
 
 const PageInformes = () => {
   const { error, loading, funcionarioCursos } = useCursosFuncionarios();
+  const [isEstudiantesModalOpen, setIsEstudiantesModalOpen] =
+    useState<boolean>(false);
+  const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState<boolean>(false);
+  const [errorEstudiantes, setErrorEstudiantes] = useState<string | null>(null);
+  const [cursoSeleccionado, setCursoSeleccionado] =
+    useState<CursoApiResponseType | null>(null);
+  const [loadingPDF, setLoadingPDF] = useState<number | null>(null);
+
+  const handleVerEstudiantes = async (curso: CursoApiResponseType) => {
+    setCursoSeleccionado(curso);
+    setIsEstudiantesModalOpen(true);
+    setLoadingEstudiantes(true);
+    setErrorEstudiantes(null);
+    setEstudiantes([]);
+
+    try {
+      const response = await estudiantesCurso(curso.id);
+      if (response) {
+        setEstudiantes(response);
+      } else {
+        setErrorEstudiantes(
+          "No se pudo cargar la información de los estudiantes"
+        );
+        setEstudiantes([]);
+      }
+    } catch (err) {
+      setErrorEstudiantes("Error al cargar los estudiantes. " + err);
+      setEstudiantes([]);
+    } finally {
+      setLoadingEstudiantes(false);
+    }
+  };
+
+  const generarPDFInforme = async (estudiante: EstudianteType) => {
+    setLoadingPDF(estudiante.id);
+    try {
+      const informe = await getInformePersonalidad(
+        estudiante.estudiante_id || estudiante.id
+      );
+
+      const doc = new jsPDF();
+      const fecha = new Date().toLocaleDateString();
+
+      // Configuración de página
+      doc.setProperties({
+        title: `Informe de Personalidad - ${informe.estudiante_nombre}`,
+        subject: "Informe de Personalidad",
+        author: "Sistema Liceo Experimental",
+        keywords: "informe, personalidad, estudiante",
+        creator: "Sistema Liceo Experimental",
+      });
+
+      // Título principal
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("INFORME DE PERSONALIDAD", 14, 20);
+
+      // Información del estudiante
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Estudiante: ${informe.estudiante_nombre}`, 14, 30);
+      doc.text(`Curso: ${informe.curso_nombre}`, 14, 37);
+      doc.text(`Año: ${informe.anio}`, 14, 44);
+      doc.text(`Fecha: ${fecha}`, 14, 51);
+
+      // I. FORMACIÓN ÉTICA
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("I. FORMACIÓN ÉTICA", 14, 65);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+
+      let y = 75;
+      FORMACION_ETICA_ITEMS.forEach((item, index) => {
+        const valor =
+          informe[`formacion_etica_${index + 1}` as keyof typeof informe];
+        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
+        y += 7;
+      });
+
+      // II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL", 14, y + 10);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      y += 20;
+
+      CRECIMIENTO_ITEMS.forEach((item, index) => {
+        const valor =
+          informe[`crecimiento_${index + 1}` as keyof typeof informe];
+        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
+        y += 7;
+      });
+
+      // III. LA PERSONA Y SU ENTORNO
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("III. LA PERSONA Y SU ENTORNO", 14, y + 10);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      y += 20;
+
+      ENTORNO_ITEMS.forEach((item, index) => {
+        const valor = informe[`entorno_${index + 1}` as keyof typeof informe];
+        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
+        y += 7;
+      });
+
+      // IV. ÁREA DE APRENDIZAJE
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("IV. ÁREA DE APRENDIZAJE", 14, y + 10);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      y += 20;
+
+      APRENDIZAJE_ITEMS.forEach((item, index) => {
+        const valor =
+          informe[`aprendizaje_${index + 1}` as keyof typeof informe];
+        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
+        y += 7;
+      });
+
+      // V. CONDUCTAS PREOCUPANTES
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("V. CONDUCTAS PREOCUPANTES", 14, y + 10);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      y += 20;
+
+      CONDUCTAS_ITEMS.forEach((item, index) => {
+        const valor = informe[`conductas_${index + 1}` as keyof typeof informe];
+        doc.text(`${index + 1}. ${item}: ${valor}`, 20, y);
+        y += 7;
+      });
+
+      // OBSERVACIONES
+      if (informe.observaciones) {
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("OBSERVACIONES", 14, y + 10);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        y += 20;
+
+        const observaciones = doc.splitTextToSize(informe.observaciones, 170);
+        doc.text(observaciones, 20, y);
+      }
+
+      // Guardar el PDF
+      doc.save(
+        `informe_personalidad_${informe.estudiante_nombre.replace(
+          /\s+/g,
+          "_"
+        )}.pdf`
+      );
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+    } finally {
+      setLoadingPDF(null);
+    }
+  };
 
   if (loading)
     return (
@@ -63,6 +288,9 @@ const PageInformes = () => {
                 <TableHead className="w-[200px] font-semibold">
                   Jefatura
                 </TableHead>
+                <TableHead className="w-[150px] font-semibold text-right">
+                  Acciones
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,11 +306,23 @@ const PageInformes = () => {
                     <TableCell className="text-muted-foreground">
                       {curso.jefatura}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleVerEstudiantes(curso)}
+                          className="hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Users className="size-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={2} className="text-center py-8">
+                  <TableCell colSpan={3} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -109,6 +349,76 @@ const PageInformes = () => {
           </Table>
         </div>
       </div>
+
+      {/* Modal de Estudiantes */}
+      <Dialog
+        open={isEstudiantesModalOpen}
+        onOpenChange={setIsEstudiantesModalOpen}
+      >
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              Estudiantes del Curso {cursoSeleccionado?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto">
+            {loadingEstudiantes ? (
+              <div className="flex justify-center items-center py-8">
+                <Spinner />
+              </div>
+            ) : errorEstudiantes ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{errorEstudiantes}</AlertDescription>
+              </Alert>
+            ) : !estudiantes || estudiantes.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay estudiantes en este curso
+              </div>
+            ) : (
+              <div className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>N.</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>RUT</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {estudiantes.map((estudiante) => (
+                      <TableRow key={estudiante.estudiante_id}>
+                        <TableCell>{estudiante.numlista}</TableCell>
+                        <TableCell>{estudiante.nombre}</TableCell>
+                        <TableCell>{estudiante.rut}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => generarPDFInforme(estudiante)}
+                            disabled={loadingPDF === estudiante.id}
+                            className="flex items-center gap-2"
+                          >
+                            {loadingPDF === estudiante.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                            ) : (
+                              <FileDown className="h-4 w-4" />
+                            )}
+                            Imprimir PDF
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
