@@ -1,10 +1,9 @@
-import Breadcrumbs from '@/components/ui/Breadcrumbs'
-import React from 'react'
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 const pageCasos = () => {
   return (
-   <>
-     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+    <>
+      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <Breadcrumbs />
         </div>
@@ -29,8 +28,8 @@ const pageCasos = () => {
           <p>Contenido de gestión de casos de convivencia escolar</p>
         </div>
       </div>
-      </>
-  )
-}
+    </>
+  );
+};
 
-export default pageCasos
+export default pageCasos;
