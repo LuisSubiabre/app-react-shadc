@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.0...v4.0.1) (2025-06-04)
+
+
+### Features
+
+* agregar funcionalidad para formatear fechas y pie de página en el informe de atrasos ([84d2256](https://github.com/LuisSubiabre/app-react-shadc/commit/84d22560738ed8a9fcb85bf71c80bba9fd2f5be8))
+
 ## [4.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v3.3.0...v4.0.0) (2025-06-03)
 
 
