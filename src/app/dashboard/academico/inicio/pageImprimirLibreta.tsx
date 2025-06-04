@@ -365,6 +365,24 @@ const AcademicoImprimirLibreta: React.FC = () => {
           asignaturas2S.length
         : null;
 
+    // Calcular promedio final anual (ignorando asignaturas conceptuales)
+    const asignaturasFinal = tableData.filter(
+      (item) => !item.esConcepto && item.pf > 0
+    );
+    let promedioFINAL = null;
+    if (asignaturasFinal.length > 0) {
+      const promedio = asignaturasFinal.reduce((acc, item) => acc + item.pf, 0) / asignaturasFinal.length;
+      const config = configPromedios.promedioAnualAsignatura;
+      
+      if (config.aproximar) {
+        const base = config.reglaAproximacion?.base || 0.05;
+        const parteDecimal = promedio - Math.floor(promedio);
+        promedioFINAL = parteDecimal >= base ? Math.ceil(promedio) : Math.floor(promedio);
+      } else {
+        promedioFINAL = Math.round(promedio);
+      }
+    }
+
     // Encabezados de la tabla
     const headers = [
       "Asignatura",
@@ -491,6 +509,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     doc.text(`Promedio General 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
     doc.text(`Promedio General 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
+    doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, promediosY + 11000000);
 
     // Agregar gráfico después de la tabla
     const chartY = promediosY + 25;
@@ -691,7 +710,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       doc.setFontSize(7);
       doc.setTextColor(100, 100, 100);
       doc.text("1S | 2S: Promedio Final Semestral", 20, 270);
-      doc.text("PF: Promedio Final Anual", 20, 275);
+      doc.text("PF: Promedio Final Anual | PC: Promedio Curso", 20, 275);
       doc.text(`Impreso el: ${fecha}`, 20, 280);
     }
 
