@@ -198,9 +198,20 @@ const PageControlAtrasos = () => {
     doc.text(`Curso: ${estudiante.curso_nombre || "No disponible"}`, 14, 39);
     doc.text(`Total Atrasos: ${atrasos.length}`, 14, 46);
 
+    // Función para formatear fecha
+    const formatearFecha = (fechaStr: string) => {
+      const fecha = new Date(fechaStr);
+      fecha.setHours(fecha.getHours() + 3); // Ajustar 3 horas para Magallanes
+      return fecha.toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    };
+
     // Tabla
     const tableData = atrasos.map((atraso) => [
-      new Date(atraso.fecha).toLocaleDateString(),
+      formatearFecha(atraso.fecha),
       atraso.hora,
       atraso.tipo === "llegada" ? "Llegada" : "Jornada",
       atraso.observaciones || "Sin observaciones",
@@ -220,6 +231,19 @@ const PageControlAtrasos = () => {
         3: { cellWidth: 90 },
       },
     });
+
+    // Agregar pie de página con fecha de impresión
+    const pageHeight = doc.internal.pageSize.height;
+    const fechaActual = new Date();
+    fechaActual.setHours(fechaActual.getHours() + 3); // Ajustar a zona horaria de Magallanes
+    const fechaImpresion = fechaActual.toLocaleDateString('es-CL', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    
+    doc.setFontSize(8);
+    doc.text(`Reporte impreso el: ${fechaImpresion}`, 14, pageHeight - 10);
 
     // Guardar el PDF
     doc.save(
