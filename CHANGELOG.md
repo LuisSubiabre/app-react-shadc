@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.1...v4.0.2) (2025-06-06)
+
+
+### Features
+
+* agregar cálculo y visualización del promedio semestral en la tabla de calificaciones ([fc9ba11](https://github.com/LuisSubiabre/app-react-shadc/commit/fc9ba110d81d3ac2589981325f991f11ab108629))
+* agregar funcionalidad para obtener y mostrar promedios por curso en el informe de calificaciones ([40508f9](https://github.com/LuisSubiabre/app-react-shadc/commit/40508f9452db45b8eea3f4ac93d096286cb5e67d))
+* calcular y mostrar el promedio final anual en el informe de calificaciones ([4528971](https://github.com/LuisSubiabre/app-react-shadc/commit/4528971ea1220c765f9c95a0608d4cd131a1ab51))
+
 ### [4.0.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.0...v4.0.1) (2025-06-04)
 
 
