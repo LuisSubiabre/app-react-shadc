@@ -62,6 +62,32 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
       ? [...Array(10).keys()].map((n) => n + 0)
       : [...Array(10).keys()].map((n) => n + 12);
 
+  const calcularPromedioSemestre = (estudiante: EstudianteType, asignaturaId: string) => {
+    const calificaciones = getColumnRange.map(index => {
+      const savedValue = studentGrades[`${estudiante.id}-${asignaturaId}`]?.[`calificacion${index + 1}`];
+      const calificacionKey = `calificacion${index + 1}` as keyof EstudianteType;
+      const calificacion = estudiante[calificacionKey] as CalificacionValue;
+      
+      // Si hay un valor guardado, usamos ese
+      if (savedValue !== undefined && savedValue !== null && savedValue !== "") {
+        return Number(savedValue);
+      }
+      
+      // Si no hay valor guardado, usamos el valor original
+      if (calificacion !== null && calificacion !== undefined) {
+        return Number(calificacion);
+      }
+      
+      return null;
+    }).filter((val): val is number => val !== null && val !== undefined);
+
+    if (calificaciones.length === 0) return null;
+    const suma = calificaciones.reduce((acc, val) => acc + val, 0);
+    const promedio = suma / calificaciones.length;
+    const decimal = promedio - Math.floor(promedio);
+    return decimal >= 0.5 ? Math.ceil(promedio) : Math.floor(promedio);
+  };
+
   const handleKeyDown = useCallback(
     (
       e: React.KeyboardEvent<HTMLInputElement>,
@@ -257,6 +283,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
             {getColumnRange.map((col) => (
               <TableHead key={col}>C{col + 1}</TableHead>
             ))}
+            <TableHead className="text-center font-bold">Promedio Semestre</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -458,6 +485,9 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
                   </TableCell>
                 );
               })}
+              <TableCell className="text-center font-medium">
+                {calcularPromedioSemestre(estudiante, asignaturaSeleccionada || "")}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

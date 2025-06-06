@@ -29,6 +29,7 @@ import { getFuncionarios } from "@/services/funcionariosService";
 import { Estudiante } from "@/app/dashboard/toor/estudiantes/types.ts";
 import { API_BASE_URL } from "@/config/config";
 import { getLibretaEstudiante } from "@/services/academicoService";
+import { getPromedioPorCurso } from "@/services/infoService";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import configPromedios from "@/config/configPromedios";
@@ -191,6 +192,19 @@ const AcademicoImprimirLibreta: React.FC = () => {
       throw new Error("No hay datos de calificaciones para este estudiante");
     }
 
+    // Obtener promedios del curso
+    const cursoId = currentCurso?.id;
+    let promediosCurso: { asignatura: string; promedio_general: string }[] = [];
+    
+    if (cursoId) {
+      try {
+        const responsePromedios = await getPromedioPorCurso(cursoId);
+        promediosCurso = responsePromedios.data;
+      } catch (error) {
+        console.error("Error al obtener promedios del curso:", error);
+      }
+    }
+
     // Agregar logo
     const logoUrl =
       "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
@@ -208,7 +222,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Título principal
     doc.setFontSize(16);
-    doc.text("Informe Parcial de Calificaciones", 105, 30, { align: "center" });
+    doc.text("Informe Parcial de Calificaciones.", 105, 30, { align: "center" });
 
     // Línea decorativa superior
     doc.setDrawColor(41, 128, 185);
@@ -289,6 +303,29 @@ const AcademicoImprimirLibreta: React.FC = () => {
             ? pfs1
             : calcularPromedioAnual(pfs1, pfs2, asignatura.concepto);
 
+        // Encontrar el promedio del curso para esta asignatura
+        const promedioCurso = promediosCurso.find(
+          (pc) => pc.asignatura === asignatura.nombre
+        );
+        
+        let pcValue = "-";
+        if (promedioCurso) {
+          const promedioNum = parseFloat(promedioCurso.promedio_general);
+          if (!isNaN(promedioNum)) {
+            if (asignatura.concepto) {
+              // Para asignaturas con concepto, convertir a escala conceptual
+              if (promedioNum >= 70) pcValue = "MB";
+              else if (promedioNum >= 50) pcValue = "B";
+              else if (promedioNum >= 40) pcValue = "S";
+              else if (promedioNum >= 30) pcValue = "I";
+              else pcValue = "-";
+            } else {
+              // Para asignaturas numéricas, redondear el valor
+              pcValue = Math.round(promedioNum).toString();
+            }
+          }
+        }
+
         return {
           nombre: asignatura.nombre,
           calificaciones: [
@@ -298,6 +335,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
             ...calificacionesSegundoSemestre,
             pfs2,
             pf,
+            pcValue
           ],
           pf: pf === "-" ? 0 : parseFloat(pf),
           pfs1: pfs1 === "-" ? 0 : parseFloat(pfs1),
@@ -327,6 +365,24 @@ const AcademicoImprimirLibreta: React.FC = () => {
           asignaturas2S.length
         : null;
 
+    // Calcular promedio final anual (ignorando asignaturas conceptuales)
+    const asignaturasFinal = tableData.filter(
+      (item) => !item.esConcepto && item.pf > 0
+    );
+    let promedioFINAL = null;
+    if (asignaturasFinal.length > 0) {
+      const promedio = asignaturasFinal.reduce((acc, item) => acc + item.pf, 0) / asignaturasFinal.length;
+      const config = configPromedios.promedioAnualAsignatura;
+      
+      if (config.aproximar) {
+        const base = config.reglaAproximacion?.base || 0.05;
+        const parteDecimal = promedio - Math.floor(promedio);
+        promedioFINAL = parteDecimal >= base ? Math.ceil(promedio) : Math.floor(promedio);
+      } else {
+        promedioFINAL = Math.round(promedio);
+      }
+    }
+
     // Encabezados de la tabla
     const headers = [
       "Asignatura",
@@ -335,13 +391,14 @@ const AcademicoImprimirLibreta: React.FC = () => {
       ...Array.from({ length: 10 }, (_, i) => (i + 1).toString()),
       "2S",
       "PF",
+      "PC"
     ];
 
     // Crear tabla
     autoTable(doc, {
       startY: 75,
       head: [headers],
-      body: tableData.map((data) => data.calificaciones),
+      body: tableData.map((data) => [...data.calificaciones, "-"]),
       theme: "grid",
       headStyles: {
         fillColor: [41, 128, 185],
@@ -398,6 +455,11 @@ const AcademicoImprimirLibreta: React.FC = () => {
           halign: "center",
           fontStyle: "bold",
         },
+        24: {
+          cellWidth: 8,
+          halign: "center",
+          fontStyle: "bold",
+        },
       },
       margin: { left: 5, right: 5 },
       tableWidth: 198,
@@ -447,6 +509,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     doc.text(`Promedio General 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
     doc.text(`Promedio General 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
+    doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, promediosY + 11000000);
 
     // Agregar gráfico después de la tabla
     const chartY = promediosY + 25;
@@ -647,7 +710,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
       doc.setFontSize(7);
       doc.setTextColor(100, 100, 100);
       doc.text("1S | 2S: Promedio Final Semestral", 20, 270);
-      doc.text("PF: Promedio Final Anual", 20, 275);
+      doc.text("PF: Promedio Final Anual | PC: Promedio Curso", 20, 275);
       doc.text(`Impreso el: ${fecha}`, 20, 280);
     }
 
