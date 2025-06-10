@@ -724,7 +724,7 @@ const PageJefatura = () => {
                     {FORMACION_ETICA_ITEMS.map((item, index) => (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                        className="flex justify-between items-center p-3 bg-muted rounded"
                       >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
@@ -773,7 +773,7 @@ const PageJefatura = () => {
                     {CRECIMIENTO_ITEMS.map((item, index) => (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                        className="flex justify-between items-center p-3 bg-muted rounded"
                       >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
@@ -822,7 +822,7 @@ const PageJefatura = () => {
                     {ENTORNO_ITEMS.map((item, index) => (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                        className="flex justify-between items-center p-3 bg-muted rounded"
                       >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
@@ -871,7 +871,7 @@ const PageJefatura = () => {
                     {APRENDIZAJE_ITEMS.map((item, index) => (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                        className="flex justify-between items-center p-3 bg-muted rounded"
                       >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
@@ -920,7 +920,7 @@ const PageJefatura = () => {
                     {CONDUCTAS_ITEMS.map((item, index) => (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                        className="flex justify-between items-center p-3 bg-muted rounded"
                       >
                         <span className="font-medium flex-1">{item}</span>
                         <div className="w-[180px]">
@@ -963,9 +963,9 @@ const PageJefatura = () => {
 
                 <div>
                   <h3 className="font-semibold text-lg mb-2">OBSERVACIONES</h3>
-                  <div className="p-4 bg-gray-50 rounded">
+                  <div className="p-4 bg-muted rounded">
                     <textarea
-                      className="w-full min-h-[100px] p-2 border rounded-md"
+                      className="w-full min-h-[100px] p-2 border rounded-md bg-background"
                       value={informePersonalidadTemp.observaciones || ""}
                       onChange={(e) =>
                         handleValueChange("observaciones", e.target.value)
