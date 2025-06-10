@@ -418,6 +418,7 @@ const PageJefatura = () => {
         title: "Éxito",
         description: "Informe de personalidad actualizado correctamente",
       });
+      setIsModalInformeOpen(false);
     } catch (error) {
       console.error("Error al guardar el informe:", error);
       toast({
