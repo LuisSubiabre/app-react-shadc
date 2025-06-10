@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.3](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.2...v4.0.3) (2025-06-10)
+
+
+### Features
+
+* agregar tooltip para informar sobre informes guardados en PageJefatura ([7b63dc0](https://github.com/LuisSubiabre/app-react-shadc/commit/7b63dc0a5aea736d3f611c85a168b2db8a98585c))
+* cerrar modal de informe tras actualización exitosa ([900d39e](https://github.com/LuisSubiabre/app-react-shadc/commit/900d39e903d21b300050d6107bd9a5733e989a92))
+
 ### [4.0.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.1...v4.0.2) (2025-06-06)
 
 
