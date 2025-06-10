@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Clock, Calendar, FileText, BookOpen } from "lucide-react";
+import { Clock, Calendar, FileText, BookOpen, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, FileDown } from "lucide-react";
 import { estudiantesCurso } from "@/services/estudiantesService";
@@ -46,6 +46,12 @@ import {
 } from "@/components/ui/select";
 import ModalVerNotas from "@/components/notas/ModalVerNotas";
 import { getPromedioPorCurso } from "@/services/infoService";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -152,6 +158,7 @@ const PageJefatura = () => {
   const [isModalPromediosOpen, setIsModalPromediosOpen] = useState(false);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
+  const [informesGuardados, setInformesGuardados] = useState<{[key: number]: string}>({});
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -414,6 +421,10 @@ const PageJefatura = () => {
         informePersonalidadTemp
       );
       setInformePersonalidadTemp(updatedInforme);
+      setInformesGuardados(prev => ({
+        ...prev,
+        [id]: new Date().toLocaleDateString()
+      }));
       toast({
         title: "Éxito",
         description: "Informe de personalidad actualizado correctamente",
@@ -623,20 +634,38 @@ const PageJefatura = () => {
                         </Button>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleInformePersonalidad(estudiante)}
-                          disabled={loadingInforme === estudiante.id}
-                          className="hover:bg-primary/10 hover:text-primary"
-                          title="Ver informe de personalidad"
-                        >
-                          {loadingInforme === estudiante.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                          ) : (
-                            <FileText className="size-5" />
-                          )}
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleInformePersonalidad(estudiante)}
+                                  disabled={loadingInforme === estudiante.id}
+                                  className="hover:bg-primary/10 hover:text-primary"
+                                  title="Ver informe de personalidad"
+                                >
+                                  {loadingInforme === estudiante.id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                  ) : (
+                                    <FileText className="size-5" />
+                                  )}
+                                </Button>
+                                {informesGuardados[estudiante.estudiante_id || estudiante.id] && (
+                                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white">
+                                    <Check className="w-3 h-3" />
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            {informesGuardados[estudiante.estudiante_id || estudiante.id] && (
+                              <TooltipContent>
+                                <p>Informe guardado el {informesGuardados[estudiante.estudiante_id || estudiante.id]}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   )
