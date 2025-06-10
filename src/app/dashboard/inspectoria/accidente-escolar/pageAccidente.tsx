@@ -34,8 +34,7 @@ import {
 import { PDFDocument } from "pdf-lib";
 import { insertAccidente } from "@/services/inspectoriaService";
 import { HistorialAccidentes } from "@/components/HistorialAccidentes";
-
-
+import { Search, BookOpen, Users, AlertCircle } from "lucide-react";
 
 // Función para obtener el número del día de la semana
 const getNumeroDiaSemana = (dia: string): string => {
@@ -620,7 +619,7 @@ const PageAccidenteEscolar = () => {
           {successMessage}
         </div>
       )}
-      <header className="flex h-16 shrink-0 items-center border-b bg-white dark:bg-gray-800">
+      <header className="flex h-16 shrink-0 items-center border-b bg-white dark:bg-gray-800 shadow-sm">
         <div className="flex items-center gap-2 px-4">
           <Breadcrumbs />
         </div>
@@ -628,211 +627,245 @@ const PageAccidenteEscolar = () => {
 
       <main className="flex-1 p-6">
         <div className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
               Accidente Escolar
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground text-lg">
               Registra y gestiona los accidentes escolares de los estudiantes
             </p>
           </div>
 
-          <div className="flex flex-col gap-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border shadow-sm">
-              <div className="flex flex-col md:flex-row gap-4 items-end">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">
-                    Filtrar por curso
-                  </label>
-                  <Select
-                    value={selectedCurso}
-                    onValueChange={setSelectedCurso}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar curso" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los cursos</SelectItem>
-                      {cursos?.map((curso) => (
-                        <SelectItem key={curso.id} value={curso.id.toString()}>
-                          {curso.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="text-sm font-semibold mb-2 block text-gray-700 dark:text-gray-300">
+                  Filtrar por curso
+                </label>
+                <Select
+                  value={selectedCurso}
+                  onValueChange={setSelectedCurso}
+                >
+                  <SelectTrigger className="w-full h-11 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                    <SelectValue placeholder="Seleccionar curso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los cursos</SelectItem>
+                    {cursos?.map((curso) => (
+                      <SelectItem key={curso.id} value={curso.id.toString()}>
+                        {curso.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">
-                    Buscar estudiante
-                  </label>
+              <div>
+                <label className="text-sm font-semibold mb-2 block text-gray-700 dark:text-gray-300">
+                  Buscar estudiante
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Nombre, RUT o email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
+                    className="w-full h-11 pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                   />
                 </div>
+              </div>
 
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-                    <span className="font-medium">Total: </span>
-                    <span>{filteredEstudiantes.length}</span>
-                  </div>
-                  <div className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full text-green-700 dark:text-green-300">
-                    <span className="font-medium">Activos: </span>
-                    <span>
-                      {filteredEstudiantes.filter((e) => e.activo).length}
-                    </span>
-                  </div>
-                  <div className="bg-red-100 dark:bg-red-900 px-3 py-1 rounded-full text-red-700 dark:text-red-300">
-                    <span className="font-medium">Inactivos: </span>
-                    <span>
-                      {filteredEstudiantes.filter((e) => !e.activo).length}
-                    </span>
-                  </div>
+              <div className="flex items-end">
+                <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white">
+                  <Search className="h-4 w-4 mr-2" />
+                  Buscar
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total estudiantes</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{filteredEstudiantes.length}</p>
                 </div>
               </div>
             </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiantes activos</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {filteredEstudiantes.filter((e) => e.activo).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiantes inactivos</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {filteredEstudiantes.filter((e) => !e.activo).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-900">
-                    <TableHead className="font-medium">ID</TableHead>
-                    <TableHead className="font-medium">Nombre</TableHead>
-                    <TableHead className="font-medium">Curso</TableHead>
-                    <TableHead className="text-right font-medium">
-                      Acciones
-                    </TableHead>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Lista de Estudiantes
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {filteredEstudiantes.length} estudiantes encontrados
+              </p>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50 dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900">
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">ID</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Nombre</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Curso</TableHead>
+                  <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">
+                    Acciones
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-10">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                        <p className="text-muted-foreground font-medium">
+                          Cargando estudiantes...
+                        </p>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-10">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-                          <p className="text-muted-foreground">
-                            Cargando estudiantes...
-                          </p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : estudiantes.length > 0 ? (
-                    filteredEstudiantes.map((estudiante) => (
-                      <TableRow
-                        key={estudiante.estudiante_id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                      >
-                        <TableCell className="font-mono">
-                          <span
-                            className={`inline-flex items-center gap-2 ${
-                              estudiante.activo
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}
-                          >
-                            {estudiante.activo ? (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                                />
-                              </svg>
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="w-4 h-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M6 18 18 6M6 6l12 12"
-                                />
-                              </svg>
-                            )}
-                            {estudiante.estudiante_id}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {estudiante.nombre}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {estudiante.email}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-300">
-                            {estudiante.curso_nombre}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <HistorialAccidentes estudianteId={estudiante.id} />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                handleRegistrarAccidente(estudiante)
-                              }
-                              className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                            >
-                              Registrar Accidente
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-10">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-3">
+                ) : estudiantes.length > 0 ? (
+                  filteredEstudiantes.map((estudiante) => (
+                    <TableRow
+                      key={estudiante.estudiante_id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                    >
+                      <TableCell className="font-mono">
+                        <span
+                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                            estudiante.activo
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                        >
+                          {estudiante.activo ? (
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
                               viewBox="0 0 24 24"
                               strokeWidth={1.5}
                               stroke="currentColor"
-                              className="w-8 h-8 text-muted-foreground"
+                              className="w-4 h-4"
                             >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                               />
                             </svg>
-                          </div>
-                          <p className="text-muted-foreground">
-                            No hay estudiantes disponibles.
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Intenta cambiar los filtros de búsqueda
-                          </p>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M6 18 18 6M6 6l12 12"
+                              />
+                            </svg>
+                          )}
+                          {estudiante.estudiante_id}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {estudiante.nombre}
+                          </span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {estudiante.email}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-sm font-medium text-blue-700 dark:text-blue-400 ring-1 ring-inset ring-blue-700/10">
+                          {estudiante.curso_nombre}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <HistorialAccidentes estudianteId={estudiante.id} />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRegistrarAccidente(estudiante)}
+                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
+                          >
+                            Registrar Accidente
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-10">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-4">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-8 h-8 text-gray-400"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-gray-900 dark:text-white font-medium">
+                          No hay estudiantes disponibles
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Intenta cambiar los filtros de búsqueda
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
       </main>
@@ -840,10 +873,9 @@ const PageAccidenteEscolar = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Registro de Accidente Escolar</DialogTitle>
-            <DialogDescription>
-              Complete los datos del accidente escolar para generar el PDF
-              correspondiente.
+            <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">Registro de Accidente Escolar</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-gray-400">
+              Complete los datos del accidente escolar para generar el PDF correspondiente.
             </DialogDescription>
           </DialogHeader>
           {errorMessage ? (
@@ -878,8 +910,8 @@ const PageAccidenteEscolar = () => {
           ) : (
             estudianteData && (
               <div className="space-y-6">
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                     Información del Estudiante
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -888,13 +920,13 @@ const PageAccidenteEscolar = () => {
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Nombre Completo
                         </span>
-                        <span className="text-base">{`${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`}</span>
+                        <span className="text-base text-gray-900 dark:text-white">{`${estudianteData.patalum} ${estudianteData.matalum} ${estudianteData.nomalum}`}</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                           RUT
                         </span>
-                        <span className="text-base">
+                        <span className="text-base text-gray-900 dark:text-white">
                           {estudianteData.rutalum}
                         </span>
                       </div>
@@ -902,7 +934,7 @@ const PageAccidenteEscolar = () => {
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Curso
                         </span>
-                        <span className="text-base">{`${estudianteData.cursole} ${estudianteData.letra}`}</span>
+                        <span className="text-base text-gray-900 dark:text-white">{`${estudianteData.cursole} ${estudianteData.letra}`}</span>
                       </div>
                     </div>
                     <div className="space-y-3">
@@ -910,7 +942,7 @@ const PageAccidenteEscolar = () => {
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Fecha de Nacimiento
                         </span>
-                        <span className="text-base">
+                        <span className="text-base text-gray-900 dark:text-white">
                           {estudianteData.fecnac}
                         </span>
                       </div>
@@ -918,7 +950,7 @@ const PageAccidenteEscolar = () => {
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Edad
                         </span>
-                        <span className="text-base">
+                        <span className="text-base text-gray-900 dark:text-white">
                           {estudianteData.edad} años
                         </span>
                       </div>
@@ -926,14 +958,14 @@ const PageAccidenteEscolar = () => {
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Sexo
                         </span>
-                        <span className="text-base">{estudianteData.sexo}</span>
+                        <span className="text-base text-gray-900 dark:text-white">{estudianteData.sexo}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                     Información de Contacto
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -941,13 +973,13 @@ const PageAccidenteEscolar = () => {
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Dirección
                       </span>
-                      <span className="text-base">{estudianteData.dirpar}</span>
+                      <span className="text-base text-gray-900 dark:text-white">{estudianteData.dirpar}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Teléfono Celular
                       </span>
-                      <span className="text-base">
+                      <span className="text-base text-gray-900 dark:text-white">
                         {estudianteData.celular}
                       </span>
                     </div>
@@ -956,7 +988,7 @@ const PageAccidenteEscolar = () => {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Fecha de Registro
                     </label>
                     <Input
@@ -965,11 +997,12 @@ const PageAccidenteEscolar = () => {
                       onChange={(e) =>
                         setFechaRegistro(new Date(e.target.value))
                       }
+                      className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Hora del Accidente
                     </label>
                     <div className="flex gap-2">
@@ -977,7 +1010,7 @@ const PageAccidenteEscolar = () => {
                         value={horaAccidente}
                         onValueChange={setHoraAccidente}
                       >
-                        <SelectTrigger className="w-1/2">
+                        <SelectTrigger className="w-1/2 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
                           <SelectValue placeholder="Hora" />
                         </SelectTrigger>
                         <SelectContent>
@@ -996,7 +1029,7 @@ const PageAccidenteEscolar = () => {
                         value={minutoAccidente}
                         onValueChange={setMinutoAccidente}
                       >
-                        <SelectTrigger className="w-1/2">
+                        <SelectTrigger className="w-1/2 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
                           <SelectValue placeholder="Minutos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1014,7 +1047,7 @@ const PageAccidenteEscolar = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Fecha del Accidente
                     </label>
                     <Input
@@ -1023,18 +1056,19 @@ const PageAccidenteEscolar = () => {
                       onChange={(e) =>
                         setFechaAccidente(new Date(e.target.value))
                       }
+                      className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Día de la Semana
                     </label>
                     <Select
                       value={diaSemanaAccidente}
                       onValueChange={setDiaSemanaAccidente}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
                         <SelectValue placeholder="Seleccione el día" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1050,14 +1084,14 @@ const PageAccidenteEscolar = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Tipo de Accidente
                     </label>
                     <Select
                       value={tipoAccidente}
                       onValueChange={setTipoAccidente}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
                         <SelectValue placeholder="Seleccione el tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1070,9 +1104,9 @@ const PageAccidenteEscolar = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Horario</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Horario</label>
                     <Select value={horario} onValueChange={setHorario}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
                         <SelectValue placeholder="Seleccione el horario" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1085,11 +1119,11 @@ const PageAccidenteEscolar = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Circunstancia del Accidente
                   </label>
                   <textarea
-                    className="w-full min-h-[80px] p-2 border rounded-md"
+                    className="w-full min-h-[80px] p-2 border rounded-md bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white"
                     placeholder="Describa cómo ocurrió el accidente (máximo 250 caracteres)"
                     value={circunstanciaAccidente}
                     onChange={(e) => {
@@ -1099,13 +1133,13 @@ const PageAccidenteEscolar = () => {
                     }}
                     maxLength={250}
                   />
-                  <p className="text-sm text-muted-foreground text-right">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-right">
                     {circunstanciaAccidente.length}/250 caracteres
                   </p>
                 </div>
 
-                <div className="border-t pt-4">
-                  <h3 className="text-sm font-medium mb-3">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Testigos (Opcional)
                   </h3>
                   <div className="space-y-3">
@@ -1124,6 +1158,7 @@ const PageAccidenteEscolar = () => {
                                 e.target.value
                               )
                             }
+                            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1137,6 +1172,7 @@ const PageAccidenteEscolar = () => {
                                 e.target.value
                               )
                             }
+                            className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                           />
                         </div>
                       </div>
@@ -1148,7 +1184,12 @@ const PageAccidenteEscolar = () => {
           )}
           <DialogFooter className="mt-4">
             {!errorMessage && estudianteData && (
-              <Button onClick={generarPDF}>Generar PDF</Button>
+              <Button 
+                onClick={generarPDF}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Generar PDF
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
