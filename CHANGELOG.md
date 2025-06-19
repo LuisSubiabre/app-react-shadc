@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.4](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.3...v4.0.4) (2025-06-19)
+
+
+### Features
+
+* aspecto visual tabla estudiantes ([210f21b](https://github.com/LuisSubiabre/app-react-shadc/commit/210f21be0d7c4a9ebd4c33b67289647ab6ed1eae))
+* cambio aspecto visual unificado ([28a8999](https://github.com/LuisSubiabre/app-react-shadc/commit/28a899959babff5843b3e04b84f00e1cf8f5c7a6))
+* implementar gestión de casos de convivencia escolar en PageCasos ([65df48a](https://github.com/LuisSubiabre/app-react-shadc/commit/65df48a2e78222658578d080f699bbbe72007249))
+* mejora visual ([f674795](https://github.com/LuisSubiabre/app-react-shadc/commit/f6747959278b90d802ba2cca5f1e7b03e4b1adff))
+* refactorizar generación de ítems en informes ([d080a03](https://github.com/LuisSubiabre/app-react-shadc/commit/d080a0389fd7e689c7df6fdf00b1605fb3a55fc2))
+
 ### [4.0.3](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.2...v4.0.3) (2025-06-10)
 
 

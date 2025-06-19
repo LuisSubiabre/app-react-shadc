@@ -157,86 +157,74 @@ const PageInformes = () => {
     doc.text(nombreEstudiante, 20, infoY);
     doc.text(curso, 20 + doc.getTextWidth(nombreEstudiante) + 10, infoY);
 
+    // Función auxiliar para generar ítems con valores alineados a la derecha
+    const generarItemsConValores = (items: string[], prefix: string, startY: number) => {
+      let y = startY;
+      items.forEach((item, index) => {
+        const valor = informe[`${prefix}_${index + 1}` as keyof typeof informe];
+        
+        // Número del ítem
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${index + 1}.`, 25, y);
+        
+        // Texto del ítem
+        doc.setFont("helvetica", "normal");
+        const itemText = `${item}:`;
+        doc.text(itemText, 35, y);
+        
+        // Valor alineado a la derecha y en negrita
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(41, 128, 185);
+        const valorText = String(valor || "No especificado");
+        const valorWidth = doc.getTextWidth(valorText);
+        doc.text(valorText, 190 - valorWidth, y);
+        
+        y += 4;
+      });
+      return y;
+    };
+
     // I. FORMACIÓN ÉTICA
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
     doc.text("I. FORMACIÓN ÉTICA", 20, infoY + 10);
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-
-    let y = infoY + 16;
-    FORMACION_ETICA_ITEMS.forEach((item, index) => {
-      const valor =
-        informe[`formacion_etica_${index + 1}` as keyof typeof informe];
-      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 4;
-    });
+    
+    let y = generarItemsConValores(FORMACION_ETICA_ITEMS, "formacion_etica", infoY + 16);
 
     // II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
     doc.text("II. CRECIMIENTO Y AUTOAFIRMACIÓN PERSONAL", 20, y + 3);
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    y += 9;
-
-    CRECIMIENTO_ITEMS.forEach((item, index) => {
-      const valor = informe[`crecimiento_${index + 1}` as keyof typeof informe];
-      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 4;
-    });
+    
+    y = generarItemsConValores(CRECIMIENTO_ITEMS, "crecimiento", y + 9);
 
     // III. LA PERSONA Y SU ENTORNO
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
     doc.text("III. LA PERSONA Y SU ENTORNO", 20, y + 3);
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    y += 9;
-
-    ENTORNO_ITEMS.forEach((item, index) => {
-      const valor = informe[`entorno_${index + 1}` as keyof typeof informe];
-      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 4;
-    });
+    
+    y = generarItemsConValores(ENTORNO_ITEMS, "entorno", y + 9);
 
     // IV. ÁREA DE APRENDIZAJE
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
     doc.text("IV. ÁREA DE APRENDIZAJE", 20, y + 3);
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    y += 9;
-
-    APRENDIZAJE_ITEMS.forEach((item, index) => {
-      const valor = informe[`aprendizaje_${index + 1}` as keyof typeof informe];
-      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 4;
-    });
+    
+    y = generarItemsConValores(APRENDIZAJE_ITEMS, "aprendizaje", y + 9);
 
     // V. CONDUCTAS PREOCUPANTES
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(41, 128, 185);
     doc.text("V. CONDUCTAS PREOCUPANTES", 20, y + 3);
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    y += 9;
-
-    CONDUCTAS_ITEMS.forEach((item, index) => {
-      const valor = informe[`conductas_${index + 1}` as keyof typeof informe];
-      doc.text(`${index + 1}. ${item}: ${valor}`, 25, y);
-      y += 4;
-    });
+    
+    y = generarItemsConValores(CONDUCTAS_ITEMS, "conductas", y + 9);
 
     // VI. COMENTARIOS
     doc.setFontSize(10);
