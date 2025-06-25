@@ -137,7 +137,11 @@ const ModalEstadisticasAsistencia: React.FC<
     if (!fecha) return "Sin sesiones";
     try {
       const fechaObj = new Date(fecha);
-      return format(fechaObj, "dd-MM-yyyy");
+      // Ajustar la fecha para compensar la zona horaria
+      const fechaLocal = new Date(
+        fechaObj.getTime() + fechaObj.getTimezoneOffset() * 60000
+      );
+      return format(fechaLocal, "dd-MM-yyyy");
     } catch (error) {
       return "Fecha inválida + " + error;
     }
