@@ -7,8 +7,19 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { obtenerEstadisticasAsistencia } from "@/services/sesionesService";
 import LoadingErrorHandler from "@/components/LoadingErrorHandler";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
 
 interface EstadisticasGenerales {
   total_sesiones: string;
@@ -56,7 +67,9 @@ const ModalEstadisticasAsistencia: React.FC<
     null
   );
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -70,9 +83,9 @@ const ModalEstadisticasAsistencia: React.FC<
     try {
       const response = await obtenerEstadisticasAsistencia();
       setEstadisticas(response);
-    } catch (error) {
+    } catch (e) {
       setError("Error al cargar las estadísticas");
-      console.error("Error:", error);
+      console.error("Error:", e);
     } finally {
       setLoading(false);
     }
@@ -113,6 +126,226 @@ const ModalEstadisticasAsistencia: React.FC<
     return meses[mes - 1];
   };
 
+  const formatearFechaPDF = (fecha: string | null) => {
+    if (!fecha) return "Sin sesiones";
+    try {
+      const fechaObj = new Date(fecha);
+      return format(fechaObj, "dd-MM-yyyy");
+    } catch (error) {
+      return "Fecha inválida + " + error;
+    }
+  };
+
+  const handleGenerarPDF = async () => {
+    if (!estadisticas) return;
+
+    setLoadingPdf(true);
+    try {
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+
+      // Título principal
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("Estadísticas de Asistencia - Talleres ACLE", 14, 20);
+
+      // Fecha de generación
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Generado el: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+        14,
+        30
+      );
+
+      // Línea horizontal
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, 35, 196, 35);
+
+      let startY = 45;
+      let pageNumber = 1;
+
+      // Resumen General
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Resumen General", 14, startY);
+      startY += 8;
+
+      // Tabla de resumen general
+      const resumenData = [
+        ["Total Talleres", estadisticas.total_talleres.toString()],
+        ["Total Sesiones", estadisticas.total_sesiones.toString()],
+        [
+          "Asistencias Registradas",
+          estadisticas.total_asistencias_registradas.toString(),
+        ],
+        ["Asistencias Efectivas", estadisticas.total_asistencias.toString()],
+        [
+          "Promedio General",
+          `${estadisticas.promedio_asistencia_general.toFixed(1)}%`,
+        ],
+      ];
+
+      autoTable(doc, {
+        startY: startY,
+        head: [["Métrica", "Valor"]],
+        body: resumenData,
+        theme: "grid",
+        headStyles: { fillColor: [41, 128, 185] },
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 80, fontStyle: "bold" },
+          1: { cellWidth: 60, halign: "center" },
+        },
+        didDrawPage: function (data) {
+          doc.setFontSize(10);
+          doc.text(
+            `Página ${pageNumber}`,
+            data.settings.margin.left,
+            doc.internal.pageSize.height - 10
+          );
+        },
+      });
+
+      startY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 15;
+
+      // Estadísticas por Taller
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Estadísticas por Taller", 14, startY);
+      startY += 8;
+
+      // Generar tabla para cada taller
+      estadisticas.talleres.forEach((taller, index) => {
+        // Verificar si necesitamos nueva página
+        if (startY > 250) {
+          doc.addPage();
+          startY = 20;
+          pageNumber++;
+        }
+
+        // Título del taller
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Taller: ${taller.nombre_taller}`, 14, startY);
+        startY += 6;
+
+        // Estadísticas generales del taller
+        const estadisticasGenerales = [
+          ["Total Sesiones", taller.estadisticas_generales.total_sesiones],
+          [
+            "Asistencias Registradas",
+            taller.estadisticas_generales.total_asistencias_registradas,
+          ],
+          [
+            "Asistencias Efectivas",
+            taller.estadisticas_generales.total_asistencias,
+          ],
+          [
+            "Porcentaje Asistencia",
+            taller.estadisticas_generales.porcentaje_asistencia
+              ? `${parseFloat(
+                  taller.estadisticas_generales.porcentaje_asistencia
+                ).toFixed(1)}%`
+              : "Sin datos",
+          ],
+          [
+            "Primera Sesión",
+            formatearFechaPDF(taller.estadisticas_generales.primera_sesion),
+          ],
+          [
+            "Última Sesión",
+            formatearFechaPDF(taller.estadisticas_generales.ultima_sesion),
+          ],
+        ];
+
+        autoTable(doc, {
+          startY: startY,
+          head: [["Métrica", "Valor"]],
+          body: estadisticasGenerales,
+          theme: "grid",
+          headStyles: { fillColor: [52, 73, 94] },
+          styles: { fontSize: 9 },
+          columnStyles: {
+            0: { cellWidth: 70, fontStyle: "bold" },
+            1: { cellWidth: 70 },
+          },
+        });
+
+        startY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 5;
+
+        // Estadísticas por mes si existen
+        if (taller.estadisticas_por_mes.length > 0) {
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.text("Estadísticas por Mes:", 14, startY);
+          startY += 5;
+
+          const estadisticasPorMes = taller.estadisticas_por_mes.map((mes) => [
+            `${obtenerNombreMes(mes.mes)} ${mes.anio}`,
+            mes.total_sesiones.toString(),
+            mes.total_asistencias_registradas.toString(),
+            mes.total_asistencias.toString(),
+            `${mes.porcentaje_asistencia.toFixed(1)}%`,
+          ]);
+
+          autoTable(doc, {
+            startY: startY,
+            head: [
+              ["Período", "Sesiones", "Registradas", "Efectivas", "Porcentaje"],
+            ],
+            body: estadisticasPorMes,
+            theme: "grid",
+            headStyles: { fillColor: [155, 89, 182] },
+            styles: { fontSize: 8 },
+            columnStyles: {
+              0: { cellWidth: 40 },
+              1: { cellWidth: 25, halign: "center" },
+              2: { cellWidth: 30, halign: "center" },
+              3: { cellWidth: 25, halign: "center" },
+              4: { cellWidth: 30, halign: "center" },
+            },
+          });
+
+          startY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 10;
+        } else {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.text("Sin sesiones registradas", 14, startY);
+          startY += 8;
+        }
+
+        // Separador entre talleres
+        if (index < estadisticas.talleres.length - 1) {
+          doc.setDrawColor(200, 200, 200);
+          doc.line(14, startY, 196, startY);
+          startY += 5;
+        }
+      });
+
+      // Guardar el PDF
+      doc.save(
+        `estadisticas-asistencia-talleres-${format(
+          new Date(),
+          "dd-MM-yyyy"
+        )}.pdf`
+      );
+
+      toast({
+        title: "Éxito",
+        description: "PDF generado correctamente",
+      });
+    } catch {
+      console.error("Error al generar el PDF");
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al generar el PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPdf(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -120,6 +353,17 @@ const ModalEstadisticasAsistencia: React.FC<
           <DialogTitle className="text-2xl font-bold">
             Estadísticas de Asistencia - Talleres ACLE
           </DialogTitle>
+          {estadisticas && (
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={handleGenerarPDF}
+                disabled={loadingPdf}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {loadingPdf ? "Generando PDF..." : "Exportar a PDF"}
+              </Button>
+            </div>
+          )}
         </DialogHeader>
 
         <LoadingErrorHandler loading={loading} error={error}>
