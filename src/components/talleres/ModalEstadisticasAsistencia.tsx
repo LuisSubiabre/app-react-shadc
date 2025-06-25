@@ -157,7 +157,7 @@ const ModalEstadisticasAsistencia: React.FC<
       // Título principal
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      doc.text("Estadísticas de Asistencia - Talleres ACLE", 14, 20);
+      doc.text("Estadísticas de Asistencia - Talleres ACLE.", 14, 20);
 
       // Fecha de generación
       doc.setFontSize(10);
