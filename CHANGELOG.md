@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.4...v4.1.0) (2025-06-25)
+
+
+### Features
+
+* actualizar la interfaz de TablaTalleres con nuevos componentes y mejoras en la usabilidad ([e9d5fab](https://github.com/LuisSubiabre/app-react-shadc/commit/e9d5fab9a23691fc7c531db271072a01bd3f3812))
+* agregar función para obtener estadísticas de asistencia general ([71db0fc](https://github.com/LuisSubiabre/app-react-shadc/commit/71db0fca1d084adf13f4d586a68c25059aa9b6e7))
+* agregar funcionalidad para exportar estadísticas a PDF ([8f14e0b](https://github.com/LuisSubiabre/app-react-shadc/commit/8f14e0b586e789ac4ee9f769fb6482e01d73a902))
+* agregar modal de estadísticas de asistencia ([9f1f099](https://github.com/LuisSubiabre/app-react-shadc/commit/9f1f099823a83752ec52d8aff0045077f83682e1))
+* agregar modal para generación de informes de porcentaje de asistencia ([d955dd2](https://github.com/LuisSubiabre/app-react-shadc/commit/d955dd2f7643746ca9d997e5612cbcd8fef593cb))
+* agregar resumen de asistencia en los modales de talleres ([80716cd](https://github.com/LuisSubiabre/app-react-shadc/commit/80716cd15dbebc525883da59a649076fb1051118))
+* mejorar la interfaz de Talleres ACLE con nuevos componentes y herramientas ([187aeeb](https://github.com/LuisSubiabre/app-react-shadc/commit/187aeeb2c50df36e9989148d5ceeecd1138257b4))
+* mejorar modales de asistencia y generación de informes ([e2c3bfa](https://github.com/LuisSubiabre/app-react-shadc/commit/e2c3bfab49b6fde17a77722cb64670ec4821baa8))
+
 ### [4.0.4](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.3...v4.0.4) (2025-06-19)
 
 

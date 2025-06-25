@@ -18,6 +18,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  ChevronDown,
+  BarChart3,
+  FileText,
+  Calendar,
+  PieChart,
+  Download,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/app/dashboard/toor/usuarios/types";
@@ -42,6 +62,8 @@ import { ModalCursos } from "@/components/talleres/ModalCursos";
 import { ModalAsistencia } from "@/components/talleres/ModalAsistencia";
 import { ModalAsistenciaPorMes } from "@/components/talleres/ModalAsistenciaPorMes";
 import { ModalAsistenciaDetalle } from "@/components/talleres/ModalAsistenciaDetalle";
+import { ModalPorcentajeAsistencia } from "@/components/talleres/ModalPorcentajeAsistencia";
+import ModalEstadisticasAsistencia from "@/components/talleres/ModalEstadisticasAsistencia";
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -53,6 +75,12 @@ const AcleTalleres: React.FC = () => {
     useState<boolean>(false);
   const [isModalAsistenciaDetalleOpen, setIsModalAsistenciaDetalleOpen] =
     useState<boolean>(false);
+  const [isModalPorcentajeAsistenciaOpen, setIsModalPorcentajeAsistenciaOpen] =
+    useState<boolean>(false);
+  const [
+    isModalEstadisticasAsistenciaOpen,
+    setIsModalEstadisticasAsistenciaOpen,
+  ] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newTaller, setNewTaller] = useState<Partial<TallerType>>({
@@ -425,14 +453,86 @@ const AcleTalleres: React.FC = () => {
         <Toaster />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <h1 className="text-2xl font-bold">Talleres ACLE</h1>
-          <div className="flex gap-2">
-            <Button onClick={handleAddClick}>Agregar Taller</Button>
-            <Button onClick={() => setIsModalAsistenciaPorMesOpen(true)}>
-              Asistencia por Mes
-            </Button>
-            <Button onClick={() => setIsModalAsistenciaDetalleOpen(true)}>
-              Asistencia con Detalle
-            </Button>
+
+          {/* Barra de herramientas mejorada */}
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+            {/* Acciones principales */}
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleAddClick}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Agregar Taller
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Crear un nuevo taller</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Menú de reportes */}
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          Reportes
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem
+                          onClick={() => setIsModalAsistenciaPorMesOpen(true)}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          Asistencia por Mes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setIsModalAsistenciaDetalleOpen(true)}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Asistencia con Detalle
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setIsModalPorcentajeAsistenciaOpen(true)
+                          }
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <PieChart className="h-4 w-4" />% de Asistencia
+                          Mensual
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setIsModalEstadisticasAsistenciaOpen(true)
+                          }
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Download className="h-4 w-4" />
+                          Estadística Asistencia
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Acceder a reportes de asistencia</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
 
           <TablaTalleres
@@ -548,6 +648,18 @@ const AcleTalleres: React.FC = () => {
         <ModalAsistenciaDetalle
           isOpen={isModalAsistenciaDetalleOpen}
           onClose={() => setIsModalAsistenciaDetalleOpen(false)}
+        />
+
+        {/* Modal para informe de porcentaje de asistencia */}
+        <ModalPorcentajeAsistencia
+          isOpen={isModalPorcentajeAsistenciaOpen}
+          onClose={() => setIsModalPorcentajeAsistenciaOpen(false)}
+        />
+
+        {/* Modal para informe de estadísticas de asistencia */}
+        <ModalEstadisticasAsistencia
+          isOpen={isModalEstadisticasAsistenciaOpen}
+          onClose={() => setIsModalEstadisticasAsistenciaOpen(false)}
         />
 
         {/* Diálogo de confirmación para eliminar */}

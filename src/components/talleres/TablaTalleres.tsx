@@ -17,8 +17,27 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, MapPin, Users, UserPlus, Download } from "lucide-react";
+import {
+  CalendarDays,
+  MapPin,
+  Users,
+  UserPlus,
+  Download,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  BookOpen,
+  UserCheck,
+  FileText,
+} from "lucide-react";
 import { getEstudiantesInscritos } from "@/services/talleresService";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -223,119 +242,110 @@ export const TablaTalleres: React.FC<TablaTalleresProps> = ({
               </div>
             </TableCell>
             <TableCell>
-              <div className="flex flex-wrap gap-2">
-                <div className="flex flex-wrap gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                {/* Botones principales - siempre visibles */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEditClick(taller)}
+                        className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Editar taller</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
+                      >
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onEditClick(taller)}
                           className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
                         >
-                          Editar
+                          <UserCheck className="h-4 w-4" />
                         </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Modificar información del taller</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Ver inscritos</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onOpenCursosModal(taller)}
+                        className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Ver cursos</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Menú desplegable para acciones secundarias */}
+                <DropdownMenu>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => onDeleteClick(taller)}
-                          className="hover:bg-red-600"
-                        >
-                          Eliminar
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Eliminar taller</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onOpenCursosModal(taller)}
-                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-                        >
-                          Cursos
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Ver cursos asociados</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to={`/dashboard/acles/talleres/inscritos/${taller.taller_id}`}
-                        >
+                        <DropdownMenuTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
                             className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
                           >
-                            Inscritos
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
-                        </Link>
+                        </DropdownMenuTrigger>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Ver lista de inscritos</p>
+                        <p>Más acciones</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => exportarPDF(taller)}
-                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          PDF
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Exportar lista de inscritos en PDF</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onOpenAsistenciaModal(taller)}
-                          className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-                        >
-                          Asistencia
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Ver informe de asistencia</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => onOpenAsistenciaModal(taller)}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Asistencia
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => exportarPDF(taller)}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Exportar PDF
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onClick={() => onDeleteClick(taller)}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar taller
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </TableCell>
           </TableRow>
