@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.2...v4.1.1) (2025-06-25)
+
+
+### Features
+
+* ajustar el formateo de fechas en el modal de estadísticas de asistencia para considerar la zona horaria local ([39e8cf8](https://github.com/LuisSubiabre/app-react-shadc/commit/39e8cf8c2cbc19f71a533d53cae14024c5ee819e))
+
 ### [4.1.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.1...v4.1.2) (2025-06-25)
 
 ### [4.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.0...v4.1.1) (2025-06-25)

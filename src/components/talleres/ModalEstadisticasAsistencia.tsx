@@ -137,7 +137,11 @@ const ModalEstadisticasAsistencia: React.FC<
     if (!fecha) return "Sin sesiones";
     try {
       const fechaObj = new Date(fecha);
-      return format(fechaObj, "dd-MM-yyyy");
+      // Ajustar la fecha para compensar la zona horaria
+      const fechaLocal = new Date(
+        fechaObj.getTime() + fechaObj.getTimezoneOffset() * 60000
+      );
+      return format(fechaLocal, "dd-MM-yyyy");
     } catch (error) {
       return "Fecha inválida + " + error;
     }
@@ -495,7 +499,7 @@ const ModalEstadisticasAsistencia: React.FC<
                               </Badge>
                             </div>
                             <div className="flex justify-between">
-                              <span>Primera Sesión:</span>
+                              <span> Primera Sesión:</span>
                               <span className="font-medium">
                                 {formatearFecha(
                                   taller.estadisticas_generales.primera_sesion
@@ -503,7 +507,7 @@ const ModalEstadisticasAsistencia: React.FC<
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span>Última Sesión:</span>
+                              <span> Última Sesión:</span>
                               <span className="font-medium">
                                 {formatearFecha(
                                   taller.estadisticas_generales.ultima_sesion
