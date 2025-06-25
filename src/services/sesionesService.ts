@@ -57,14 +57,11 @@ export const obtenerInformeAsistencia = async (
     .then((response) => response.data);
 };
 
-export const obtenerAllSesionesPorMes = async (
-  mes: number,
-  anio: number
-) => {
+export const obtenerAllSesionesPorMes = async (mes: number, anio: number) => {
   return api
     .get(`talleres-sesiones/asistencia/all/${mes}/${anio}`)
     .then((response) => response.data);
-}
+};
 
 export const obtenerAllSesionesPorMesDetalle = async (
   mes: number,
@@ -73,4 +70,13 @@ export const obtenerAllSesionesPorMesDetalle = async (
   return api
     .get(`talleres-sesiones/asistencia/all-detalles/${mes}/${anio}`)
     .then((response) => response.data);
-}
+};
+
+export const obtenerPorcentajeAsistencia = async (
+  mes: number,
+  anio: number
+) => {
+  return api
+    .get(`talleres-sesiones/porcentaje-asistencia/${mes}/${anio}`)
+    .then((response) => response.data);
+};
