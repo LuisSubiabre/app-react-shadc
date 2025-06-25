@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.0...v4.1.1) (2025-06-25)
+
+
+### Features
+
+* ajustar la función de formateo de fechas en el modal de estadísticas de asistencia ([1913c9e](https://github.com/LuisSubiabre/app-react-shadc/commit/1913c9e8f6dc9e00dc7ebd09483d6e57dc9ea91c))
+
 ## [4.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.0.4...v4.1.0) (2025-06-25)
 
 

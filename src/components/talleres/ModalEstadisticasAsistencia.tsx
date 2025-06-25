@@ -94,7 +94,13 @@ const ModalEstadisticasAsistencia: React.FC<
 
   const formatearFecha = (fecha: string | null) => {
     if (!fecha) return "Sin sesiones";
-    return new Date(fecha).toLocaleDateString("es-ES", {
+    // Crear la fecha y ajustar para la zona horaria local
+    const fechaObj = new Date(fecha);
+    // Ajustar la fecha para compensar la zona horaria
+    const fechaLocal = new Date(
+      fechaObj.getTime() + fechaObj.getTimezoneOffset() * 60000
+    );
+    return fechaLocal.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
