@@ -80,3 +80,11 @@ export const obtenerPorcentajeAsistencia = async (
     .get(`talleres-sesiones/porcentaje-asistencia/${mes}/${anio}`)
     .then((response) => response.data);
 };
+
+export const obtenerEstadisticasAsistencia = async (
+
+) => {
+  return api
+    .get(`talleres-sesiones/porcentaje-asistencia/general`)
+    .then((response) => response.data);
+}
