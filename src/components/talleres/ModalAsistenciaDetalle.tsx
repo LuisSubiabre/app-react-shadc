@@ -36,6 +36,10 @@ interface SesionDetalle {
   asistio: boolean;
   nombre_taller: string;
   nombre_monitor: string;
+  total_sesiones: string;
+  total_asistencias_registradas: string;
+  total_asistencias: string;
+  porcentaje_asistencia: string;
 }
 
 interface ModalAsistenciaDetalleProps {
@@ -231,6 +235,52 @@ export const ModalAsistenciaDetalle: React.FC<ModalAsistenciaDetalleProps> = ({
             // Actualizar startY para la próxima tabla
             startY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 10;
           });
+
+          // Agregar resumen de asistencia del taller al final
+          const primerRegistro = Object.values(
+            sesiones as { [key: string]: SesionDetalle[] }
+          )[0][0];
+          const mesLabel = meses.find(
+            (m) => m.value === mesSeleccionado
+          )?.label;
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.text(
+            `Resumen del Taller - ${mesLabel} ${añoSeleccionado}:`,
+            14,
+            startY
+          );
+          startY += 5;
+          doc.setFont("helvetica", "normal");
+          doc.text(
+            `Total de sesiones: ${primerRegistro.total_sesiones || "0"}`,
+            14,
+            startY
+          );
+          startY += 4;
+          doc.text(
+            `Total de asistencias registradas: ${
+              primerRegistro.total_asistencias_registradas || "0"
+            }`,
+            14,
+            startY
+          );
+          startY += 4;
+          doc.text(
+            `Total de asistencias: ${primerRegistro.total_asistencias || "0"}`,
+            14,
+            startY
+          );
+          startY += 4;
+          doc.setFont("helvetica", "bold");
+          doc.text(
+            `Porcentaje de asistencia: ${
+              primerRegistro.porcentaje_asistencia || "0"
+            }%`,
+            14,
+            startY
+          );
+          startY += 15;
         }
       );
 
