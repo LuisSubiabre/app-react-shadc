@@ -14,6 +14,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Download } from "lucide-react";
 
 interface JsPDFWithAutoTable extends jsPDF {
   lastAutoTable: {
@@ -360,6 +361,7 @@ const ModalEstadisticasAsistencia: React.FC<
                 disabled={loadingPdf}
                 className="bg-blue-600 hover:bg-blue-700"
               >
+                <Download className="mr-2 h-4 w-4" />
                 {loadingPdf ? "Generando PDF..." : "Exportar a PDF"}
               </Button>
             </div>

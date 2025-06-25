@@ -18,6 +18,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  ChevronDown,
+  BarChart3,
+  FileText,
+  Calendar,
+  PieChart,
+  Download,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/app/dashboard/toor/usuarios/types";
@@ -433,20 +453,86 @@ const AcleTalleres: React.FC = () => {
         <Toaster />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <h1 className="text-2xl font-bold">Talleres ACLE</h1>
-          <div className="flex gap-2">
-            <Button onClick={handleAddClick}>Agregar Taller</Button>
-            <Button onClick={() => setIsModalAsistenciaPorMesOpen(true)}>
-              Asistencia por Mes
-            </Button>
-            <Button onClick={() => setIsModalAsistenciaDetalleOpen(true)}>
-              Asistencia con Detalle
-            </Button>
-            <Button onClick={() => setIsModalPorcentajeAsistenciaOpen(true)}>
-              % de Asistencia Mensual
-            </Button>
-            <Button onClick={() => setIsModalEstadisticasAsistenciaOpen(true)}>
-              Estadística Asistencia
-            </Button>
+
+          {/* Barra de herramientas mejorada */}
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+            {/* Acciones principales */}
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleAddClick}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Agregar Taller
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Crear un nuevo taller</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Menú de reportes */}
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          Reportes
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem
+                          onClick={() => setIsModalAsistenciaPorMesOpen(true)}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          Asistencia por Mes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setIsModalAsistenciaDetalleOpen(true)}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Asistencia con Detalle
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setIsModalPorcentajeAsistenciaOpen(true)
+                          }
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <PieChart className="h-4 w-4" />% de Asistencia
+                          Mensual
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setIsModalEstadisticasAsistenciaOpen(true)
+                          }
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Download className="h-4 w-4" />
+                          Estadística Asistencia
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Acceder a reportes de asistencia</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
 
           <TablaTalleres
