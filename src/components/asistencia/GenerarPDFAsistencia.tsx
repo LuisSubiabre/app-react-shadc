@@ -41,6 +41,9 @@ const MESES_NOMBRES = [
   "Diciembre",
 ];
 
+// Meses del año escolar (marzo a diciembre)
+const MESES_ESCOLARES = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
 export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
   cursoId,
   cursoNombre = "Curso",
@@ -67,12 +70,18 @@ export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
           a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" })
       );
 
-      // Obtener meses únicos y ordenarlos
-      const mesesUnicos = [
+      // Obtener meses únicos de los datos y ordenarlos según el año escolar
+      const mesesDisponibles = [
         ...new Set(
           (data as AsistenciaData[]).map((item: AsistenciaData) => item.mes)
         ),
-      ].sort((a: number, b: number) => a - b);
+      ]
+        .filter((mes) => MESES_ESCOLARES.includes(mes))
+        .sort((a: number, b: number) => a - b);
+
+      // Si no hay meses disponibles, mostrar todos los meses del año escolar
+      const mesesAMostrar =
+        mesesDisponibles.length > 0 ? mesesDisponibles : MESES_ESCOLARES;
 
       // Agrupar datos por estudiante
       const estudiantesMap = new Map<
@@ -133,7 +142,7 @@ export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
 
       // Preparar encabezados de la tabla
       const headers = ["Estudiante"];
-      mesesUnicos.forEach((mes: number) => {
+      mesesAMostrar.forEach((mes: number) => {
         headers.push(MESES_NOMBRES[mes - 1]);
       });
 
@@ -143,7 +152,7 @@ export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
       estudiantesMap.forEach((estudiante) => {
         const row: string[] = [estudiante.nombre];
 
-        mesesUnicos.forEach((mes: number) => {
+        mesesAMostrar.forEach((mes: number) => {
           const datosMes = estudiante.datos.get(mes);
           if (datosMes) {
             row.push(
@@ -156,6 +165,30 @@ export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
 
         tableData.push(row);
       });
+
+      // Calcular anchos de columna dinámicamente
+      const anchoEstudiante = 60;
+      const anchoRestante = 196 - 14 - anchoEstudiante; // Ancho total menos márgenes y columna estudiante
+      const anchoPorMes = anchoRestante / mesesAMostrar.length;
+
+      // Configurar estilos de columna
+      const columnStyles: {
+        [key: string]: {
+          cellWidth: number;
+          fontStyle?: "normal" | "bold" | "italic";
+          halign?: "left" | "center" | "right";
+        };
+      } = {
+        0: { cellWidth: anchoEstudiante, fontStyle: "bold" }, // Nombre del estudiante
+      };
+
+      // Configurar anchos para las columnas de meses
+      for (let i = 1; i <= mesesAMostrar.length; i++) {
+        columnStyles[i.toString()] = {
+          cellWidth: anchoPorMes,
+          halign: "center",
+        };
+      }
 
       // Configurar y generar la tabla
       autoTable(doc, {
@@ -170,12 +203,10 @@ export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
           halign: "center",
         },
         styles: {
-          fontSize: 8,
+          fontSize: 7, // Reducir tamaño de fuente para acomodar más columnas
           cellPadding: 2,
         },
-        columnStyles: {
-          0: { cellWidth: 60, fontStyle: "bold" }, // Nombre del estudiante
-        },
+        columnStyles: columnStyles,
         alternateRowStyles: {
           fillColor: [248, 249, 250],
         },
