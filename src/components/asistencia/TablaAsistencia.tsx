@@ -25,6 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { GenerarPDFAsistencia } from "./GenerarPDFAsistencia";
 
 interface TablaAsistenciaProps {
   estudiantes: Estudiante[];
@@ -34,12 +35,16 @@ interface TablaAsistenciaProps {
     diasAsistidos: number,
     totalDias: number
   ) => void;
+  cursoId?: number;
+  cursoNombre?: string;
 }
 
 export const TablaAsistencia: React.FC<TablaAsistenciaProps> = ({
   estudiantes,
   asistenciaState,
   onAsistenciaChange,
+  cursoId,
+  cursoNombre,
 }) => {
   const [diasTrabajadosModal, setDiasTrabajadosModal] = useState<string>("");
   const [editableCells, setEditableCells] = useState<{
@@ -75,46 +80,51 @@ export const TablaAsistencia: React.FC<TablaAsistenciaProps> = ({
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <Button
-          onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <span>
-            {ordenAlfabetico ? "Orden Original" : "Ordenar Alfabéticamente"}
-          </span>
-          {ordenAlfabetico ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-              />
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
-              />
-            </svg>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setOrdenAlfabetico(!ordenAlfabetico)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <span>
+              {ordenAlfabetico ? "Orden Original" : "Ordenar Alfabéticamente"}
+            </span>
+            {ordenAlfabetico ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                />
+              </svg>
+            )}
+          </Button>
+          {cursoId && (
+            <GenerarPDFAsistencia cursoId={cursoId} cursoNombre={cursoNombre} />
           )}
-        </Button>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">Establecer días trabajados</Button>

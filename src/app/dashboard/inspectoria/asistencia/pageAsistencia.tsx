@@ -151,6 +151,10 @@ const PageAsistencia = () => {
             estudiantes={estudiantes}
             asistenciaState={asistenciaState}
             onAsistenciaChange={handleAsistenciaChange}
+            cursoId={cursoSeleccionado || undefined}
+            cursoNombre={
+              funcionarioCursos.find((c) => c.id === cursoSeleccionado)?.nombre
+            }
           />
         ) : cursoSeleccionado ? (
           <div className="text-center text-gray-500">

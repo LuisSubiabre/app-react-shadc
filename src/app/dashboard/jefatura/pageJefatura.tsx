@@ -52,6 +52,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { GenerarPDFAsistencia } from "@/components/asistencia/GenerarPDFAsistencia";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -158,7 +159,9 @@ const PageJefatura = () => {
   const [isModalPromediosOpen, setIsModalPromediosOpen] = useState(false);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
-  const [informesGuardados, setInformesGuardados] = useState<{[key: number]: string}>({});
+  const [informesGuardados, setInformesGuardados] = useState<{
+    [key: number]: string;
+  }>({});
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -421,9 +424,9 @@ const PageJefatura = () => {
         informePersonalidadTemp
       );
       setInformePersonalidadTemp(updatedInforme);
-      setInformesGuardados(prev => ({
+      setInformesGuardados((prev) => ({
         ...prev,
-        [id]: new Date().toLocaleDateString()
+        [id]: new Date().toLocaleDateString(),
       }));
       toast({
         title: "Éxito",
@@ -552,6 +555,12 @@ const PageJefatura = () => {
               </svg>
               Promedios Consolidados
             </Button>
+            {curso && (
+              <GenerarPDFAsistencia
+                cursoId={curso.curso_id}
+                cursoNombre={curso.curso_nombre}
+              />
+            )}
             <Button onClick={exportarACLEs} className="flex items-center gap-2">
               <FileDown className="h-4 w-4" />
               Exportar Listado ACLES
@@ -641,7 +650,9 @@ const PageJefatura = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleInformePersonalidad(estudiante)}
+                                  onClick={() =>
+                                    handleInformePersonalidad(estudiante)
+                                  }
                                   disabled={loadingInforme === estudiante.id}
                                   className="hover:bg-primary/10 hover:text-primary"
                                   title="Ver informe de personalidad"
@@ -652,16 +663,27 @@ const PageJefatura = () => {
                                     <FileText className="size-5" />
                                   )}
                                 </Button>
-                                {informesGuardados[estudiante.estudiante_id || estudiante.id] && (
+                                {informesGuardados[
+                                  estudiante.estudiante_id || estudiante.id
+                                ] && (
                                   <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white">
                                     <Check className="w-3 h-3" />
                                   </div>
                                 )}
                               </div>
                             </TooltipTrigger>
-                            {informesGuardados[estudiante.estudiante_id || estudiante.id] && (
+                            {informesGuardados[
+                              estudiante.estudiante_id || estudiante.id
+                            ] && (
                               <TooltipContent>
-                                <p>Informe guardado el {informesGuardados[estudiante.estudiante_id || estudiante.id]}</p>
+                                <p>
+                                  Informe guardado el{" "}
+                                  {
+                                    informesGuardados[
+                                      estudiante.estudiante_id || estudiante.id
+                                    ]
+                                  }
+                                </p>
                               </TooltipContent>
                             )}
                           </Tooltip>
