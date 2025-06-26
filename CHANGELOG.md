@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.3...v4.2.0) (2025-06-26)
+
+
+### Features
+
+* agregar componente para generar PDF de asistencia y actualizar la tabla de asistencia ([e0f00a1](https://github.com/LuisSubiabre/app-react-shadc/commit/e0f00a1ebdd6c8598c07b463b563b69066b4e9e6))
+* añadir función para obtener asistencia por curso ([f0cb255](https://github.com/LuisSubiabre/app-react-shadc/commit/f0cb25588b7761d96adf5a2c9d45c746b7bda72c))
+* añadir modal para generar reporte de atrasos en PageJefatura ([5c324f0](https://github.com/LuisSubiabre/app-react-shadc/commit/5c324f063ace6ef38285e80dc3a56bb41265cf5d))
+* implementar generación de PDF de atrasos por curso en PageJefatura ([6526479](https://github.com/LuisSubiabre/app-react-shadc/commit/65264798577d295b1d3dcddff33b2e5099e91c6a))
+* mejorar la generación de PDF de asistencia con meses escolares y ajuste de estilos ([ec3cfbd](https://github.com/LuisSubiabre/app-react-shadc/commit/ec3cfbde6223f25f2504c8de7bbc4f75185f27f5))
+
+
+### Bug Fixes
+
+* actualizar texto del botón en GenerarPDFAsistencia a "Reporte de Asistencia" ([da23e78](https://github.com/LuisSubiabre/app-react-shadc/commit/da23e786e27b01abd05c03ab1f6de94c87abd1de))
+* corregir el texto en el encabezado del PDF de estadísticas de asistencia para incluir un punto final ([63ff329](https://github.com/LuisSubiabre/app-react-shadc/commit/63ff329c43dc27a3b43c45eb2e92de135578ac2f))
+
 ### [4.1.3](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.2...v4.1.3) (2025-06-25)
 
 
