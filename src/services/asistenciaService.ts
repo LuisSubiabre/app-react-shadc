@@ -92,3 +92,13 @@ export const getAsistenciaEstudiante = async (estudianteId: number) => {
     return [];
   }
 };
+
+export const getAsistenciaCurso = async (cursoId: number) => {
+  try {
+    const response = await api.get(`/asistencias/curso/${cursoId}`);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error al obtener asistencia:", error);
+    return [];
+  }
+};

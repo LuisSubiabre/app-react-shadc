@@ -828,9 +828,9 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                 </TableBody>
               </Table>
 
-              <div className="grid grid-cols-3 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-3 gap-4 mt-6 p-4 bg-muted rounded-lg">
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-gray-600">
+                  <p className="font-semibold text-sm text-muted-foreground">
                     Promedio General 1° Semestre
                   </p>
                   <p className="text-2xl font-bold">
@@ -838,7 +838,7 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-gray-600">
+                  <p className="font-semibold text-sm text-muted-foreground">
                     Promedio General 2° Semestre
                   </p>
                   <p className="text-2xl font-bold">
@@ -846,7 +846,7 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-gray-600">
+                  <p className="font-semibold text-sm text-muted-foreground">
                     Promedio Final
                   </p>
                   <p className="text-2xl font-bold">

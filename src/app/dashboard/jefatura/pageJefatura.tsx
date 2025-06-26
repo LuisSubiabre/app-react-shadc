@@ -20,7 +20,10 @@ import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ModalVerAtrasos } from "@/components/atrasos/ModalVerAtrasos";
-import { getAtrasosByEstudiante } from "@/services/atrasosService";
+import {
+  getAtrasosByEstudiante,
+  getAtrasosCursoRangoFecha,
+} from "@/services/atrasosService";
 import { Atraso } from "@/types";
 import { ModalVerAsistencia } from "@/components/asistencia/ModalVerAsistencia";
 import { getAsistenciaEstudiante } from "@/services/asistenciaService";
@@ -36,6 +39,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -52,6 +57,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { GenerarPDFAsistencia } from "@/components/asistencia/GenerarPDFAsistencia";
+import { Input } from "@/components/ui/input";
 
 interface TallerACLE {
   estudiante_id: number;
@@ -131,6 +138,20 @@ const EVALUACION_OPTIONS = [
   { value: "No observado", label: "No observado" },
 ];
 
+// Tipo para los atrasos del reporte
+type AtrasoReporteType = {
+  atraso_id: number;
+  fecha: string;
+  hora: string;
+  tipo: string;
+  justificado: boolean;
+  observaciones: string;
+  fecha_registro: string;
+  estudiante_id: number;
+  nombre_estudiante: string;
+  nombre_curso: string;
+};
+
 const PageJefatura = () => {
   const [curso, setCurso] = useState<CursoType | null>(null);
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
@@ -158,7 +179,18 @@ const PageJefatura = () => {
   const [isModalPromediosOpen, setIsModalPromediosOpen] = useState(false);
   const [promediosData, setPromediosData] = useState<PromedioData[]>([]);
   const [loadingPromedios, setLoadingPromedios] = useState(false);
-  const [informesGuardados, setInformesGuardados] = useState<{[key: number]: string}>({});
+  const [informesGuardados, setInformesGuardados] = useState<{
+    [key: number]: string;
+  }>({});
+
+  // Estados para el reporte de atrasos
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [isLoadingPDFAtrasos, setIsLoadingPDFAtrasos] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [dialogDescription, setDialogDescription] = useState("");
+  const [isModalAtrasosOpen, setIsModalAtrasosOpen] = useState(false);
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -421,9 +453,9 @@ const PageJefatura = () => {
         informePersonalidadTemp
       );
       setInformePersonalidadTemp(updatedInforme);
-      setInformesGuardados(prev => ({
+      setInformesGuardados((prev) => ({
         ...prev,
-        [id]: new Date().toLocaleDateString()
+        [id]: new Date().toLocaleDateString(),
       }));
       toast({
         title: "Éxito",
@@ -503,6 +535,194 @@ const PageJefatura = () => {
     }
   };
 
+  // Función para abrir el modal de atrasos
+  const handleOpenModalAtrasos = () => {
+    setIsModalAtrasosOpen(true);
+  };
+
+  // Función para cerrar el modal de atrasos
+  const handleCloseModalAtrasos = () => {
+    setIsModalAtrasosOpen(false);
+    setFechaInicio("");
+    setFechaFin("");
+  };
+
+  // Función para mostrar el diálogo
+  const showDialog = (title: string, description: string) => {
+    setDialogTitle(title);
+    setDialogDescription(description);
+    setDialogOpen(true);
+  };
+
+  // Función para generar y descargar el PDF de atrasos por curso
+  const handleGenerarPDFAtrasos = async () => {
+    if (!fechaInicio || !fechaFin || !curso) {
+      showDialog("Error", "Por favor, selecciona un rango de fechas");
+      return;
+    }
+
+    const fechaInicioFormateada = new Date(fechaInicio)
+      .toISOString()
+      .split("T")[0];
+    const fechaFinFormateada = new Date(fechaFin).toISOString().split("T")[0];
+
+    setIsLoadingPDFAtrasos(true);
+    try {
+      const response = await getAtrasosCursoRangoFecha(
+        fechaInicioFormateada,
+        fechaFinFormateada,
+        curso.curso_id
+      );
+
+      const atrasos = response && response.data ? response.data : response;
+
+      if (!atrasos || atrasos.length === 0) {
+        showDialog(
+          "Sin resultados",
+          "No se encontraron atrasos en el rango de fechas seleccionado"
+        );
+        setIsLoadingPDFAtrasos(false);
+        return;
+      }
+
+      // Generar el PDF
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+
+      // Agrupar y ordenar atrasos por tipo
+      const atrasosLlegada = atrasos
+        .filter((atraso: AtrasoReporteType) => atraso.tipo === "llegada")
+        .sort((a: AtrasoReporteType, b: AtrasoReporteType) => {
+          // Primero por nombre
+          const nombreCompare = a.nombre_estudiante.localeCompare(
+            b.nombre_estudiante
+          );
+          if (nombreCompare !== 0) return nombreCompare;
+
+          // Luego por fecha
+          const fechaCompare = a.fecha.localeCompare(b.fecha);
+          if (fechaCompare !== 0) return fechaCompare;
+
+          // Finalmente por hora
+          return a.hora.localeCompare(b.hora);
+        });
+
+      const atrasosJornada = atrasos
+        .filter((atraso: AtrasoReporteType) => atraso.tipo === "jornada")
+        .sort((a: AtrasoReporteType, b: AtrasoReporteType) => {
+          // Primero por nombre
+          const nombreCompare = a.nombre_estudiante.localeCompare(
+            b.nombre_estudiante
+          );
+          if (nombreCompare !== 0) return nombreCompare;
+
+          // Luego por fecha
+          const fechaCompare = a.fecha.localeCompare(b.fecha);
+          if (fechaCompare !== 0) return fechaCompare;
+
+          // Finalmente por hora
+          return a.hora.localeCompare(b.hora);
+        });
+
+      // Título
+      doc.setFontSize(16);
+      doc.text("Reporte de Atrasos por Curso", 14, 15);
+      doc.setFontSize(12);
+
+      // Formatear fechas
+      const fechaInicioParts = fechaInicio.split("-");
+      const fechaFinParts = fechaFin.split("-");
+
+      const fechaInicioFormatted = `${fechaInicioParts[2]}/${fechaInicioParts[1]}/${fechaInicioParts[0]}`;
+      const fechaFinFormatted = `${fechaFinParts[2]}/${fechaFinParts[1]}/${fechaFinParts[0]}`;
+
+      doc.text(`Curso: ${curso.curso_nombre}`, 14, 25);
+      doc.text(
+        `Período: ${fechaInicioFormatted} - ${fechaFinFormatted}`,
+        14,
+        32
+      );
+      doc.text(`Total de atrasos: ${atrasos.length}`, 14, 39);
+      doc.text(`Atrasos por llegada: ${atrasosLlegada.length}`, 14, 46);
+      doc.text(`Atrasos por jornada: ${atrasosJornada.length}`, 14, 53);
+
+      // Función para crear datos de tabla
+      const createTableData = (atrasos: AtrasoReporteType[]) => {
+        return atrasos.map((atraso: AtrasoReporteType) => [
+          atraso.nombre_estudiante,
+          atraso.nombre_curso,
+          atraso.fecha.split("T")[0].split("-").reverse().join("/"),
+          atraso.hora,
+          atraso.tipo === "llegada" ? "Llegada" : "Jornada",
+        ]);
+      };
+
+      // Tabla de atrasos por llegada
+      if (atrasosLlegada.length > 0) {
+        doc.setFontSize(14);
+        doc.text("Atrasos por Llegada", 14, 63);
+        doc.setFontSize(12);
+
+        autoTable(doc, {
+          startY: 68,
+          head: [["Estudiante", "Curso", "Fecha", "Hora", "Tipo"]],
+          body: createTableData(atrasosLlegada),
+          theme: "grid",
+          headStyles: { fillColor: [41, 128, 185] },
+          styles: { fontSize: 10 },
+          columnStyles: {
+            0: { cellWidth: 60 },
+            1: { cellWidth: 30 },
+            2: { cellWidth: 30 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 25 },
+          },
+        });
+      }
+
+      // Tabla de atrasos por jornada
+      if (atrasosJornada.length > 0) {
+        // Obtener la posición Y después de la tabla anterior
+        const lastY =
+          (doc as JsPDFWithAutoTable & { lastAutoTable: { finalY: number } })
+            .lastAutoTable?.finalY || 68;
+
+        doc.setFontSize(14);
+        doc.text("Atrasos por Jornada", 14, lastY + 20);
+        doc.setFontSize(12);
+
+        autoTable(doc, {
+          startY: lastY + 25,
+          head: [["Estudiante", "Curso", "Fecha", "Hora", "Tipo"]],
+          body: createTableData(atrasosJornada),
+          theme: "grid",
+          headStyles: { fillColor: [41, 128, 185] },
+          styles: { fontSize: 10 },
+          columnStyles: {
+            0: { cellWidth: 60 },
+            1: { cellWidth: 30 },
+            2: { cellWidth: 30 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 25 },
+          },
+        });
+      }
+
+      // Guardar el PDF
+      doc.save(
+        `reporte-atrasos-curso-${new Date().toISOString().split("T")[0]}.pdf`
+      );
+    } catch (error) {
+      console.error("Error al generar el PDF de atrasos:", error);
+      showDialog(
+        "Error",
+        "Error al generar el PDF: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    } finally {
+      setIsLoadingPDFAtrasos(false);
+    }
+  };
+
   if (loading) return <div>Cargando...</div>;
 
   if (!curso)
@@ -552,12 +772,28 @@ const PageJefatura = () => {
               </svg>
               Promedios Consolidados
             </Button>
+            {curso && (
+              <GenerarPDFAsistencia
+                cursoId={curso.curso_id}
+                cursoNombre={curso.curso_nombre}
+              />
+            )}
+            <Button
+              onClick={handleOpenModalAtrasos}
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <Clock className="h-4 w-4" />
+              Reporte de Atrasos
+            </Button>
             <Button onClick={exportarACLEs} className="flex items-center gap-2">
               <FileDown className="h-4 w-4" />
               Exportar Listado ACLES
             </Button>
           </div>
         </div>
+
+        {/* Eliminar el formulario anterior que ocupaba mucho espacio */}
 
         {loadingEstudiantes && (
           <div className="flex items-center justify-center h-32">
@@ -641,7 +877,9 @@ const PageJefatura = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleInformePersonalidad(estudiante)}
+                                  onClick={() =>
+                                    handleInformePersonalidad(estudiante)
+                                  }
                                   disabled={loadingInforme === estudiante.id}
                                   className="hover:bg-primary/10 hover:text-primary"
                                   title="Ver informe de personalidad"
@@ -652,16 +890,27 @@ const PageJefatura = () => {
                                     <FileText className="size-5" />
                                   )}
                                 </Button>
-                                {informesGuardados[estudiante.estudiante_id || estudiante.id] && (
+                                {informesGuardados[
+                                  estudiante.estudiante_id || estudiante.id
+                                ] && (
                                   <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white">
                                     <Check className="w-3 h-3" />
                                   </div>
                                 )}
                               </div>
                             </TooltipTrigger>
-                            {informesGuardados[estudiante.estudiante_id || estudiante.id] && (
+                            {informesGuardados[
+                              estudiante.estudiante_id || estudiante.id
+                            ] && (
                               <TooltipContent>
-                                <p>Informe guardado el {informesGuardados[estudiante.estudiante_id || estudiante.id]}</p>
+                                <p>
+                                  Informe guardado el{" "}
+                                  {
+                                    informesGuardados[
+                                      estudiante.estudiante_id || estudiante.id
+                                    ]
+                                  }
+                                </p>
                               </TooltipContent>
                             )}
                           </Tooltip>
@@ -1081,6 +1330,76 @@ const PageJefatura = () => {
               </Table>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isModalAtrasosOpen} onOpenChange={setIsModalAtrasosOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generar Reporte de Atrasos</DialogTitle>
+            <DialogDescription>
+              Selecciona el rango de fechas para generar el reporte de atrasos
+              del curso {curso?.curso_nombre}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Fecha Inicio
+              </label>
+              <Input
+                type="date"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Fecha Fin
+              </label>
+              <Input
+                type="date"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseModalAtrasos}
+              disabled={isLoadingPDFAtrasos}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGenerarPDFAtrasos}
+              disabled={isLoadingPDFAtrasos || !fechaInicio || !fechaFin}
+            >
+              {isLoadingPDFAtrasos ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <FileDown className="h-4 w-4 mr-2" />
+              )}
+              Generar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDescription}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setDialogOpen(false)}>Aceptar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
