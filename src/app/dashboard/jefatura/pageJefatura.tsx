@@ -190,6 +190,7 @@ const PageJefatura = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogDescription, setDialogDescription] = useState("");
+  const [isModalAtrasosOpen, setIsModalAtrasosOpen] = useState(false);
 
   useEffect(() => {
     getJefatura(Number(user?.id))
@@ -534,6 +535,18 @@ const PageJefatura = () => {
     }
   };
 
+  // Función para abrir el modal de atrasos
+  const handleOpenModalAtrasos = () => {
+    setIsModalAtrasosOpen(true);
+  };
+
+  // Función para cerrar el modal de atrasos
+  const handleCloseModalAtrasos = () => {
+    setIsModalAtrasosOpen(false);
+    setFechaInicio("");
+    setFechaFin("");
+  };
+
   // Función para mostrar el diálogo
   const showDialog = (title: string, description: string) => {
     setDialogTitle(title);
@@ -765,6 +778,14 @@ const PageJefatura = () => {
                 cursoNombre={curso.curso_nombre}
               />
             )}
+            <Button
+              onClick={handleOpenModalAtrasos}
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <Clock className="h-4 w-4" />
+              Reporte de Atrasos
+            </Button>
             <Button onClick={exportarACLEs} className="flex items-center gap-2">
               <FileDown className="h-4 w-4" />
               Exportar Listado ACLES
@@ -772,50 +793,7 @@ const PageJefatura = () => {
           </div>
         </div>
 
-        {/* Formulario para generar PDF de atrasos */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">
-            Generar PDF de Atrasos del Curso
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Fecha Inicio
-              </label>
-              <Input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Fecha Fin
-              </label>
-              <Input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <Button
-                onClick={handleGenerarPDFAtrasos}
-                className="w-full"
-                disabled={isLoadingPDFAtrasos}
-              >
-                {isLoadingPDFAtrasos ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                ) : (
-                  <FileDown className="h-4 w-4 mr-2" />
-                )}
-                Generar PDF de Atrasos
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Eliminar el formulario anterior que ocupaba mucho espacio */}
 
         {loadingEstudiantes && (
           <div className="flex items-center justify-center h-32">
@@ -1352,6 +1330,64 @@ const PageJefatura = () => {
               </Table>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isModalAtrasosOpen} onOpenChange={setIsModalAtrasosOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generar Reporte de Atrasos</DialogTitle>
+            <DialogDescription>
+              Selecciona el rango de fechas para generar el reporte de atrasos
+              del curso {curso?.curso_nombre}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Fecha Inicio
+              </label>
+              <Input
+                type="date"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Fecha Fin
+              </label>
+              <Input
+                type="date"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseModalAtrasos}
+              disabled={isLoadingPDFAtrasos}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGenerarPDFAtrasos}
+              disabled={isLoadingPDFAtrasos || !fechaInicio || !fechaFin}
+            >
+              {isLoadingPDFAtrasos ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <FileDown className="h-4 w-4 mr-2" />
+              )}
+              Generar PDF
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
