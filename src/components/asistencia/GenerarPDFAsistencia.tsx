@@ -273,7 +273,7 @@ export const GenerarPDFAsistencia: React.FC<GenerarPDFAsistenciaProps> = ({
       ) : (
         <FileDown className="h-4 w-4" />
       )}
-      Ver asistencia
+      Reporte de Asistencia
     </Button>
   );
 };
