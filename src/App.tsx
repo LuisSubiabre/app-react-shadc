@@ -70,6 +70,9 @@ const Orientacion = lazy(
 const Convivencia = lazy(
   () => import("@/app/dashboard/convivencia/casos/pageCasos")
 );
+const FD = lazy(
+  () => import("@/app/dashboard/fd/pageFD")
+);
 
 function App() {
   return (
@@ -245,7 +248,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
+              <Route
+                path="/dashboard/fd"
+                element={
+                  <ProtectedRoute requiredRoles={[15]}>
+                    <Layout>
+                      <FD />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/dashboard/inspectoria/asistencia"
                 element={
