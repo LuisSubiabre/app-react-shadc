@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.2.0...v4.3.0) (2025-07-22)
+
+
+### Features
+
+* añadir funcionalidad de eliminación de casos en ModalCasos ([a141d8b](https://github.com/LuisSubiabre/app-react-shadc/commit/a141d8b4954cd522dfa38923518b25ed516dd723))
+* añadir funcionalidad de ordenamiento en el modal de casos de convivencia ([a38417b](https://github.com/LuisSubiabre/app-react-shadc/commit/a38417b54a5bd514fd6c159d18c2dba43fb1fc5e))
+* añadir funcionalidad para crear nuevos casos en ModalCasos ([e726341](https://github.com/LuisSubiabre/app-react-shadc/commit/e726341c00c11d6e2764648cd24b87957cb8bab9))
+* añadir funcionalidad para visualizar todos los casos en PageCasos ([9ba431d](https://github.com/LuisSubiabre/app-react-shadc/commit/9ba431d5823a2eae9bfa8c3fc417e804626a26b5))
+* añadir modal de edición para casos de convivencia ([d165d26](https://github.com/LuisSubiabre/app-react-shadc/commit/d165d261d2e42f230b70c155d65bb67a562931c9))
+* añadir modal para gestionar casos de convivencia en PageCasos ([6b26458](https://github.com/LuisSubiabre/app-react-shadc/commit/6b264589da9c26768bb050285f455dfb9cd21354))
+* mejorar el modal de casos de convivencia ([c5d447e](https://github.com/LuisSubiabre/app-react-shadc/commit/c5d447e6806f1b84f8a1281e9eb70423c99e1c4d))
+* mejorar el modal de edición de casos de convivencia ([ffc6e8c](https://github.com/LuisSubiabre/app-react-shadc/commit/ffc6e8c756bc66c0b4a5fdfb1993b7e01c435963))
+* mejorar la presentación de los pasos en los modales de casos de convivencia ([cb3e696](https://github.com/LuisSubiabre/app-react-shadc/commit/cb3e69602c5304d81ec79470267f9cf89733e568))
+* optimizar componentes de edición y visualización de casos de convivencia ([190a380](https://github.com/LuisSubiabre/app-react-shadc/commit/190a3804f77e85e61dee49e5a135bd92dd5c6381))
+
+
+### Bug Fixes
+
+* corregir errores en la lógica de generación de reportes de atrasos ([5dde8e3](https://github.com/LuisSubiabre/app-react-shadc/commit/5dde8e3ebc46ce32e9ad4444ec85de15453784ed))
+
 ## [4.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.1.3...v4.2.0) (2025-06-26)
 
 
