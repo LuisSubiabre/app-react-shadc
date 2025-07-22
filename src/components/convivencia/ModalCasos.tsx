@@ -24,8 +24,10 @@ import {
   Clock, 
   FileText, 
   Calendar,
-  AlertCircle 
+  AlertCircle,
+  Edit
 } from "lucide-react";
+import { EditCasoModal } from "./EditCasoModal";
 
 interface ModalCasosProps {
   isOpen: boolean;
@@ -40,6 +42,8 @@ export function ModalCasos({
 }: ModalCasosProps) {
   const [casos, setCasos] = useState<CasoConvivenciaType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCaso, setSelectedCaso] = useState<CasoConvivenciaType | null>(null);
 
   useEffect(() => {
     if (isOpen && estudiante) {
@@ -52,7 +56,15 @@ export function ModalCasos({
     
     setIsLoading(true);
     try {
-      const response = await getCasosEstudiante(estudiante.estudiante_id || estudiante.id);
+      console.log('Estudiante completo:', estudiante);
+      console.log('estudiante.estudiante_id:', estudiante.estudiante_id);
+      console.log('estudiante.id:', estudiante.id);
+      
+      const estudianteId = estudiante.estudiante_id || estudiante.id;
+      console.log('ID que se enviará al servicio:', estudianteId);
+      
+      const response = await getCasosEstudiante(estudianteId);
+      console.log('Respuesta en el modal:', response);
       setCasos(response);
     } catch (error) {
       console.error("Error al obtener casos:", error);
@@ -102,6 +114,20 @@ export function ModalCasos({
     return Math.round((completados / 4) * 100);
   };
 
+  const handleEditCaso = (caso: CasoConvivenciaType) => {
+    setSelectedCaso(caso);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedCaso(null);
+  };
+
+  const handleCasoUpdate = () => {
+    fetchCasos();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -113,6 +139,28 @@ export function ModalCasos({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Botón de prueba */}
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Debug: Información del estudiante
+                </h3>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  ID: {estudiante?.estudiante_id || estudiante?.id} | Nombre: {estudiante?.nombre}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchCasos}
+                className="text-yellow-700 border-yellow-300 hover:bg-yellow-100 dark:text-yellow-300 dark:border-yellow-600 dark:hover:bg-yellow-900/50"
+              >
+                Recargar Casos
+              </Button>
+            </div>
+          </div>
+
           {/* Información del estudiante */}
           <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -143,152 +191,190 @@ export function ModalCasos({
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando casos...</p>
             </div>
-          ) : casos.length > 0 ? (
-            <div className="space-y-4">
-              {casos.map((caso) => (
-                <div
-                  key={caso.caso_id}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          Caso #{caso.caso_id}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Creado el {formatearFecha(caso.fecha_creacion)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {getProgresoTotal(caso)}%
-                      </div>
-                      <div className="text-sm text-gray-500">Progreso</div>
-                    </div>
-                  </div>
-
-                  {/* Progreso de pasos */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Paso 1
-                        </span>
-                        {getEstadoPaso(caso.paso1, caso.fecha_paso1)}
-                      </div>
-                      {caso.fecha_paso1 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Completado: {formatearFecha(caso.fecha_paso1)}
-                        </p>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Paso 2
-                        </span>
-                        {getEstadoPaso(caso.paso2, caso.fecha_paso2)}
-                      </div>
-                      {caso.fecha_paso2 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Completado: {formatearFecha(caso.fecha_paso2)}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Paso 3
-                        </span>
-                        {getEstadoPaso(caso.paso3, caso.fecha_paso3)}
-                      </div>
-                      {caso.fecha_paso3 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Completado: {formatearFecha(caso.fecha_paso3)}
-                        </p>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Paso 4
-                        </span>
-                        {getEstadoPaso(caso.paso4, caso.fecha_paso4)}
-                      </div>
-                      {caso.fecha_paso4 && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Completado: {formatearFecha(caso.fecha_paso4)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Información adicional */}
-                  {(caso.observaciones || caso.url) && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                      {caso.observaciones && (
-                        <div className="mb-2">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Observaciones:
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 p-3 rounded">
-                            {caso.observaciones}
-                          </p>
-                        </div>
-                      )}
-                      {caso.url && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Enlace:
-                          </p>
-                          <a
-                            href={caso.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                          >
-                            {caso.url}
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Fechas */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>Creado: {formatearFecha(caso.fecha_creacion)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>Actualizado: {formatearFecha(caso.fecha_actualizacion)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-4 mb-4">
-                <FileText className="h-8 w-8 text-gray-400" />
+            <div className="space-y-4">
+              {/* Debug info */}
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  Debug: Estado de casos
+                </h3>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Casos cargados: {casos.length} | Tipo: {Array.isArray(casos) ? 'Array' : typeof casos}
+                </p>
+                {casos.length > 0 && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Primer caso: {JSON.stringify(casos[0], null, 2)}
+                  </p>
+                )}
               </div>
-              <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No hay casos registrados
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                Este estudiante no tiene casos de convivencia registrados en el sistema.
-              </p>
+              
+              {casos.length > 0 ? (
+                <div className="space-y-4">
+                  {casos.map((caso) => (
+                    <div
+                      key={caso.caso_id}
+                      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              Caso #{caso.caso_id}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Creado el {formatearFecha(caso.fecha_creacion)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {getProgresoTotal(caso)}%
+                            </div>
+                            <div className="text-sm text-gray-500">Progreso</div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCaso(caso)}
+                            className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Editar
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Progreso de pasos */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 1
+                            </span>
+                            {getEstadoPaso(caso.paso1, caso.fecha_paso1)}
+                          </div>
+                          {caso.fecha_paso1 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Completado: {formatearFecha(caso.fecha_paso1)}
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 2
+                            </span>
+                            {getEstadoPaso(caso.paso2, caso.fecha_paso2)}
+                          </div>
+                          {caso.fecha_paso2 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Completado: {formatearFecha(caso.fecha_paso2)}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 3
+                            </span>
+                            {getEstadoPaso(caso.paso3, caso.fecha_paso3)}
+                          </div>
+                          {caso.fecha_paso3 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Completado: {formatearFecha(caso.fecha_paso3)}
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 4
+                            </span>
+                            {getEstadoPaso(caso.paso4, caso.fecha_paso4)}
+                          </div>
+                          {caso.fecha_paso4 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Completado: {formatearFecha(caso.fecha_paso4)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Información adicional */}
+                      {(caso.observaciones || caso.url) && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                          {caso.observaciones && (
+                            <div className="mb-2">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Observaciones:
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 p-3 rounded">
+                                {caso.observaciones}
+                              </p>
+                            </div>
+                          )}
+                          {caso.url && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Enlace:
+                              </p>
+                              <a
+                                href={caso.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                              >
+                                {caso.url}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Fechas */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>Creado: {formatearFecha(caso.fecha_creacion)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>Actualizado: {formatearFecha(caso.fecha_actualizacion)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-4 mb-4">
+                    <FileText className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No hay casos registrados
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                    Este estudiante no tiene casos de convivencia registrados en el sistema.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </DialogContent>
+
+      {/* Modal de Edición */}
+      <EditCasoModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        caso={selectedCaso}
+        onUpdate={handleCasoUpdate}
+      />
     </Dialog>
   );
 } 
