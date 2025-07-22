@@ -37,9 +37,11 @@ import {
   AlertCircle,
   Edit,
   Trash2,
-  Link
+  Link,
+  Plus
 } from "lucide-react";
 import { EditCasoModal } from "./EditCasoModal";
+import { CreateCasoModal } from "./CreateCasoModal";
 import { toast } from "@/hooks/use-toast";
 
 interface ModalCasosProps {
@@ -59,6 +61,7 @@ export function ModalCasos({
   const [selectedCaso, setSelectedCaso] = useState<CasoConvivenciaType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [casoToDelete, setCasoToDelete] = useState<CasoConvivenciaType | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && estudiante) {
@@ -71,28 +74,14 @@ export function ModalCasos({
     
     setIsLoading(true);
     try {
-      console.log('🎯 fetchCasos iniciado');
-      console.log('👤 Estudiante:', estudiante);
-      console.log('🆔 estudiante.estudiante_id:', estudiante.estudiante_id);
-      console.log('🆔 estudiante.id:', estudiante.id);
-      
       const estudianteId = estudiante.estudiante_id || estudiante.id;
-      console.log('🎯 ID que se enviará:', estudianteId);
-      
       const response = await getCasosEstudiante(estudianteId);
-      console.log('📦 Respuesta recibida en modal:', response);
-      console.log('📦 Tipo de respuesta:', typeof response);
-      console.log('📦 Es array?', Array.isArray(response));
-      console.log('📦 Longitud:', response?.length);
-      
       setCasos(response);
-      console.log('✅ Casos actualizados en estado');
     } catch (error) {
-      console.error("❌ Error al obtener casos:", error);
+      console.error("Error al obtener casos:", error);
       setCasos([]);
     } finally {
       setIsLoading(false);
-      console.log('🏁 fetchCasos completado');
     }
   };
 
@@ -150,6 +139,18 @@ export function ModalCasos({
     fetchCasos();
   };
 
+  const handleCreateCaso = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleCasoCreated = () => {
+    fetchCasos();
+  };
+
   const handleDeleteCaso = (caso: CasoConvivenciaType) => {
     setCasoToDelete(caso);
     setIsDeleteDialogOpen(true);
@@ -192,27 +193,38 @@ export function ModalCasos({
           <div className="space-y-6">
             {/* Información del estudiante */}
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiante</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {estudiante?.nombre}
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiante</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {estudiante?.nombre}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Curso</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {estudiante?.curso_nombre}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de casos</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {casos.length}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Curso</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {estudiante?.curso_nombre}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de casos</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {casos.length}
-                  </p>
-                </div>
+                <Button
+                  onClick={handleCreateCaso}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nuevo Caso
+                </Button>
               </div>
             </div>
+
+
 
 
 
@@ -412,6 +424,14 @@ export function ModalCasos({
           onClose={handleCloseEditModal}
           caso={selectedCaso}
           onUpdate={handleCasoUpdate}
+        />
+
+        {/* Modal de Creación */}
+        <CreateCasoModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCloseCreateModal}
+          estudiante={estudiante}
+          onCasoCreated={handleCasoCreated}
         />
       </Dialog>
 
