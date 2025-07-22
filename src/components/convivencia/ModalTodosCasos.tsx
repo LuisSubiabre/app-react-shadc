@@ -5,13 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CasoConvivenciaType } from "@/types";
 import { getAllCasos } from "@/services/convivenciaService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Search, Calendar, User, BookOpen, ExternalLink, FileText, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Calendar, User, BookOpen, ExternalLink, FileText, CheckCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface ModalTodosCasosProps {
@@ -26,6 +26,7 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCaso, setExpandedCaso] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<string>("newest");
 
   useEffect(() => {
     if (isOpen) {
@@ -35,7 +36,7 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
 
   useEffect(() => {
     filterCasos();
-  }, [casos, searchTerm, statusFilter]);
+  }, [casos, searchTerm, statusFilter, sortOrder]);
 
   const fetchCasos = async () => {
     setIsLoading(true);
@@ -88,7 +89,23 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
       });
     }
 
+    // Ordenar casos
+    filtered = sortCasos(filtered, sortOrder);
+    
     setFilteredCasos(filtered);
+  };
+
+  const sortCasos = (casosToSort: CasoConvivenciaType[], order: string) => {
+    const sorted = [...casosToSort];
+    
+    switch (order) {
+      case "newest":
+        return sorted.sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime());
+      case "oldest":
+        return sorted.sort((a, b) => new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime());
+      default:
+        return sorted;
+    }
   };
 
   const formatearFecha = (fecha: string) => {
@@ -104,30 +121,7 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
     return Math.round((pasosCompletados / 4) * 100);
   };
 
-  const getEstadoPaso = (completado: boolean, fecha: string | null) => {
-    if (completado && fecha) {
-      return (
-        <div className="flex items-center gap-1 text-xs">
-          <CheckCircle className="h-3 w-3 text-green-600" />
-          <span className="text-green-600 font-medium">Completado</span>
-        </div>
-      );
-    } else if (completado) {
-      return (
-        <div className="flex items-center gap-1 text-xs">
-          <CheckCircle className="h-3 w-3 text-green-600" />
-          <span className="text-green-600 font-medium">Completado</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex items-center gap-1 text-xs">
-          <Clock className="h-3 w-3 text-gray-400" />
-          <span className="text-gray-500">Pendiente</span>
-        </div>
-      );
-    }
-  };
+
 
   const getEstadoGeneral = (caso: CasoConvivenciaType) => {
     const progreso = getProgresoTotal(caso);
@@ -140,6 +134,17 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
     }
   };
 
+  const getSortOrderLabel = (order: string) => {
+    switch (order) {
+      case "newest":
+        return "Más recientes";
+      case "oldest":
+        return "Más antiguos";
+      default:
+        return "Más recientes";
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -147,9 +152,14 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
           <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white">
             Todos los Casos de Convivencia
           </DialogTitle>
-          <p className="text-gray-600 dark:text-gray-400">
-            {filteredCasos.length} casos encontrados
-          </p>
+          <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+            <p>{filteredCasos.length} casos encontrados</p>
+            {sortOrder !== "newest" && (
+              <Badge variant="secondary" className="text-xs">
+                Ordenado por: {getSortOrderLabel(sortOrder)}
+              </Badge>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -178,6 +188,26 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
                 <SelectItem value="started">Iniciados</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Botones de ordenamiento */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={sortOrder === "newest" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSortOrder("newest")}
+              className="text-xs"
+            >
+              Más recientes
+            </Button>
+            <Button
+              variant={sortOrder === "oldest" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSortOrder("oldest")}
+              className="text-xs"
+            >
+              Más antiguos
+            </Button>
           </div>
 
           {/* Estadísticas */}
