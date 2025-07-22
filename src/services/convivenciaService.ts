@@ -61,4 +61,9 @@ export const deleteCaso = async (caso_id: number) => {
     const response = await api.delete(`/convivencia-casos/${caso_id}`);
     return response.data || [];
   };
+
+export const getAllCasos = async () => {
+  const response = await api.get('/convivencia-casos/all');
+  return response.data;
+}
   
