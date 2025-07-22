@@ -25,7 +25,9 @@ import {
   estudiantesCurso,
   getEstudiantes,
 } from "@/services/estudiantesService";
-import { Search, Users, BookOpen, AlertCircle } from "lucide-react";
+import { Search, Users, BookOpen, AlertCircle, List } from "lucide-react";
+import { ModalCasos } from "@/components/convivencia/ModalCasos";
+import { ModalTodosCasos } from "@/components/convivencia/ModalTodosCasos";
 
 const PageCasos = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
@@ -33,6 +35,9 @@ const PageCasos = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
+  const [isTodosCasosModalOpen, setIsTodosCasosModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -134,6 +139,24 @@ const PageCasos = () => {
       return nombreANormalized.localeCompare(nombreBNormalized);
     });
 
+  const handleOpenModal = (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEstudiante(null);
+  };
+
+  const handleOpenTodosCasosModal = () => {
+    setIsTodosCasosModalOpen(true);
+  };
+
+  const handleCloseTodosCasosModal = () => {
+    setIsTodosCasosModalOpen(false);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="flex h-16 shrink-0 items-center border-b bg-white dark:bg-gray-800 shadow-sm">
@@ -145,12 +168,23 @@ const PageCasos = () => {
       <main className="flex-1 p-6">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Gestión de Casos
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Administra los casos de convivencia escolar
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  Gestión de Casos
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Administra los casos de convivencia escolar
+                </p>
+              </div>
+              <Button
+                onClick={handleOpenTodosCasosModal}
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <List className="h-4 w-4" />
+                Ver Todos los Casos
+              </Button>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
@@ -340,6 +374,7 @@ const PageCasos = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleOpenModal(estudiante)}
                           className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
                         >
                           Gestionar Casos
@@ -382,6 +417,19 @@ const PageCasos = () => {
           </div>
         </div>
       </main>
+
+      {/* Modal de Casos */}
+      <ModalCasos
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        estudiante={selectedEstudiante}
+      />
+
+      {/* Modal de Todos los Casos */}
+      <ModalTodosCasos
+        isOpen={isTodosCasosModalOpen}
+        onClose={handleCloseTodosCasosModal}
+      />
     </div>
   );
 };
