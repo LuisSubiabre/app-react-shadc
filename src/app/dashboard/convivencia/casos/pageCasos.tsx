@@ -26,6 +26,7 @@ import {
   getEstudiantes,
 } from "@/services/estudiantesService";
 import { Search, Users, BookOpen, AlertCircle } from "lucide-react";
+import { ModalCasos } from "@/components/convivencia/ModalCasos";
 
 const PageCasos = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
@@ -33,6 +34,8 @@ const PageCasos = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -133,6 +136,16 @@ const PageCasos = () => {
 
       return nombreANormalized.localeCompare(nombreBNormalized);
     });
+
+  const handleOpenModal = (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEstudiante(null);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -340,6 +353,7 @@ const PageCasos = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleOpenModal(estudiante)}
                           className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
                         >
                           Gestionar Casos
@@ -382,6 +396,13 @@ const PageCasos = () => {
           </div>
         </div>
       </main>
+
+      {/* Modal de Casos */}
+      <ModalCasos
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        estudiante={selectedEstudiante}
+      />
     </div>
   );
 };

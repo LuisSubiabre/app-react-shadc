@@ -180,3 +180,22 @@ export interface TalleresInscritosResponseType {
   message: string;
   talleres: TallerInscritoType[];
 }
+
+export interface CasoConvivenciaType {
+  estudiante_nombre: string;
+  curso_nombre: string;
+  caso_id: number;
+  estudiante_id: number;
+  paso1: boolean;
+  fecha_paso1: string | null;
+  paso2: boolean;
+  fecha_paso2: string | null;
+  paso3: boolean;
+  fecha_paso3: string | null;
+  paso4: boolean;
+  fecha_paso4: string | null;
+  url: string | null;
+  observaciones: string | null;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+}
