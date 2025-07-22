@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { CasoConvivenciaType } from "@/types";
 import { updateCaso } from "@/services/convivenciaService";
 import { format } from "date-fns";
@@ -259,21 +259,7 @@ export function EditCasoModal({
               Información Adicional
             </h3>
             
-            {/* URL */}
-            <div className="space-y-2">
-              <Label htmlFor="url" className="flex items-center gap-2">
-                <Link className="h-4 w-4" />
-                Enlace de documento
-              </Label>
-                             <Input
-                 id="url"
-                 type="url"
-                 placeholder="https://drive.google.com/documento-convivencia-123"
-                 value={formData.url}
-                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                 className="w-full"
-               />
-            </div>
+           
 
             {/* Observaciones */}
             <div className="space-y-2">
@@ -287,6 +273,22 @@ export function EditCasoModal({
                  value={formData.observaciones}
                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, observaciones: e.target.value }))}
                  className="w-full min-h-[100px]"
+               />
+            </div>
+
+             {/* URL */}
+             <div className="space-y-2">
+              <Label htmlFor="url" className="flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Enlace de documento
+              </Label>
+                             <Input
+                 id="url"
+                 type="url"
+                 placeholder="https://drive.google.com/documento-convivencia-123"
+                 value={formData.url}
+                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                 className="w-full"
                />
             </div>
           </div>

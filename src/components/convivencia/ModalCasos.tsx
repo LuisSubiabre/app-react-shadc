@@ -108,23 +108,23 @@ export function ModalCasos({
   const getEstadoPaso = (completado: boolean, fecha: string | null) => {
     if (completado && fecha) {
       return (
-        <div className="flex items-center gap-2 text-green-600">
-          <CheckCircle className="h-4 w-4" />
-          <span className="text-sm">Completado</span>
+        <div className="flex items-center gap-1.5">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <span className="text-xs font-medium text-green-700 dark:text-green-400">Completado</span>
         </div>
       );
     } else if (completado) {
       return (
-        <div className="flex items-center gap-2 text-blue-600">
-          <CheckCircle className="h-4 w-4" />
-          <span className="text-sm">Completado</span>
+        <div className="flex items-center gap-1.5">
+          <CheckCircle className="h-4 w-4 text-blue-600" />
+          <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Completado</span>
         </div>
       );
     } else {
       return (
-        <div className="flex items-center gap-2 text-gray-500">
-          <Clock className="h-4 w-4" />
-          <span className="text-sm">Pendiente</span>
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-4 w-4 text-gray-400" />
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Pendiente</span>
         </div>
       );
     }
@@ -214,21 +214,7 @@ export function ModalCasos({
               </div>
             </div>
 
-            {/* Debug temporal */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
-              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-                Debug Temporal
-              </h3>
-              <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                isLoading: {isLoading.toString()} | casos.length: {casos.length} | 
-                Tipo casos: {Array.isArray(casos) ? 'Array' : typeof casos}
-              </p>
-              {casos.length > 0 && (
-                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                  Primer caso ID: {casos[0]?.caso_id}
-                </p>
-              )}
-            </div>
+
 
             {/* Lista de casos */}
             {isLoading ? (
@@ -277,57 +263,70 @@ export function ModalCasos({
                     </div>
 
                     {/* Progreso de pasos */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Paso 1
-                          </span>
-                          {getEstadoPaso(caso.paso1, caso.fecha_paso1)}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        Progreso del Protocolo
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Paso 1 */}
+                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 1
+                            </span>
+                            {getEstadoPaso(caso.paso1, caso.fecha_paso1)}
+                          </div>
+                          {caso.fecha_paso1 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                              {formatearFecha(caso.fecha_paso1)}
+                            </p>
+                          )}
                         </div>
-                        {caso.fecha_paso1 && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Completado: {formatearFecha(caso.fecha_paso1)}
-                          </p>
-                        )}
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Paso 2
-                          </span>
-                          {getEstadoPaso(caso.paso2, caso.fecha_paso2)}
+                        {/* Paso 2 */}
+                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 2
+                            </span>
+                            {getEstadoPaso(caso.paso2, caso.fecha_paso2)}
+                          </div>
+                          {caso.fecha_paso2 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                              {formatearFecha(caso.fecha_paso2)}
+                            </p>
+                          )}
                         </div>
-                        {caso.fecha_paso2 && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Completado: {formatearFecha(caso.fecha_paso2)}
-                          </p>
-                        )}
-                      </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Paso 3
-                          </span>
-                          {getEstadoPaso(caso.paso3, caso.fecha_paso3)}
+                        {/* Paso 3 */}
+                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 3
+                            </span>
+                            {getEstadoPaso(caso.paso3, caso.fecha_paso3)}
+                          </div>
+                          {caso.fecha_paso3 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                              {formatearFecha(caso.fecha_paso3)}
+                            </p>
+                          )}
                         </div>
-                        {caso.fecha_paso3 && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Completado: {formatearFecha(caso.fecha_paso3)}
-                          </p>
-                        )}
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Paso 4
-                          </span>
-                          {getEstadoPaso(caso.paso4, caso.fecha_paso4)}
+                        {/* Paso 4 */}
+                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Paso 4
+                            </span>
+                            {getEstadoPaso(caso.paso4, caso.fecha_paso4)}
+                          </div>
+                          {caso.fecha_paso4 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                              {formatearFecha(caso.fecha_paso4)}
+                            </p>
+                          )}
                         </div>
-                        {caso.fecha_paso4 && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Completado: {formatearFecha(caso.fecha_paso4)}
-                          </p>
-                        )}
                       </div>
                     </div>
 
