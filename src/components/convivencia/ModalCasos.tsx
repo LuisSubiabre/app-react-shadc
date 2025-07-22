@@ -16,21 +16,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import { EstudianteType, CasoConvivenciaType } from "@/types";
 import { getCasosEstudiante, deleteCaso } from "@/services/convivenciaService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
   CheckCircle, 
-  XCircle, 
   Clock, 
   FileText, 
   Calendar,

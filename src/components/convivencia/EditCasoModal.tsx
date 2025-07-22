@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CasoConvivenciaType } from "@/types";
 import { updateCaso } from "@/services/convivenciaService";
 import { format } from "date-fns";
-import { Calendar, Link, FileText, Save, X } from "lucide-react";
+import { Link, FileText, Save, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface EditCasoModalProps {
