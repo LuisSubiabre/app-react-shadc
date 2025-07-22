@@ -152,10 +152,13 @@ export function EditCasoModal({
               Pasos del Protocolo
             </h3>
             
-            {/* Paso 1 */}
+                        {/* Paso 1 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 1</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 1</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Inicio</p>
+                </div>
                 <Switch
                   checked={formData.paso1}
                   onCheckedChange={(checked) => handlePasoChange("paso1", checked)}
@@ -166,13 +169,13 @@ export function EditCasoModal({
                   <Label htmlFor="fecha_paso1" className="text-sm text-gray-600 dark:text-gray-400">
                     Fecha de completado
                   </Label>
-                                     <Input
-                     id="fecha_paso1"
-                     type="datetime-local"
-                     value={formData.fecha_paso1}
-                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso1: e.target.value }))}
-                     className="w-full"
-                   />
+                  <Input
+                    id="fecha_paso1"
+                    type="datetime-local"
+                    value={formData.fecha_paso1}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso1: e.target.value }))}
+                    className="w-full"
+                  />
                 </div>
               )}
             </div>
@@ -180,7 +183,10 @@ export function EditCasoModal({
             {/* Paso 2 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 2</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 2</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Investigación</p>
+                </div>
                 <Switch
                   checked={formData.paso2}
                   onCheckedChange={(checked) => handlePasoChange("paso2", checked)}
@@ -191,13 +197,13 @@ export function EditCasoModal({
                   <Label htmlFor="fecha_paso2" className="text-sm text-gray-600 dark:text-gray-400">
                     Fecha de completado
                   </Label>
-                                     <Input
-                     id="fecha_paso2"
-                     type="datetime-local"
-                     value={formData.fecha_paso2}
-                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso2: e.target.value }))}
-                     className="w-full"
-                   />
+                  <Input
+                    id="fecha_paso2"
+                    type="datetime-local"
+                    value={formData.fecha_paso2}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso2: e.target.value }))}
+                    className="w-full"
+                  />
                 </div>
               )}
             </div>
@@ -205,7 +211,10 @@ export function EditCasoModal({
             {/* Paso 3 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 3</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 3</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Cierre</p>
+                </div>
                 <Switch
                   checked={formData.paso3}
                   onCheckedChange={(checked) => handlePasoChange("paso3", checked)}
@@ -216,13 +225,13 @@ export function EditCasoModal({
                   <Label htmlFor="fecha_paso3" className="text-sm text-gray-600 dark:text-gray-400">
                     Fecha de completado
                   </Label>
-                                     <Input
-                     id="fecha_paso3"
-                     type="datetime-local"
-                     value={formData.fecha_paso3}
-                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso3: e.target.value }))}
-                     className="w-full"
-                   />
+                  <Input
+                    id="fecha_paso3"
+                    type="datetime-local"
+                    value={formData.fecha_paso3}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso3: e.target.value }))}
+                    className="w-full"
+                  />
                 </div>
               )}
             </div>
@@ -230,7 +239,10 @@ export function EditCasoModal({
             {/* Paso 4 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 4</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 4</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Seguimiento</p>
+                </div>
                 <Switch
                   checked={formData.paso4}
                   onCheckedChange={(checked) => handlePasoChange("paso4", checked)}
@@ -241,13 +253,13 @@ export function EditCasoModal({
                   <Label htmlFor="fecha_paso4" className="text-sm text-gray-600 dark:text-gray-400">
                     Fecha de completado
                   </Label>
-                                     <Input
-                     id="fecha_paso4"
-                     type="datetime-local"
-                     value={formData.fecha_paso4}
-                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso4: e.target.value }))}
-                     className="w-full"
-                   />
+                  <Input
+                    id="fecha_paso4"
+                    type="datetime-local"
+                    value={formData.fecha_paso4}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fecha_paso4: e.target.value }))}
+                    className="w-full"
+                  />
                 </div>
               )}
             </div>

@@ -286,9 +286,12 @@ export function ModalCasos({
                         {/* Paso 1 */}
                         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Paso 1
-                            </span>
+                            <div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Paso 1
+                              </span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Inicio</p>
+                            </div>
                             {getEstadoPaso(caso.paso1, caso.fecha_paso1)}
                           </div>
                           {caso.fecha_paso1 && (
@@ -301,9 +304,12 @@ export function ModalCasos({
                         {/* Paso 2 */}
                         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Paso 2
-                            </span>
+                            <div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Paso 2
+                              </span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Investigación</p>
+                            </div>
                             {getEstadoPaso(caso.paso2, caso.fecha_paso2)}
                           </div>
                           {caso.fecha_paso2 && (
@@ -316,9 +322,12 @@ export function ModalCasos({
                         {/* Paso 3 */}
                         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Paso 3
-                            </span>
+                            <div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Paso 3
+                              </span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Cierre</p>
+                            </div>
                             {getEstadoPaso(caso.paso3, caso.fecha_paso3)}
                           </div>
                           {caso.fecha_paso3 && (
@@ -331,9 +340,12 @@ export function ModalCasos({
                         {/* Paso 4 */}
                         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Paso 4
-                            </span>
+                            <div>
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Paso 4
+                              </span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Seguimiento</p>
+                            </div>
                             {getEstadoPaso(caso.paso4, caso.fecha_paso4)}
                           </div>
                           {caso.fecha_paso4 && (

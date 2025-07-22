@@ -148,7 +148,10 @@ export function CreateCasoModal({
             {/* Paso 1 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 1</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 1</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Inicio</p>
+                </div>
                 <Switch
                   checked={formData.paso1}
                   onCheckedChange={(checked) => handlePasoChange("paso1", checked)}
@@ -173,7 +176,10 @@ export function CreateCasoModal({
             {/* Paso 2 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 2</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 2</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Investigación</p>
+                </div>
                 <Switch
                   checked={formData.paso2}
                   onCheckedChange={(checked) => handlePasoChange("paso2", checked)}
@@ -198,7 +204,10 @@ export function CreateCasoModal({
             {/* Paso 3 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 3</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 3</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Cierre</p>
+                </div>
                 <Switch
                   checked={formData.paso3}
                   onCheckedChange={(checked) => handlePasoChange("paso3", checked)}
@@ -223,7 +232,10 @@ export function CreateCasoModal({
             {/* Paso 4 */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-base font-medium">Paso 4</Label>
+                <div>
+                  <Label className="text-base font-medium">Paso 4</Label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Seguimiento</p>
+                </div>
                 <Switch
                   checked={formData.paso4}
                   onCheckedChange={(checked) => handlePasoChange("paso4", checked)}
