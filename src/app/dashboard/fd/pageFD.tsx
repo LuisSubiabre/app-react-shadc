@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
-import { AsignaturaEncuestaFDType } from "@/types";
+import { getAsignaturas } from "@/services/asignaturasService";
+import { AsignaturaEncuestaFDType, AsignaturaType } from "@/types";
 
 const PageFD = () => {
   const [asignaturas, setAsignaturas] = useState<AsignaturaEncuestaFDType[]>([]);
+  const [asignaturasExistentes, setAsignaturasExistentes] = useState<AsignaturaType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -16,7 +18,8 @@ const PageFD = () => {
     bloque: "Bloque 1",
     cupos_totales: 0,
     cupos_actuales: 0,
-    estado: "visible"
+    estado: "visible",
+    asignatura_id: null
   });
 
   const fetchAsignaturas = async () => {
@@ -32,15 +35,26 @@ const PageFD = () => {
     }
   };
 
+  const fetchAsignaturasExistentes = async () => {
+    try {
+      const response = await getAsignaturas();
+      setAsignaturasExistentes(response.data || response);
+    } catch (err) {
+      console.error("Error fetching asignaturas existentes:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAsignaturas();
+    fetchAsignaturasExistentes();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes('cupos') ? parseInt(value) || 0 : value
+      [name]: name.includes('cupos') ? parseInt(value) || 0 : 
+              name === 'asignatura_id' ? (value === '' ? null : parseInt(value)) : value
     }));
   };
 
@@ -49,7 +63,13 @@ const PageFD = () => {
     setSubmitting(true);
     
     try {
-      await postAsignaturaEncuestaFD(formData);
+      // Solo enviar asignatura_id si no es null
+      const dataToSend = { ...formData };
+      if (dataToSend.asignatura_id === null) {
+        delete dataToSend.asignatura_id;
+      }
+      
+      await postAsignaturaEncuestaFD(dataToSend);
       setShowModal(false);
       setFormData({
         nombre: "",
@@ -57,7 +77,8 @@ const PageFD = () => {
         bloque: "Bloque 1",
         cupos_totales: 0,
         cupos_actuales: 0,
-        estado: "visible"
+        estado: "visible",
+        asignatura_id: null
       });
       // Recargar la lista de asignaturas
       await fetchAsignaturas();
@@ -185,6 +206,11 @@ const PageFD = () => {
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                             {asignatura.area}
                           </p>
+                          {asignatura.asignatura_nombre && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                              Vinculada a: {asignatura.asignatura_nombre}
+                            </p>
+                          )}
                           <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                             <span>
                               Cupos: {asignatura.cupos_actuales}/{asignatura.cupos_totales}
@@ -211,7 +237,7 @@ const PageFD = () => {
       {/* Modal para agregar asignatura */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Agregar Nueva Asignatura
@@ -246,15 +272,18 @@ const PageFD = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Área
                 </label>
-                <input
-                  type="text"
+                <select
                   name="area"
                   value={formData.area}
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Ej: Matemáticas Aplicadas"
-                />
+                >
+                  <option value="">Selecciona un área</option>
+                  <option value="A">Área A</option>
+                  <option value="B">Área B</option>
+                  <option value="C">Área C</option>
+                </select>
               </div>
 
               <div>
@@ -320,6 +349,28 @@ const PageFD = () => {
                   <option value="visible">Visible</option>
                   <option value="oculto">Oculto</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Vincular con Asignatura Existente (Opcional)
+                </label>
+                <select
+                  name="asignatura_id"
+                  value={formData.asignatura_id || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Sin vincular</option>
+                  {asignaturasExistentes.map((asignatura) => (
+                    <option key={asignatura.asignatura_id} value={asignatura.asignatura_id}>
+                      {asignatura.nombre}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Selecciona una asignatura existente para vincular esta encuesta FD
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">

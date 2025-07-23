@@ -16,6 +16,7 @@ export interface CreateAsignaturaEncuestaFDType {
   cupos_totales: number;
   cupos_actuales: number;
   estado: string;
+  asignatura_id?: number | null; // Campo opcional para vincular con asignatura existente
 }
 
 export const postAsignaturaEncuestaFD = async (asignatura: CreateAsignaturaEncuestaFDType) => {
