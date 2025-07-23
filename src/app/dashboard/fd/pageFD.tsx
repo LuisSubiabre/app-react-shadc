@@ -244,9 +244,8 @@ const PageFD = () => {
           <Breadcrumbs />
         </div>
       </header>
-
       <main className="flex-1 p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
               Asignaturas Encuesta FD
