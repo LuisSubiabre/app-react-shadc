@@ -19,8 +19,21 @@ export interface CreateAsignaturaEncuestaFDType {
   asignatura_id?: number | null; // Campo opcional para vincular con asignatura existente
 }
 
+// Tipo para actualizar asignatura (incluye ID)
+export interface UpdateAsignaturaEncuestaFDType extends CreateAsignaturaEncuestaFDType {
+  asignatura_encuesta_id: number;
+}
+
 export const postAsignaturaEncuestaFD = async (asignatura: CreateAsignaturaEncuestaFDType) => {
   return api.post(`/fd-encuesta/asignaturas`, asignatura).then((response) => response.data);
+};
+
+export const updateAsignaturaEncuestaFD = async (asignatura: UpdateAsignaturaEncuestaFDType) => {
+  return api.patch(`/fd-encuesta/asignaturas/${asignatura.asignatura_encuesta_id}`, asignatura).then((response) => response.data);
+};
+
+export const deleteAsignaturaEncuestaFD = async (asignatura_encuesta_id: number) => {
+  return api.delete(`/fd-encuesta/asignaturas/${asignatura_encuesta_id}`).then((response) => response.data);
 };
 
 

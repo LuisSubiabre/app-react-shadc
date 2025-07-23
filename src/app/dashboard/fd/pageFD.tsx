@@ -1,9 +1,21 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
+import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
 import { AsignaturaEncuestaFDType, AsignaturaType } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Toaster } from "@/components/ui/toaster";
 
 const PageFD = () => {
   const [asignaturas, setAsignaturas] = useState<AsignaturaEncuestaFDType[]>([]);
@@ -11,7 +23,10 @@ const PageFD = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingAsignatura, setEditingAsignatura] = useState<AsignaturaEncuestaFDType | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [asignaturaToDelete, setAsignaturaToDelete] = useState<AsignaturaEncuestaFDType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -21,6 +36,8 @@ const PageFD = () => {
     estado: "visible",
     asignatura_id: null
   });
+
+  const { toast } = useToast();
 
   const fetchAsignaturas = async () => {
     try {
@@ -58,36 +75,111 @@ const PageFD = () => {
     }));
   };
 
+  const resetForm = () => {
+    setFormData({
+      nombre: "",
+      area: "",
+      bloque: "Bloque 1",
+      cupos_totales: 0,
+      cupos_actuales: 0,
+      estado: "visible",
+      asignatura_id: null
+    });
+    setEditingAsignatura(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     
     try {
-      // Solo enviar asignatura_id si no es null
-      const dataToSend = { ...formData };
-      if (dataToSend.asignatura_id === null) {
-        delete dataToSend.asignatura_id;
+      if (editingAsignatura) {
+        // Actualizar asignatura existente
+        const dataToSend = { ...formData, asignatura_encuesta_id: editingAsignatura.asignatura_encuesta_id };
+        if (dataToSend.asignatura_id === null) {
+          delete dataToSend.asignatura_id;
+        }
+        
+        await updateAsignaturaEncuestaFD(dataToSend);
+        toast({
+          title: "Éxito",
+          description: "Asignatura actualizada correctamente",
+        });
+      } else {
+        // Crear nueva asignatura
+        const dataToSend = { ...formData };
+        if (dataToSend.asignatura_id === null) {
+          delete dataToSend.asignatura_id;
+        }
+        
+        await postAsignaturaEncuestaFD(dataToSend);
+        toast({
+          title: "Éxito",
+          description: "Asignatura creada correctamente",
+        });
       }
       
-      await postAsignaturaEncuestaFD(dataToSend);
       setShowModal(false);
-      setFormData({
-        nombre: "",
-        area: "",
-        bloque: "Bloque 1",
-        cupos_totales: 0,
-        cupos_actuales: 0,
-        estado: "visible",
-        asignatura_id: null
-      });
+      resetForm();
       // Recargar la lista de asignaturas
       await fetchAsignaturas();
     } catch (err) {
-      console.error("Error creating asignatura:", err);
-      alert("Error al crear la asignatura");
+      console.error("Error saving asignatura:", err);
+      toast({
+        title: "Error",
+        description: editingAsignatura ? "Error al actualizar la asignatura" : "Error al crear la asignatura",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEdit = (asignatura: AsignaturaEncuestaFDType) => {
+    setEditingAsignatura(asignatura);
+    setFormData({
+      nombre: asignatura.nombre,
+      area: asignatura.area,
+      bloque: asignatura.bloque,
+      cupos_totales: asignatura.cupos_totales,
+      cupos_actuales: asignatura.cupos_actuales,
+      estado: asignatura.estado,
+      asignatura_id: asignatura.asignatura_id
+    });
+    setShowModal(true);
+  };
+
+  const handleDeleteClick = (asignatura: AsignaturaEncuestaFDType) => {
+    setAsignaturaToDelete(asignatura);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!asignaturaToDelete) return;
+
+    try {
+      await deleteAsignaturaEncuestaFD(asignaturaToDelete.asignatura_encuesta_id);
+      await fetchAsignaturas();
+      toast({
+        title: "Éxito",
+        description: "Asignatura eliminada correctamente",
+      });
+    } catch (err) {
+      console.error("Error deleting asignatura:", err);
+      toast({
+        title: "Error",
+        description: "Error al eliminar la asignatura",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setAsignaturaToDelete(null);
+    }
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setShowModal(true);
   };
 
   // Función para agrupar asignaturas por bloque
@@ -164,7 +256,7 @@ const PageFD = () => {
                 Gestiona las asignaturas disponibles para la encuesta FD
               </p>
               <button
-                onClick={() => setShowModal(true)}
+                onClick={openCreateModal}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,17 +292,41 @@ const PageFD = () => {
                           key={asignatura.asignatura_encuesta_id}
                           className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
-                          <h3 className="font-medium text-gray-900 dark:text-white mb-1">
-                            {asignatura.nombre}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {asignatura.area}
-                          </p>
-                          {asignatura.asignatura_nombre && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
-                              Vinculada a: {asignatura.asignatura_nombre}
-                            </p>
-                          )}
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <h3 className="font-medium text-gray-900 dark:text-white mb-1">
+                                {asignatura.nombre}
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                Área {asignatura.area}
+                              </p>
+                              {asignatura.asignatura_nombre && (
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                                  Vinculada a: {asignatura.asignatura_nombre}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex gap-1 ml-2">
+                              <button
+                                onClick={() => handleEdit(asignatura)}
+                                className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                title="Editar"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(asignatura)}
+                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                                title="Eliminar"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
                           <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                             <span>
                               Cupos: {asignatura.cupos_actuales}/{asignatura.cupos_totales}
@@ -234,16 +350,19 @@ const PageFD = () => {
         </div>
       </main>
 
-      {/* Modal para agregar asignatura */}
+      {/* Modal para agregar/editar asignatura */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Agregar Nueva Asignatura
+                {editingAsignatura ? 'Editar Asignatura' : 'Agregar Nueva Asignatura'}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,7 +495,10 @@ const PageFD = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancelar
@@ -386,13 +508,33 @@ const PageFD = () => {
                   disabled={submitting}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {submitting ? "Guardando..." : "Guardar"}
+                  {submitting ? "Guardando..." : (editingAsignatura ? "Actualizar" : "Guardar")}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Alert Dialog para confirmar eliminación */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente la asignatura{" "}
+              <strong>{asignaturaToDelete?.nombre}</strong> de la encuesta FD.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Toaster />
     </div>
   );
 };
