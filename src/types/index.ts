@@ -199,3 +199,38 @@ export interface CasoConvivenciaType {
   fecha_creacion: string;
   fecha_actualizacion: string;
 }
+
+export interface AsignaturaEncuestaFDType {
+  asignatura_encuesta_id: number;
+  nombre: string;
+  area: string;
+  bloque: string;
+  cupos_totales: number;
+  cupos_actuales: number;
+  estado: string;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+  asignatura_id: number | null;
+  asignatura_nombre: string | null;
+}
+
+export interface PaginationType {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface LinksType {
+  self: string;
+  next: string | null;
+  previous: string | null;
+}
+
+export interface AsignaturasEncuestaFDResponseType {
+  data: AsignaturaEncuestaFDType[];
+  pagination: PaginationType;
+  links: LinksType;
+}
