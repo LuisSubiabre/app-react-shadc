@@ -234,3 +234,12 @@ export interface AsignaturasEncuestaFDResponseType {
   pagination: PaginationType;
   links: LinksType;
 }
+
+export interface InscritoAnteriorEncuestaFDType {
+  estudiante_id: number;
+  nombre_estudiante: string;
+  rut: string;
+  nombre_curso: string;
+  nombre_asignatura_encuesta: string;
+  nombre_asignatura: string;
+}

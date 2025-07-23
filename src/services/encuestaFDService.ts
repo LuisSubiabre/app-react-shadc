@@ -1,4 +1,4 @@
-import { AsignaturasEncuestaFDResponseType } from "@/types/index.ts";
+import { AsignaturasEncuestaFDResponseType, InscritoAnteriorEncuestaFDType } from "@/types/index.ts";
 import api from "../config/api.ts";
 
 // ** Rutas Públicas **
@@ -34,6 +34,12 @@ export const updateAsignaturaEncuestaFD = async (asignatura: UpdateAsignaturaEnc
 
 export const deleteAsignaturaEncuestaFD = async (asignatura_encuesta_id: number) => {
   return api.delete(`/fd-encuesta/asignaturas/${asignatura_encuesta_id}`).then((response) => response.data);
+};
+
+export const inscritosAnterioresEncuestaFD = async (asignatura_encuesta_id: number): Promise<InscritoAnteriorEncuestaFDType[]> => {
+  const url = `/fd-encuesta/anterior/${asignatura_encuesta_id}`;
+  console.log('Calling inscritosAnterioresEncuestaFD with URL:', url);
+  return api.get(url).then((response) => response.data);
 };
 
 

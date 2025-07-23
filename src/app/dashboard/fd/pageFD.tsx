@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
+import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
-import { AsignaturaEncuestaFDType, AsignaturaType } from "@/types";
+import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -27,6 +27,10 @@ const PageFD = () => {
   const [submitting, setSubmitting] = useState(false);
   const [asignaturaToDelete, setAsignaturaToDelete] = useState<AsignaturaEncuestaFDType | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [showInscritosModal, setShowInscritosModal] = useState(false);
+  const [selectedAsignatura, setSelectedAsignatura] = useState<AsignaturaEncuestaFDType | null>(null);
+  const [inscritosAnteriores, setInscritosAnteriores] = useState<InscritoAnteriorEncuestaFDType[]>([]);
+  const [loadingInscritos, setLoadingInscritos] = useState(false);
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -59,6 +63,31 @@ const PageFD = () => {
     } catch (err) {
       console.error("Error fetching asignaturas existentes:", err);
     }
+  };
+
+  const fetchInscritosAnteriores = async (asignatura_encuesta_id: number) => {
+    try {
+      setLoadingInscritos(true);
+      console.log('Fetching inscritos for asignatura_encuesta_id:', asignatura_encuesta_id);
+      const response = await inscritosAnterioresEncuestaFD(asignatura_encuesta_id);
+      console.log('Response from inscritosAnterioresEncuestaFD:', response);
+      setInscritosAnteriores(response);
+    } catch (err) {
+      console.error("Error fetching inscritos anteriores:", err);
+      toast({
+        title: "Error",
+        description: "Error al cargar los inscritos anteriores",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingInscritos(false);
+    }
+  };
+
+  const openInscritosModal = async (asignatura: AsignaturaEncuestaFDType) => {
+    setSelectedAsignatura(asignatura);
+    setShowInscritosModal(true);
+    await fetchInscritosAnteriores(asignatura.asignatura_encuesta_id);
   };
 
   useEffect(() => {
@@ -244,6 +273,7 @@ const PageFD = () => {
           <Breadcrumbs />
         </div>
       </header>
+
       <main className="flex-1 p-6">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -266,7 +296,7 @@ const PageFD = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {Object.entries(gruposAsignaturas).map(([bloque, asignaturasBloque]) => (
               <div
                 key={bloque}
@@ -300,9 +330,21 @@ const PageFD = () => {
                                 Área {asignatura.area}
                               </p>
                               {asignatura.asignatura_nombre && (
-                                <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
-                                  Vinculada a: {asignatura.asignatura_nombre}
-                                </p>
+                                <div className="mb-2">
+                                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
+                                    Vinculada a: {asignatura.asignatura_nombre}
+                                  </p>
+                                  <button
+                                    onClick={() => openInscritosModal(asignatura)}
+                                    className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    Ver inscritos anteriores
+                                  </button>
+                                </div>
                               )}
                             </div>
                             <div className="flex gap-1 ml-2">
@@ -326,6 +368,7 @@ const PageFD = () => {
                               </button>
                             </div>
                           </div>
+                          
                           <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                             <span>
                               Cupos: {asignatura.cupos_actuales}/{asignatura.cupos_totales}
@@ -511,6 +554,89 @@ const PageFD = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para mostrar inscritos anteriores */}
+      {showInscritosModal && selectedAsignatura && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Inscritos Anteriores
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedAsignatura.nombre} - Vinculada a: {selectedAsignatura.asignatura_nombre}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInscritosModal(false);
+                  setSelectedAsignatura(null);
+                  setInscritosAnteriores([]);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {loadingInscritos ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando inscritos...</span>
+              </div>
+            ) : inscritosAnteriores.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Estudiante</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">RUT</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Curso</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Asignatura Encuesta</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Asignatura Vinculada</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inscritosAnteriores.map((inscrito, index) => (
+                      <tr
+                        key={`${inscrito.estudiante_id}-${index}`}
+                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
+                          {inscrito.nombre_estudiante}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {inscrito.rut}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {inscrito.nombre_curso}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {inscrito.nombre_asignatura_encuesta}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {inscrito.nombre_asignatura}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                  Total de inscritos: {inscritosAnteriores.length}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">📋</div>
+                <p className="text-gray-600 dark:text-gray-400">No hay inscritos anteriores para esta asignatura</p>
+              </div>
+            )}
           </div>
         </div>
       )}
