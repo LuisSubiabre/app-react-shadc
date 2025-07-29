@@ -525,6 +525,25 @@ const PageFD = () => {
             </div>
           </div>
 
+          {/* Leyenda de áreas */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Leyenda de Áreas</h3>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-orange-400 rounded-full"></span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Área A</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-blue-400 rounded-full"></span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Área B</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-purple-400 rounded-full"></span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Área C</span>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {Object.entries(gruposAsignaturas).map(([bloque, asignaturasBloque]) => (
               <div
@@ -533,9 +552,22 @@ const PageFD = () => {
               >
                 <div className="bg-blue-600 dark:bg-blue-700 px-4 py-3">
                   <h2 className="text-lg font-semibold text-white">{bloque}</h2>
-                  <p className="text-blue-100 text-sm">
-                    {asignaturasBloque.length} asignatura{asignaturasBloque.length !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-blue-100 text-sm">
+                      {asignaturasBloque.length} asignatura{asignaturasBloque.length !== 1 ? 's' : ''}
+                    </p>
+                    <div className="flex gap-1">
+                      {asignaturasBloque.some(a => a.area === 'A') && (
+                        <span className="w-3 h-3 bg-orange-400 rounded-full" title="Área A"></span>
+                      )}
+                      {asignaturasBloque.some(a => a.area === 'B') && (
+                        <span className="w-3 h-3 bg-blue-400 rounded-full" title="Área B"></span>
+                      )}
+                      {asignaturasBloque.some(a => a.area === 'C') && (
+                        <span className="w-3 h-3 bg-purple-400 rounded-full" title="Área C"></span>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="p-4">
@@ -548,16 +580,30 @@ const PageFD = () => {
                       {asignaturasBloque.map((asignatura) => (
                         <div
                           key={asignatura.asignatura_encuesta_id}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          className={`border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                            asignatura.area === 'A' 
+                              ? 'border-orange-200 dark:border-orange-700'
+                              : asignatura.area === 'B'
+                              ? 'border-blue-200 dark:border-blue-700'
+                              : 'border-purple-200 dark:border-purple-700'
+                          }`}
                         >
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                               <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                                 {asignatura.nombre}
                               </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                Área {asignatura.area}
-                              </p>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  asignatura.area === 'A' 
+                                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                    : asignatura.area === 'B'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                }`}>
+                                  Área {asignatura.area}
+                                </span>
+                              </div>
                               {(asignatura.horario || asignatura.dia) && (
                                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                                   {asignatura.dia && <span className="mr-2">📅 {asignatura.dia}</span>}
