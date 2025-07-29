@@ -55,7 +55,9 @@ const PageFD = () => {
     cupos_totales: 0,
     cupos_actuales: 0,
     estado: "visible",
-    asignatura_id: null
+    asignatura_id: null,
+    horario: null,
+    dia: null
   });
 
   const { toast } = useToast();
@@ -322,7 +324,8 @@ const PageFD = () => {
     setFormData(prev => ({
       ...prev,
       [name]: name.includes('cupos') ? parseInt(value) || 0 : 
-              name === 'asignatura_id' ? (value === '' ? null : parseInt(value)) : value
+              name === 'asignatura_id' ? (value === '' ? null : parseInt(value)) :
+              name === 'horario' || name === 'dia' ? (value === '' ? null : value) : value
     }));
   };
 
@@ -334,7 +337,9 @@ const PageFD = () => {
       cupos_totales: 0,
       cupos_actuales: 0,
       estado: "visible",
-      asignatura_id: null
+      asignatura_id: null,
+      horario: null,
+      dia: null
     });
     setEditingAsignatura(null);
   };
@@ -395,7 +400,9 @@ const PageFD = () => {
       cupos_totales: asignatura.cupos_totales,
       cupos_actuales: asignatura.cupos_actuales,
       estado: asignatura.estado,
-      asignatura_id: asignatura.asignatura_id
+      asignatura_id: asignatura.asignatura_id,
+      horario: asignatura.horario,
+      dia: asignatura.dia
     });
     setShowModal(true);
   };
@@ -551,6 +558,12 @@ const PageFD = () => {
                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 Área {asignatura.area}
                               </p>
+                              {(asignatura.horario || asignatura.dia) && (
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                  {asignatura.dia && <span className="mr-2">📅 {asignatura.dia}</span>}
+                                  {asignatura.horario && <span>🕐 {asignatura.horario}</span>}
+                                </div>
+                              )}
                               {asignatura.asignatura_nombre && (
                                 <div className="mb-2">
                                   <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
@@ -771,6 +784,36 @@ const PageFD = () => {
                   <option value="visible">Visible</option>
                   <option value="oculto">Oculto</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Horario (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    name="horario"
+                    value={formData.horario || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Ej: 08:00 - 09:30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Día (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    name="dia"
+                    value={formData.dia || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Ej: Lunes"
+                  />
+                </div>
               </div>
 
               <div>

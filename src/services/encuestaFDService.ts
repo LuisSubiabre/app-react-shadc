@@ -17,6 +17,8 @@ export interface CreateAsignaturaEncuestaFDType {
   cupos_actuales: number;
   estado: string;
   asignatura_id?: number | null; // Campo opcional para vincular con asignatura existente
+  horario?: string | null; // Campo opcional para el horario
+  dia?: string | null; // Campo opcional para el día
 }
 
 // Tipo para actualizar asignatura (incluye ID)
