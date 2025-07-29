@@ -199,3 +199,95 @@ export interface CasoConvivenciaType {
   fecha_creacion: string;
   fecha_actualizacion: string;
 }
+
+export interface AsignaturaEncuestaFDType {
+  asignatura_encuesta_id: number;
+  nombre: string;
+  area: string;
+  bloque: string;
+  cupos_totales: number;
+  cupos_actuales: number;
+  estado: string;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+  asignatura_id: number | null;
+  asignatura_nombre: string | null;
+}
+
+export interface PaginationType {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface LinksType {
+  self: string;
+  next: string | null;
+  previous: string | null;
+}
+
+export interface AsignaturasEncuestaFDResponseType {
+  data: AsignaturaEncuestaFDType[];
+  pagination: PaginationType;
+  links: LinksType;
+}
+
+export interface InscritoAnteriorEncuestaFDType {
+  estudiante_id: number;
+  nombre_estudiante: string;
+  rut: string;
+  nombre_curso: string;
+  nombre_asignatura_encuesta: string;
+  nombre_asignatura: string;
+}
+
+// Tipos para getInscritosEncuestaFD
+export interface EstudianteInscritoFDType {
+  id: number;
+  nombre: string;
+  rut: string;
+  curso: string;
+}
+
+export interface AsignaturaInscritoFDType {
+  id: number;
+  nombre: string;
+  prioridad: number;
+}
+
+export interface InscritoFDType {
+  eleccion_id: number;
+  estudiante: EstudianteInscritoFDType;
+  asignatura: AsignaturaInscritoFDType;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+}
+
+export interface EstadisticasInscritosFDType {
+  total_inscritos: number;
+  por_prioridad: {
+    prioridad_1: number;
+    prioridad_2: number;
+    prioridad_3: number;
+  };
+}
+
+export interface InscritosEncuestaFDResponseType {
+  asignatura_id: number;
+  estadisticas: EstadisticasInscritosFDType;
+  inscritos: InscritoFDType[];
+}
+
+// Tipos para inscribir estudiantes
+export interface EleccionEncuestaFDType {
+  asignatura_encuesta_id: number;
+  prioridad: number;
+}
+
+export interface InscribirEstudianteEncuestaFDType {
+  estudiante_id: number;
+  elecciones: EleccionEncuestaFDType[];
+}

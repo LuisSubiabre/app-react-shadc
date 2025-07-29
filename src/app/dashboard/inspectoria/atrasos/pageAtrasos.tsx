@@ -97,7 +97,9 @@ const PageAtrasos = () => {
   });
 
   const handleNewAtraso = async (estudianteId: number, tipo: "llegada" | "jornada") => {
-    const estudiante = estudiantes.find((e) => e.id === estudianteId);
+    // Buscar por estudiante_id primero, si no existe, buscar por id
+    const estudiante = estudiantes.find((e) => e.estudiante_id === estudianteId) || 
+                      estudiantes.find((e) => e.id === estudianteId);
     if (!estudiante) return;
 
     try {
@@ -338,7 +340,7 @@ const PageAtrasos = () => {
                 ) : estudiantes.length > 0 ? (
                   filteredEstudiantes.map((estudiante) => (
                     <TableRow
-                      key={estudiante.estudiante_id}
+                      key={estudiante.estudiante_id || estudiante.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
                       <TableCell className="font-mono">
@@ -380,7 +382,7 @@ const PageAtrasos = () => {
                               />
                             </svg>
                           )}
-                          {estudiante.estudiante_id}
+                          {estudiante.estudiante_id || estudiante.id}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -403,7 +405,7 @@ const PageAtrasos = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleNewAtraso(estudiante.id, "llegada")}
+                            onClick={() => handleNewAtraso(estudiante.estudiante_id || estudiante.id, "llegada")}
                             className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
                           >
                             <Clock className="h-4 w-4 mr-2" />
@@ -412,7 +414,7 @@ const PageAtrasos = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleNewAtraso(estudiante.id, "jornada")}
+                            onClick={() => handleNewAtraso(estudiante.estudiante_id || estudiante.id, "jornada")}
                             className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300 transition-colors"
                           >
                             <Calendar className="h-4 w-4 mr-2" />
