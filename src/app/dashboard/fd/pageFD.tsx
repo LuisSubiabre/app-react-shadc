@@ -631,23 +631,10 @@ const PageFD = () => {
                                 <span className="ml-2 text-xs text-gray-500">Cargando inscritos...</span>
                               </div>
                             ) : inscritosPorAsignatura[asignatura.asignatura_encuesta_id] ? (
-                              <div className="space-y-1">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    Inscritos: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.total_inscritos}
-                                  </span>
-                                </div>
-                                <div className="flex gap-2 text-xs">
-                                  <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
-                                    P1: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_1}
-                                  </span>
-                                  <span className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 rounded">
-                                    P2: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_2}
-                                  </span>
-                                  <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded">
-                                    P3: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_3}
-                                  </span>
-                                </div>
+                              <div className="text-center">
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                  Inscritos: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.total_inscritos}
+                                </span>
                               </div>
                             ) : (
                               <div className="text-xs text-gray-400 text-center py-1">
@@ -956,30 +943,12 @@ const PageFD = () => {
             {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id] && (
               <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Estadísticas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="flex justify-center">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                       {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.total_inscritos}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">Total Inscritos</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_1}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 1</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_2}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 2</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_3}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 3</div>
                   </div>
                 </div>
               </div>
