@@ -40,11 +40,12 @@ const PageFD = () => {
   const [isDeleteInscritoDialogOpen, setIsDeleteInscritoDialogOpen] = useState(false);
   const [deletingInscrito, setDeletingInscrito] = useState(false);
   const [showInscribirModal, setShowInscribirModal] = useState(false);
-  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState<EstudianteType[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(false);
   const [estudianteSeleccionado, setEstudianteSeleccionado] = useState<EstudianteType | null>(null);
   const [elecciones, setElecciones] = useState<EleccionEncuestaFDType[]>([]);
   const [inscribiendo, setInscribiendo] = useState(false);
+  const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null);
+  const [estudiantesPorCurso, setEstudiantesPorCurso] = useState<Record<number, EstudianteType[]>>({});
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -200,25 +201,27 @@ const PageFD = () => {
     
     setShowInscribirModal(true);
     setLoadingEstudiantes(true);
+    setCursoSeleccionado(null);
+    setEstudianteSeleccionado(null);
     
     try {
       // Cargar estudiantes de los cursos 25, 26, 27, 28, 29, 30
       const cursosIds = [25, 26, 27, 28, 29, 30];
-      const todosEstudiantes: EstudianteType[] = [];
+      const estudiantesPorCursoData: Record<number, EstudianteType[]> = {};
       
       for (const cursoId of cursosIds) {
         try {
           const response = await estudiantesCurso(cursoId);
           if (response && Array.isArray(response)) {
-            todosEstudiantes.push(...response);
+            estudiantesPorCursoData[cursoId] = response;
           }
         } catch (err) {
           console.error(`Error cargando estudiantes del curso ${cursoId}:`, err);
         }
       }
       
-      console.log('Estudiantes cargados:', todosEstudiantes);
-      setEstudiantesDisponibles(todosEstudiantes);
+      console.log('Estudiantes por curso:', estudiantesPorCursoData);
+      setEstudiantesPorCurso(estudiantesPorCursoData);
       
       // Inicializar elección solo para la asignatura específica
       const eleccionInicial = {
@@ -244,6 +247,10 @@ const PageFD = () => {
     setEstudianteSeleccionado(estudiante);
   };
 
+  const handleCursoChange = (cursoId: number | null) => {
+    setCursoSeleccionado(cursoId);
+    setEstudianteSeleccionado(null); // Resetear estudiante cuando cambia el curso
+  };
 
 
   const handleInscribirEstudiante = async () => {
@@ -279,6 +286,7 @@ const PageFD = () => {
       
       setShowInscribirModal(false);
       setEstudianteSeleccionado(null);
+      setCursoSeleccionado(null);
       setElecciones([]);
       
     } catch (err) {
@@ -1056,6 +1064,7 @@ const PageFD = () => {
                 onClick={() => {
                   setShowInscribirModal(false);
                   setEstudianteSeleccionado(null);
+                  setCursoSeleccionado(null);
                   setElecciones([]);
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -1073,34 +1082,58 @@ const PageFD = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Selección de estudiante */}
+                {/* Selección de curso */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Seleccionar Estudiante
+                    Seleccionar Curso
                   </label>
-                  {estudiantesDisponibles.length === 0 ? (
-                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                      No hay estudiantes disponibles en los cursos 25, 26, 27, 28, 29, 30
-                    </div>
-                  ) : (
-                    <select
-                      value={estudianteSeleccionado ? (estudianteSeleccionado.estudiante_id || estudianteSeleccionado.id) : ''}
-                      onChange={(e) => {
-                        const estudianteId = parseInt(e.target.value);
-                        const estudiante = estudiantesDisponibles.find(est => (est.estudiante_id || est.id) === estudianteId);
-                        handleEstudianteChange(estudiante || null);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    >
-                      <option value="">Selecciona un estudiante</option>
-                      {estudiantesDisponibles.map((estudiante) => (
-                        <option key={estudiante.estudiante_id || estudiante.id} value={estudiante.estudiante_id || estudiante.id}>
-                          {estudiante.nombre} - {estudiante.rut} - Curso {estudiante.curso_id}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  <select
+                    value={cursoSeleccionado || ''}
+                    onChange={(e) => {
+                      const cursoId = e.target.value ? parseInt(e.target.value) : null;
+                      handleCursoChange(cursoId);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Selecciona un curso</option>
+                    {[25, 26, 27, 28, 29, 30].map((cursoId) => (
+                      <option key={cursoId} value={cursoId}>
+                        Curso {cursoId}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* Selección de estudiante */}
+                {cursoSeleccionado && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Seleccionar Estudiante
+                    </label>
+                    {estudiantesPorCurso[cursoSeleccionado] && estudiantesPorCurso[cursoSeleccionado].length > 0 ? (
+                      <select
+                        value={estudianteSeleccionado ? (estudianteSeleccionado.estudiante_id || estudianteSeleccionado.id) : ''}
+                        onChange={(e) => {
+                          const estudianteId = parseInt(e.target.value);
+                          const estudiante = estudiantesPorCurso[cursoSeleccionado].find(est => (est.estudiante_id || est.id) === estudianteId);
+                          handleEstudianteChange(estudiante || null);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">Selecciona un estudiante</option>
+                        {estudiantesPorCurso[cursoSeleccionado].map((estudiante) => (
+                          <option key={estudiante.estudiante_id || estudiante.id} value={estudiante.estudiante_id || estudiante.id}>
+                            {estudiante.nombre} - {estudiante.rut}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                        No hay estudiantes disponibles en el curso {cursoSeleccionado}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Información de la asignatura */}
                 {estudianteSeleccionado && selectedAsignaturaInscritos && (
@@ -1140,11 +1173,12 @@ const PageFD = () => {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowInscribirModal(false);
-                      setEstudianteSeleccionado(null);
-                      setElecciones([]);
-                    }}
+                                      onClick={() => {
+                    setShowInscribirModal(false);
+                    setEstudianteSeleccionado(null);
+                    setCursoSeleccionado(null);
+                    setElecciones([]);
+                  }}
                     className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancelar
