@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
+import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
-import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType } from "@/types";
+import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType, InscritosEncuestaFDResponseType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -31,6 +31,10 @@ const PageFD = () => {
   const [selectedAsignatura, setSelectedAsignatura] = useState<AsignaturaEncuestaFDType | null>(null);
   const [inscritosAnteriores, setInscritosAnteriores] = useState<InscritoAnteriorEncuestaFDType[]>([]);
   const [loadingInscritos, setLoadingInscritos] = useState(false);
+  const [inscritosPorAsignatura, setInscritosPorAsignatura] = useState<Record<number, InscritosEncuestaFDResponseType>>({});
+  const [loadingInscritosPorAsignatura, setLoadingInscritosPorAsignatura] = useState<Record<number, boolean>>({});
+  const [showInscritosActualesModal, setShowInscritosActualesModal] = useState(false);
+  const [selectedAsignaturaInscritos, setSelectedAsignaturaInscritos] = useState<AsignaturaEncuestaFDType | null>(null);
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -43,11 +47,29 @@ const PageFD = () => {
 
   const { toast } = useToast();
 
+  const fetchInscritosAsignatura = async (asignatura_encuesta_id: number) => {
+    try {
+      setLoadingInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: true }));
+      const response = await getInscritosEncuestaFD(asignatura_encuesta_id);
+      setInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: response }));
+    } catch (err) {
+      console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
+      // No mostrar toast para evitar spam, solo log del error
+    } finally {
+      setLoadingInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: false }));
+    }
+  };
+
   const fetchAsignaturas = async () => {
     try {
       setLoading(true);
       const response = await getAsignaturasEncuestaFD();
       setAsignaturas(response.data);
+      
+      // Cargar inscritos para todas las asignaturas
+      response.data.forEach(asignatura => {
+        fetchInscritosAsignatura(asignatura.asignatura_encuesta_id);
+      });
     } catch (err) {
       setError("Error al cargar las asignaturas");
       console.error("Error fetching asignaturas:", err);
@@ -88,6 +110,11 @@ const PageFD = () => {
     setSelectedAsignatura(asignatura);
     setShowInscritosModal(true);
     await fetchInscritosAnteriores(asignatura.asignatura_encuesta_id);
+  };
+
+  const openInscritosActualesModal = (asignatura: AsignaturaEncuestaFDType) => {
+    setSelectedAsignaturaInscritos(asignatura);
+    setShowInscritosActualesModal(true);
   };
 
   useEffect(() => {
@@ -150,7 +177,7 @@ const PageFD = () => {
       
       setShowModal(false);
       resetForm();
-      // Recargar la lista de asignaturas
+      // Recargar la lista de asignaturas y sus inscritos
       await fetchAsignaturas();
     } catch (err) {
       console.error("Error saving asignatura:", err);
@@ -358,6 +385,26 @@ const PageFD = () => {
                                 </svg>
                               </button>
                               <button
+                                onClick={() => openInscritosActualesModal(asignatura)}
+                                className="p-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+                                title="Ver inscritos actuales"
+                                disabled={!inscritosPorAsignatura[asignatura.asignatura_encuesta_id]}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => fetchInscritosAsignatura(asignatura.asignatura_encuesta_id)}
+                                className="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                                title="Recargar inscritos"
+                                disabled={loadingInscritosPorAsignatura[asignatura.asignatura_encuesta_id]}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              </button>
+                              <button
                                 onClick={() => handleDeleteClick(asignatura)}
                                 className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                                 title="Eliminar"
@@ -380,6 +427,39 @@ const PageFD = () => {
                             }`}>
                               {asignatura.estado}
                             </span>
+                          </div>
+                          
+                          {/* Información de inscritos */}
+                          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                            {loadingInscritosPorAsignatura[asignatura.asignatura_encuesta_id] ? (
+                              <div className="flex items-center justify-center py-1">
+                                <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+                                <span className="ml-2 text-xs text-gray-500">Cargando inscritos...</span>
+                              </div>
+                            ) : inscritosPorAsignatura[asignatura.asignatura_encuesta_id] ? (
+                              <div className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    Inscritos: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.total_inscritos}
+                                  </span>
+                                </div>
+                                <div className="flex gap-2 text-xs">
+                                  <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
+                                    P1: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_1}
+                                  </span>
+                                  <span className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 rounded">
+                                    P2: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_2}
+                                  </span>
+                                  <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded">
+                                    P3: {inscritosPorAsignatura[asignatura.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_3}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-xs text-gray-400 text-center py-1">
+                                Sin inscritos
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -635,6 +715,120 @@ const PageFD = () => {
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">📋</div>
                 <p className="text-gray-600 dark:text-gray-400">No hay inscritos anteriores para esta asignatura</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal para mostrar inscritos actuales */}
+      {showInscritosActualesModal && selectedAsignaturaInscritos && inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id] && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Inscritos Actuales
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedAsignaturaInscritos.nombre}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInscritosActualesModal(false);
+                  setSelectedAsignaturaInscritos(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Estadísticas */}
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Estadísticas</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.total_inscritos}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Inscritos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_1}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 1</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_2}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 2</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_3}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 3</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de inscritos */}
+            {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].inscritos.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Estudiante</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">RUT</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Prioridad</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Fecha de Inscripción</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Última Actualización</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].inscritos.map((inscrito) => (
+                      <tr
+                        key={inscrito.eleccion_id}
+                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
+                          {inscrito.estudiante.nombre}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {inscrito.estudiante.rut}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            inscrito.asignatura.prioridad === 1 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                              : inscrito.asignatura.prioridad === 2
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          }`}>
+                            Prioridad {inscrito.asignatura.prioridad}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {new Date(inscrito.fecha_creacion).toLocaleDateString('es-CL')}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {new Date(inscrito.fecha_actualizacion).toLocaleDateString('es-CL')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">👥</div>
+                <p className="text-gray-600 dark:text-gray-400">No hay inscritos actuales para esta asignatura</p>
               </div>
             )}
           </div>

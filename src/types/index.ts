@@ -243,3 +243,39 @@ export interface InscritoAnteriorEncuestaFDType {
   nombre_asignatura_encuesta: string;
   nombre_asignatura: string;
 }
+
+// Tipos para getInscritosEncuestaFD
+export interface EstudianteInscritoFDType {
+  id: number;
+  nombre: string;
+  rut: string;
+}
+
+export interface AsignaturaInscritoFDType {
+  id: number;
+  nombre: string;
+  prioridad: number;
+}
+
+export interface InscritoFDType {
+  eleccion_id: number;
+  estudiante: EstudianteInscritoFDType;
+  asignatura: AsignaturaInscritoFDType;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+}
+
+export interface EstadisticasInscritosFDType {
+  total_inscritos: number;
+  por_prioridad: {
+    prioridad_1: number;
+    prioridad_2: number;
+    prioridad_3: number;
+  };
+}
+
+export interface InscritosEncuestaFDResponseType {
+  asignatura_id: number;
+  estadisticas: EstadisticasInscritosFDType;
+  inscritos: InscritoFDType[];
+}
