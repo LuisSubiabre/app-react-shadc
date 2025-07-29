@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
+import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
 import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType, InscritosEncuestaFDResponseType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,9 @@ const PageFD = () => {
   const [loadingInscritosPorAsignatura, setLoadingInscritosPorAsignatura] = useState<Record<number, boolean>>({});
   const [showInscritosActualesModal, setShowInscritosActualesModal] = useState(false);
   const [selectedAsignaturaInscritos, setSelectedAsignaturaInscritos] = useState<AsignaturaEncuestaFDType | null>(null);
+  const [inscritoToDelete, setInscritoToDelete] = useState<{ eleccion_id: number; estudiante_nombre: string } | null>(null);
+  const [isDeleteInscritoDialogOpen, setIsDeleteInscritoDialogOpen] = useState(false);
+  const [deletingInscrito, setDeletingInscrito] = useState(false);
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -49,9 +52,12 @@ const PageFD = () => {
 
   const fetchInscritosAsignatura = async (asignatura_encuesta_id: number) => {
     try {
+      console.log(`Fetching inscritos for asignatura ${asignatura_encuesta_id}...`);
       setLoadingInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: true }));
       const response = await getInscritosEncuestaFD(asignatura_encuesta_id);
+      console.log(`Response for asignatura ${asignatura_encuesta_id}:`, response);
       setInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: response }));
+      console.log(`Estado actualizado para asignatura ${asignatura_encuesta_id}`);
     } catch (err) {
       console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
       // No mostrar toast para evitar spam, solo log del error
@@ -115,6 +121,71 @@ const PageFD = () => {
   const openInscritosActualesModal = (asignatura: AsignaturaEncuestaFDType) => {
     setSelectedAsignaturaInscritos(asignatura);
     setShowInscritosActualesModal(true);
+  };
+
+  const handleDeleteInscritoClick = (eleccion_id: number, estudiante_nombre: string) => {
+    setInscritoToDelete({ eleccion_id, estudiante_nombre });
+    setIsDeleteInscritoDialogOpen(true);
+  };
+
+  const handleConfirmDeleteInscrito = async () => {
+    if (!inscritoToDelete || !selectedAsignaturaInscritos) return;
+
+    try {
+      setDeletingInscrito(true);
+      console.log('Eliminando inscrito:', inscritoToDelete.eleccion_id);
+      await eliminarInscritoEncuestaFD(inscritoToDelete.eleccion_id);
+      
+      console.log('Inscrito eliminado, actualizando estado...');
+      
+      // Actualizar el estado inmediatamente removiendo el inscrito eliminado
+      setInscritosPorAsignatura(prev => {
+        const currentData = prev[selectedAsignaturaInscritos.asignatura_encuesta_id];
+        if (!currentData) return prev;
+        
+        const updatedInscritos = currentData.inscritos.filter(
+          inscrito => inscrito.eleccion_id !== inscritoToDelete.eleccion_id
+        );
+        
+        const updatedEstadisticas = {
+          total_inscritos: updatedInscritos.length,
+          por_prioridad: {
+            prioridad_1: updatedInscritos.filter(i => i.asignatura.prioridad === 1).length,
+            prioridad_2: updatedInscritos.filter(i => i.asignatura.prioridad === 2).length,
+            prioridad_3: updatedInscritos.filter(i => i.asignatura.prioridad === 3).length,
+          }
+        };
+        
+        const updatedData = {
+          ...currentData,
+          inscritos: updatedInscritos,
+          estadisticas: updatedEstadisticas
+        };
+        
+        console.log('Estado actualizado:', updatedData);
+        
+        return {
+          ...prev,
+          [selectedAsignaturaInscritos.asignatura_encuesta_id]: updatedData
+        };
+      });
+      
+      toast({
+        title: "Éxito",
+        description: "Estudiante eliminado de la asignatura correctamente",
+      });
+    } catch (err) {
+      console.error("Error deleting inscrito:", err);
+      toast({
+        title: "Error",
+        description: "Error al eliminar el estudiante de la asignatura",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingInscrito(false);
+      setIsDeleteInscritoDialogOpen(false);
+      setInscritoToDelete(null);
+    }
   };
 
   useEffect(() => {
@@ -789,6 +860,7 @@ const PageFD = () => {
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Prioridad</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Fecha de Inscripción</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Última Actualización</th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-white">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -820,6 +892,17 @@ const PageFD = () => {
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                           {new Date(inscrito.fecha_actualizacion).toLocaleDateString('es-CL')}
                         </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => handleDeleteInscritoClick(inscrito.eleccion_id, inscrito.estudiante.nombre)}
+                            className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                            title="Eliminar inscripción"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -835,7 +918,7 @@ const PageFD = () => {
         </div>
       )}
 
-      {/* Alert Dialog para confirmar eliminación */}
+      {/* Alert Dialog para confirmar eliminación de asignatura */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -849,6 +932,30 @@ const PageFD = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog para confirmar eliminación de inscrito */}
+      <AlertDialog open={isDeleteInscritoDialogOpen} onOpenChange={setIsDeleteInscritoDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar inscripción?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente la inscripción de{" "}
+              <strong>{inscritoToDelete?.estudiante_nombre}</strong> de la asignatura{" "}
+              <strong>{selectedAsignaturaInscritos?.nombre}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingInscrito}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDeleteInscrito} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deletingInscrito}
+            >
+              {deletingInscrito ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

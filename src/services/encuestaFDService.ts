@@ -54,3 +54,9 @@ export const eliminarInscritoEncuestaFD = async (inscrito_encuesta_id: number) =
   return api.delete(url).then((response) => response.data);
 };
 
+export const inscribirEstudianteEncuestaFD = async () => {
+  const url = `/fd-encuesta/elecciones`;
+  console.log('Calling inscribirEstudianteEncuestaFD with URL:', url);
+  return api.post(url).then((response) => response.data);
+};
+
