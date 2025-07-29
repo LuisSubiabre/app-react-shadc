@@ -4,6 +4,7 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, inscribirEstudianteEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
 import { estudiantesCurso } from "@/services/estudiantesService";
+import { getCursos } from "@/services/cursosService";
 import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType, InscritosEncuestaFDResponseType, EstudianteType, InscribirEstudianteEncuestaFDType, EleccionEncuestaFDType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -46,6 +47,7 @@ const PageFD = () => {
   const [inscribiendo, setInscribiendo] = useState(false);
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null);
   const [estudiantesPorCurso, setEstudiantesPorCurso] = useState<Record<number, EstudianteType[]>>({});
+  const [cursos, setCursos] = useState<{ id: number; nombre: string }[]>([]);
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -205,6 +207,15 @@ const PageFD = () => {
     setEstudianteSeleccionado(null);
     
     try {
+      // Cargar información de cursos
+      const cursosResponse = await getCursos();
+      if (cursosResponse && cursosResponse.data) {
+        const cursosFiltrados = cursosResponse.data
+          .filter((curso: { id: number; nombre: string }) => [25, 26, 27, 28, 29, 30].includes(curso.id))
+          .map((curso: { id: number; nombre: string }) => ({ id: curso.id, nombre: curso.nombre }));
+        setCursos(cursosFiltrados);
+      }
+      
       // Cargar estudiantes de los cursos 25, 26, 27, 28, 29, 30
       const cursosIds = [25, 26, 27, 28, 29, 30];
       const estudiantesPorCursoData: Record<number, EstudianteType[]> = {};
@@ -1096,9 +1107,9 @@ const PageFD = () => {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Selecciona un curso</option>
-                    {[25, 26, 27, 28, 29, 30].map((cursoId) => (
-                      <option key={cursoId} value={cursoId}>
-                        Curso {cursoId}
+                    {cursos.map((curso) => (
+                      <option key={curso.id} value={curso.id}>
+                        {curso.nombre}
                       </option>
                     ))}
                   </select>
