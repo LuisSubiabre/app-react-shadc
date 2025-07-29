@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Toaster } from "@/components/ui/toaster";
+import * as XLSX from "xlsx";
 
 const PageFD = () => {
   const [asignaturas, setAsignaturas] = useState<AsignaturaEncuestaFDType[]>([]);
@@ -455,6 +456,58 @@ const PageFD = () => {
     });
 
     return grupos;
+  };
+
+  // Función para exportar inscritos a Excel
+  const handleExportExcel = () => {
+    if (!selectedAsignaturaInscritos) return;
+
+    const inscritos = inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id]?.inscritos || [];
+
+    if (inscritos.length === 0) {
+      toast({
+        title: "No hay estudiantes inscritos",
+        description: "No hay estudiantes inscritos para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Preparar los datos para el Excel
+    const excelData = inscritos.map((inscrito) => ({
+      "Nombre del Estudiante": inscrito.estudiante.nombre,
+      "RUT": inscrito.estudiante.rut,
+      "Curso": inscrito.estudiante.curso,
+      "Prioridad": `Prioridad ${inscrito.asignatura.prioridad}`,
+      "Fecha de Inscripción": new Date(inscrito.fecha_creacion).toLocaleDateString('es-CL'),
+      "Última Actualización": new Date(inscrito.fecha_actualizacion).toLocaleDateString('es-CL'),
+    }));
+
+    // Crear el libro de Excel
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Ajustar el ancho de las columnas
+    const colWidths = [
+      { wch: 30 }, // Nombre del estudiante
+      { wch: 15 }, // RUT
+      { wch: 15 }, // Curso
+      { wch: 15 }, // Prioridad
+      { wch: 20 }, // Fecha de Inscripción
+      { wch: 20 }, // Última Actualización
+    ];
+    ws["!cols"] = colWidths;
+
+    // Agregar la hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, "Estudiantes Inscritos");
+
+    // Generar el archivo
+    XLSX.writeFile(wb, `Inscritos_${selectedAsignaturaInscritos.nombre}.xlsx`);
+
+    toast({
+      title: "Exportación exitosa",
+      description: `Se han exportado ${inscritos.length} estudiantes inscritos`,
+    });
   };
 
   const gruposAsignaturas = agruparPorBloque(asignaturas);
@@ -1013,6 +1066,15 @@ const PageFD = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Inscribir Estudiante
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Exportar Excel
                 </button>
                 <button
                   onClick={() => {

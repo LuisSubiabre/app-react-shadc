@@ -13,6 +13,7 @@ import Spinner from "@/components/Spinner";
 import { EstudianteType } from "@/types";
 import { API_BASE_URL } from "@/config/config";
 import { useAuth } from "@/hooks/useAuth";
+import * as XLSX from "xlsx";
 
 interface ModalInscripcionEstudiantesProps {
   isOpen: boolean;
@@ -190,6 +191,54 @@ export const ModalInscripcionEstudiantes: React.FC<
     }
   };
 
+  const handleExportExcel = () => {
+    // Filtrar solo los estudiantes inscritos
+    const estudiantesInscritos = estudiantes.filter(
+      (estudiante) => enrolledStudents[`${estudiante.id}-${asignaturaId}`]
+    );
+
+    if (estudiantesInscritos.length === 0) {
+      toast({
+        title: "No hay estudiantes inscritos",
+        description: "No hay estudiantes inscritos para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Preparar los datos para el Excel
+    const excelData = estudiantesInscritos.map((estudiante) => ({
+      "Nombre del Estudiante": estudiante.nombre,
+      "RUT": estudiante.rut,
+      "Número de Lista": estudiante.numlista,
+      "Estado": "Inscrito",
+    }));
+
+    // Crear el libro de Excel
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Ajustar el ancho de las columnas
+    const colWidths = [
+      { wch: 30 }, // Nombre del estudiante
+      { wch: 15 }, // RUT
+      { wch: 15 }, // Número de lista
+      { wch: 12 }, // Estado
+    ];
+    ws["!cols"] = colWidths;
+
+    // Agregar la hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, "Estudiantes Inscritos");
+
+    // Generar el archivo
+    XLSX.writeFile(wb, `Estudiantes_Inscritos_${asignaturaNombre}.xlsx`);
+
+    toast({
+      title: "Exportación exitosa",
+      description: `Se han exportado ${estudiantesInscritos.length} estudiantes inscritos`,
+    });
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -274,6 +323,28 @@ export const ModalInscripcionEstudiantes: React.FC<
                       className="flex items-center gap-2"
                     >
                       <span>Seleccionar Todos</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportExcel}
+                      className="flex items-center gap-2"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                        />
+                      </svg>
+                      <span>Exportar Excel</span>
                     </Button>
                   </div>
                 </div>
