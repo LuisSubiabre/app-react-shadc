@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.4.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.3.0...v4.4.0) (2025-07-29)
+
+
+### Features
+
+* añadir funcionalidad para inscribir estudiantes en PageFD ([5c99692](https://github.com/LuisSubiabre/app-react-shadc/commit/5c99692be78ad9b589317b4e39b4c698f506ef79))
+* añadir funcionalidad para visualizar inscritos actuales en PageFD ([38df608](https://github.com/LuisSubiabre/app-react-shadc/commit/38df608deacad80f9a6ca1d4ca75163ae0707163))
+* añadir funcionalidad para visualizar inscritos anteriores en PageFD ([b5f3ecb](https://github.com/LuisSubiabre/app-react-shadc/commit/b5f3ecbe12609e08ae21b37b794677a40f9ef9c8))
+* añadir nueva funcionalidad para la sección FD en el dashboard ([fc29af8](https://github.com/LuisSubiabre/app-react-shadc/commit/fc29af8deb97acb4a78ed13f5bafb48f36236781))
+* añadir selección de curso y estudiantes en PageFD ([c46097f](https://github.com/LuisSubiabre/app-react-shadc/commit/c46097fa6f3cbea6991c3545143d1682f936db45))
+* añadir vinculación de asignaturas existentes en PageFD ([1f4744c](https://github.com/LuisSubiabre/app-react-shadc/commit/1f4744c5d298c904a529765dc90f5199003034ee))
+* cargar y mostrar cursos en PageFD ([53f4c12](https://github.com/LuisSubiabre/app-react-shadc/commit/53f4c12d24c4efb2a828ec9367eeaab59e4ec5d3))
+* implementar funcionalidad de eliminación de inscritos en PageFD ([99a2e6b](https://github.com/LuisSubiabre/app-react-shadc/commit/99a2e6b80ac79443c7eea9c24a1526bea40d33ae))
+* implementar gestión completa de asignaturas en PageFD ([b482103](https://github.com/LuisSubiabre/app-react-shadc/commit/b4821039a74e52b387254aa66b680521d696ce52))
+* implementar gestión de asignaturas en PageFD ([66764b8](https://github.com/LuisSubiabre/app-react-shadc/commit/66764b80ae9df04e99849e510f018bc7fd8ff63a))
+* mejorar la búsqueda y visualización de estudiantes en PageAtrasos ([0c814e5](https://github.com/LuisSubiabre/app-react-shadc/commit/0c814e58fd27a5b67129e7b91b59ec6d2f893188))
+* mejorar visualización de estadísticas de inscritos en PageFD ([d459266](https://github.com/LuisSubiabre/app-react-shadc/commit/d459266518e3f60765fad75af7adfccecc71abcf))
+* mejorar visualización de inscritos actuales en PageFD ([616b370](https://github.com/LuisSubiabre/app-react-shadc/commit/616b370839a1e0570b1093ba9d588861f334eac2))
+
 ## [4.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.2.0...v4.3.0) (2025-07-22)
 
 
