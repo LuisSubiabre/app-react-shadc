@@ -564,7 +564,6 @@ const PageFD = () => {
                                 onClick={() => openInscritosActualesModal(asignatura)}
                                 className="p-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
                                 title="Ver inscritos actuales"
-                                disabled={!inscritosPorAsignatura[asignatura.asignatura_encuesta_id]}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -898,7 +897,7 @@ const PageFD = () => {
       )}
 
       {/* Modal para mostrar inscritos actuales */}
-      {showInscritosActualesModal && selectedAsignaturaInscritos && inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id] && (
+      {showInscritosActualesModal && selectedAsignaturaInscritos && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
@@ -935,44 +934,47 @@ const PageFD = () => {
             </div>
 
             {/* Estadísticas */}
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Estadísticas</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.total_inscritos}
+            {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id] && (
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Estadísticas</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.total_inscritos}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Total Inscritos</div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Total Inscritos</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_1}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_1}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 1</div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 1</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_2}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_2}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 2</div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 2</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_3}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].estadisticas.por_prioridad.prioridad_3}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 3</div>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Prioridad 3</div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Lista de inscritos */}
-            {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].inscritos.length > 0 ? (
+            {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id] && inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id].inscritos.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Estudiante</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">RUT</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Curso</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Prioridad</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Fecha de Inscripción</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Última Actualización</th>
@@ -990,6 +992,9 @@ const PageFD = () => {
                         </td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                           {inscrito.estudiante.rut}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                          {inscrito.estudiante.curso}
                         </td>
                         <td className="py-3 px-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -1027,7 +1032,12 @@ const PageFD = () => {
             ) : (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">👥</div>
-                <p className="text-gray-600 dark:text-gray-400">No hay inscritos actuales para esta asignatura</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id] 
+                    ? "No hay inscritos actuales para esta asignatura"
+                    : "Cargando inscritos..."
+                  }
+                </p>
               </div>
             )}
           </div>

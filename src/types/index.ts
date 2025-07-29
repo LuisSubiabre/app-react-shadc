@@ -249,6 +249,7 @@ export interface EstudianteInscritoFDType {
   id: number;
   nombre: string;
   rut: string;
+  curso: string;
 }
 
 export interface AsignaturaInscritoFDType {
