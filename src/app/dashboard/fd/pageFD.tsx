@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
+import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, inscribirEstudianteEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
-import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType, InscritosEncuestaFDResponseType } from "@/types";
+import { estudiantesCurso } from "@/services/estudiantesService";
+import { AsignaturaEncuestaFDType, AsignaturaType, InscritoAnteriorEncuestaFDType, InscritosEncuestaFDResponseType, EstudianteType, InscribirEstudianteEncuestaFDType, EleccionEncuestaFDType } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -38,6 +39,12 @@ const PageFD = () => {
   const [inscritoToDelete, setInscritoToDelete] = useState<{ eleccion_id: number; estudiante_nombre: string } | null>(null);
   const [isDeleteInscritoDialogOpen, setIsDeleteInscritoDialogOpen] = useState(false);
   const [deletingInscrito, setDeletingInscrito] = useState(false);
+  const [showInscribirModal, setShowInscribirModal] = useState(false);
+  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState<EstudianteType[]>([]);
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState(false);
+  const [estudianteSeleccionado, setEstudianteSeleccionado] = useState<EstudianteType | null>(null);
+  const [elecciones, setElecciones] = useState<EleccionEncuestaFDType[]>([]);
+  const [inscribiendo, setInscribiendo] = useState(false);
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -185,6 +192,104 @@ const PageFD = () => {
       setDeletingInscrito(false);
       setIsDeleteInscritoDialogOpen(false);
       setInscritoToDelete(null);
+    }
+  };
+
+  const openInscribirModal = async () => {
+    if (!selectedAsignaturaInscritos) return;
+    
+    setShowInscribirModal(true);
+    setLoadingEstudiantes(true);
+    
+    try {
+      // Cargar estudiantes de los cursos 25, 26, 27, 28, 29, 30
+      const cursosIds = [25, 26, 27, 28, 29, 30];
+      const todosEstudiantes: EstudianteType[] = [];
+      
+      for (const cursoId of cursosIds) {
+        try {
+          const response = await estudiantesCurso(cursoId);
+          if (response && Array.isArray(response)) {
+            todosEstudiantes.push(...response);
+          }
+        } catch (err) {
+          console.error(`Error cargando estudiantes del curso ${cursoId}:`, err);
+        }
+      }
+      
+      console.log('Estudiantes cargados:', todosEstudiantes);
+      setEstudiantesDisponibles(todosEstudiantes);
+      
+      // Inicializar elección solo para la asignatura específica
+      const eleccionInicial = {
+        asignatura_encuesta_id: selectedAsignaturaInscritos.asignatura_encuesta_id,
+        prioridad: selectedAsignaturaInscritos.area === 'A' ? 1 : selectedAsignaturaInscritos.area === 'B' ? 2 : 3
+      };
+      setElecciones([eleccionInicial]);
+      
+    } catch (err) {
+      console.error("Error cargando estudiantes:", err);
+      toast({
+        title: "Error",
+        description: "Error al cargar los estudiantes disponibles",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingEstudiantes(false);
+    }
+  };
+
+  const handleEstudianteChange = (estudiante: EstudianteType | null) => {
+    console.log('Estudiante seleccionado:', estudiante);
+    setEstudianteSeleccionado(estudiante);
+  };
+
+
+
+  const handleInscribirEstudiante = async () => {
+    if (!estudianteSeleccionado) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar un estudiante",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setInscribiendo(true);
+      
+      const data: InscribirEstudianteEncuestaFDType = {
+        estudiante_id: estudianteSeleccionado.estudiante_id || estudianteSeleccionado.id,
+        elecciones: elecciones
+      };
+      
+      console.log('Inscribiendo estudiante con datos:', data);
+      await inscribirEstudianteEncuestaFD(data);
+      
+      // Recargar los inscritos de la asignatura específica
+      if (selectedAsignaturaInscritos) {
+        await fetchInscritosAsignatura(selectedAsignaturaInscritos.asignatura_encuesta_id);
+      }
+      
+      toast({
+        title: "Éxito",
+        description: "Estudiante inscrito correctamente",
+      });
+      
+      setShowInscribirModal(false);
+      setEstudianteSeleccionado(null);
+      setElecciones([]);
+      
+    } catch (err) {
+      console.error("Error inscribiendo estudiante:", err);
+      toast({
+        title: "Error",
+        description: "Error al inscribir el estudiante",
+        variant: "destructive",
+      });
+    } finally {
+      setInscribiendo(false);
     }
   };
 
@@ -805,17 +910,28 @@ const PageFD = () => {
                   {selectedAsignaturaInscritos.nombre}
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  setShowInscritosActualesModal(false);
-                  setSelectedAsignaturaInscritos(null);
-                }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={openInscribirModal}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Inscribir Estudiante
+                </button>
+                <button
+                  onClick={() => {
+                    setShowInscritosActualesModal(false);
+                    setSelectedAsignaturaInscritos(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Estadísticas */}
@@ -912,6 +1028,125 @@ const PageFD = () => {
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">👥</div>
                 <p className="text-gray-600 dark:text-gray-400">No hay inscritos actuales para esta asignatura</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal para inscribir estudiantes */}
+      {showInscribirModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Inscribir Estudiante en {selectedAsignaturaInscritos?.nombre}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowInscribirModal(false);
+                  setEstudianteSeleccionado(null);
+                  setElecciones([]);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {loadingEstudiantes ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando estudiantes...</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Selección de estudiante */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Seleccionar Estudiante
+                  </label>
+                  {estudiantesDisponibles.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                      No hay estudiantes disponibles en los cursos 25, 26, 27, 28, 29, 30
+                    </div>
+                  ) : (
+                    <select
+                      value={estudianteSeleccionado ? (estudianteSeleccionado.estudiante_id || estudianteSeleccionado.id) : ''}
+                      onChange={(e) => {
+                        const estudianteId = parseInt(e.target.value);
+                        const estudiante = estudiantesDisponibles.find(est => (est.estudiante_id || est.id) === estudianteId);
+                        handleEstudianteChange(estudiante || null);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="">Selecciona un estudiante</option>
+                      {estudiantesDisponibles.map((estudiante) => (
+                        <option key={estudiante.estudiante_id || estudiante.id} value={estudiante.estudiante_id || estudiante.id}>
+                          {estudiante.nombre} - {estudiante.rut} - Curso {estudiante.curso_id}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Información de la asignatura */}
+                {estudianteSeleccionado && selectedAsignaturaInscritos && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                      Asignatura a Inscribir
+                    </h3>
+                    <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white">{selectedAsignaturaInscritos.nombre}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Área {selectedAsignaturaInscritos.area} - {selectedAsignaturaInscritos.bloque}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Prioridad:</span>
+                          <span className={`px-2 py-1 rounded text-sm font-medium ${
+                            elecciones[0]?.prioridad === 1 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                              : elecciones[0]?.prioridad === 2
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          }`}>
+                            {elecciones[0]?.prioridad || 1}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Prioridad automática: Área {selectedAsignaturaInscritos.area} = Prioridad {elecciones[0]?.prioridad || 1}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botones de acción */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowInscribirModal(false);
+                      setEstudianteSeleccionado(null);
+                      setElecciones([]);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleInscribirEstudiante}
+                    disabled={!estudianteSeleccionado || inscribiendo}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {inscribiendo ? "Inscribiendo..." : "Inscribir Estudiante"}
+                  </button>
+                </div>
               </div>
             )}
           </div>

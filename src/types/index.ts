@@ -279,3 +279,14 @@ export interface InscritosEncuestaFDResponseType {
   estadisticas: EstadisticasInscritosFDType;
   inscritos: InscritoFDType[];
 }
+
+// Tipos para inscribir estudiantes
+export interface EleccionEncuestaFDType {
+  asignatura_encuesta_id: number;
+  prioridad: number;
+}
+
+export interface InscribirEstudianteEncuestaFDType {
+  estudiante_id: number;
+  elecciones: EleccionEncuestaFDType[];
+}
