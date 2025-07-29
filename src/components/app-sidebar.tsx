@@ -5,6 +5,7 @@ import packageJson from "../../package.json";
 import {
   AudioWaveform,
   BookOpen,
+  BookAudio,
   Bot,
   Command,
   Frame,
@@ -124,6 +125,18 @@ const data = {
              {
           title: "Promedios",
           url: "/dashboard/academico/asignaturas",
+        },
+      ],
+    },
+    {
+      title: "FD",
+      url: "#",
+      icon: BookAudio,
+      isActive: false,
+      items: [
+        {
+          title: "Inicio",
+          url: "/dashboard/fd",
         },
       ],
     },
@@ -260,6 +273,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       if (menu.title == "Convivencia") {
         return user?.roles?.includes(14); // Mostrar "Convivencia" solo si el usuario tiene el rol 6
+      }
+      if (menu.title == "FD") {
+        return user?.roles?.includes(15); // Mostrar "FD" solo si el usuario tiene el rol 15
       }
       return true; // Mostrar otros menús sin restricciones
     });
