@@ -88,9 +88,40 @@ const PageFD = () => {
       }
       
       console.log(`Estado actualizado para asignatura ${asignatura_encuesta_id}`);
-    } catch (err) {
-      console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
-      // No mostrar toast para evitar spam, solo log del error
+    } catch (err: unknown) {
+      // Si es un error 404, significa que no hay inscritos para esta asignatura
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError?.response?.status === 404) {
+        console.log(`No hay inscritos para asignatura ${asignatura_encuesta_id}`);
+        
+        // Crear una respuesta vacía para asignaturas sin inscritos
+        const emptyResponse = {
+          asignatura_id: asignatura_encuesta_id,
+          estadisticas: {
+            total_inscritos: 0,
+            por_prioridad: {
+              prioridad_1: 0,
+              prioridad_2: 0,
+              prioridad_3: 0
+            }
+          },
+          inscritos: []
+        };
+        
+        setInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: emptyResponse }));
+        
+        // Actualizar cupos disponibles (todos los cupos están disponibles)
+        const asignatura = asignaturas.find(a => a.asignatura_encuesta_id === asignatura_encuesta_id);
+        if (asignatura) {
+          setAsignaturas(prev => prev.map(asignatura => 
+            asignatura.asignatura_encuesta_id === asignatura_encuesta_id
+              ? { ...asignatura, cupos_actuales: asignatura.cupos_totales }
+              : asignatura
+          ));
+        }
+      } else {
+        console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
+      }
     } finally {
       setLoadingInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: false }));
     }
