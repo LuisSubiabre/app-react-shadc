@@ -62,3 +62,5 @@ export const inscribirEstudianteEncuestaFD = async (data: InscribirEstudianteEnc
   return api.post(url, data).then((response) => response.data);
 };
 
+
+
