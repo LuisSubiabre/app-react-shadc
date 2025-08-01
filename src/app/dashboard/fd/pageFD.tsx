@@ -85,6 +85,14 @@ const PageFD = () => {
             ? { ...asignatura, cupos_actuales: cuposDisponibles }
             : asignatura
         ));
+        
+        // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+        setSelectedAsignaturaInscritos(prev => {
+          if (prev && prev.asignatura_encuesta_id === asignatura_encuesta_id) {
+            return { ...prev, cupos_actuales: cuposDisponibles };
+          }
+          return prev;
+        });
       }
       
       console.log(`Estado actualizado para asignatura ${asignatura_encuesta_id}`);
@@ -118,6 +126,14 @@ const PageFD = () => {
               ? { ...asignatura, cupos_actuales: asignatura.cupos_totales }
               : asignatura
           ));
+          
+          // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+          setSelectedAsignaturaInscritos(prev => {
+            if (prev && prev.asignatura_encuesta_id === asignatura_encuesta_id) {
+              return { ...prev, cupos_actuales: asignatura.cupos_totales };
+            }
+            return prev;
+          });
         }
       } else {
         console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
@@ -180,7 +196,9 @@ const PageFD = () => {
   };
 
   const openInscritosActualesModal = (asignatura: AsignaturaEncuestaFDType) => {
-    setSelectedAsignaturaInscritos(asignatura);
+    // Asegurar que tenemos los datos más recientes de la asignatura
+    const asignaturaActualizada = asignaturas.find(a => a.asignatura_encuesta_id === asignatura.asignatura_encuesta_id);
+    setSelectedAsignaturaInscritos(asignaturaActualizada || asignatura);
     setShowInscritosActualesModal(true);
   };
 
@@ -235,6 +253,9 @@ const PageFD = () => {
             ? { ...asignatura, cupos_actuales: cuposDisponibles }
             : asignatura
         ));
+        
+        // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+        setSelectedAsignaturaInscritos(prev => prev ? { ...prev, cupos_actuales: cuposDisponibles } : null);
         
         return {
           ...prev,
@@ -375,6 +396,9 @@ const PageFD = () => {
               ? { ...asignatura, cupos_actuales: cuposDisponibles }
               : asignatura
           ));
+          
+          // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+          setSelectedAsignaturaInscritos(prev => prev ? { ...prev, cupos_actuales: cuposDisponibles } : null);
         }
       }
       
@@ -1200,7 +1224,13 @@ const PageFD = () => {
               <div className="flex gap-2">
                 <button
                   onClick={openInscribirModal}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                  disabled={selectedAsignaturaInscritos.cupos_actuales <= 0}
+                  className={`px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors ${
+                    selectedAsignaturaInscritos.cupos_actuales <= 0
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                  title={selectedAsignaturaInscritos.cupos_actuales <= 0 ? "No hay cupos disponibles" : "Inscribir nuevo estudiante"}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
