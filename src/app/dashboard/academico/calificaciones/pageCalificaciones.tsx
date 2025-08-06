@@ -37,7 +37,15 @@ const PageCalificaciones: React.FC = () => {
     string | null
   >(null);
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
-  const [selectedSemester, setSelectedSemester] = useState(1);
+  // Detectar automáticamente el semestre basado en el mes actual
+  const getCurrentSemester = () => {
+    const currentMonth = new Date().getMonth() + 1; // getMonth() devuelve 0-11, sumamos 1 para obtener 1-12
+    // Primer semestre: marzo a junio (meses 3-6)
+    // Segundo semestre: julio a diciembre (meses 7-12)
+    return currentMonth >= 7 ? 2 : 1;
+  };
+
+  const [selectedSemester, setSelectedSemester] = useState(getCurrentSemester());
   const [loading, setLoading] = useState(false);
   const [studentGrades, setStudentGrades] = useState<CalificacionesState>({});
   const [ordenAlfabetico, setOrdenAlfabetico] = useState(false);

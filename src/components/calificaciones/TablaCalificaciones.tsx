@@ -62,8 +62,16 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
       ? [...Array(10).keys()].map((n) => n + 0)
       : [...Array(10).keys()].map((n) => n + 12);
 
-  const calcularPromedioSemestre = (estudiante: EstudianteType, asignaturaId: string) => {
-    const calificaciones = getColumnRange.map(index => {
+  const calcularPromedioSemestre = (estudiante: EstudianteType, asignaturaId: string, semestre?: number) => {
+    // Si no se especifica semestre, usar el semestre seleccionado actualmente
+    const semestreACalcular = semestre || selectedSemester;
+    
+    // Definir el rango de calificaciones según el semestre
+    const rangoCalificaciones = semestreACalcular === 1 
+      ? [...Array(10).keys()].map((n) => n + 0)  // C1-C10 para primer semestre
+      : [...Array(10).keys()].map((n) => n + 12); // C13-C22 para segundo semestre
+
+    const calificaciones = rangoCalificaciones.map(index => {
       const savedValue = studentGrades[`${estudiante.id}-${asignaturaId}`]?.[`calificacion${index + 1}`];
       const calificacionKey = `calificacion${index + 1}` as keyof EstudianteType;
       const calificacion = estudiante[calificacionKey] as CalificacionValue;
@@ -94,8 +102,13 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
       rowIndex: number,
       colIndex: number
     ) => {
-      const inputs = document.querySelectorAll('input[type="number"]');
-      const currentIndex = rowIndex * getColumnRange.length + colIndex;
+      // Seleccionar solo los inputs de la tabla actual usando un selector más específico
+      const tableContainer = e.currentTarget.closest('table');
+      const inputs = tableContainer ? 
+        Array.from(tableContainer.querySelectorAll('input[type="number"]')) as HTMLInputElement[] :
+        [];
+      const totalColumns = 10; // Siempre son 10 columnas por semestre
+      const currentIndex = rowIndex * totalColumns + colIndex;
       let nextInput: HTMLInputElement | null = null;
 
       // Prevenir el comportamiento predeterminado de las flechas arriba/abajo
@@ -109,30 +122,47 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
 
       switch (e.key) {
         case "ArrowRight":
-          if (colIndex === getColumnRange.length - 1) {
+          if (colIndex === totalColumns - 1) {
             // Si estamos en la última columna, ir al primer input de la siguiente fila
-            nextInput = inputs[currentIndex + 1] as HTMLInputElement;
+            if (rowIndex < estudiantes.length - 1) {
+              nextInput = inputs[(rowIndex + 1) * totalColumns] as HTMLInputElement;
+            }
           } else {
             nextInput = inputs[currentIndex + 1] as HTMLInputElement;
           }
           break;
         case "ArrowLeft":
-          nextInput = inputs[currentIndex - 1] as HTMLInputElement;
+          if (colIndex === 0) {
+            // Si estamos en la primera columna, ir al último input de la fila anterior
+            if (rowIndex > 0) {
+              nextInput = inputs[(rowIndex - 1) * totalColumns + (totalColumns - 1)] as HTMLInputElement;
+            }
+          } else {
+            nextInput = inputs[currentIndex - 1] as HTMLInputElement;
+          }
           break;
         case "ArrowDown":
         case "Enter":
           if (rowIndex === estudiantes.length - 1) {
             // Si estamos en la última fila, ir al primer input de la siguiente columna
             const nextColumnIndex = colIndex + 1;
-            if (nextColumnIndex < getColumnRange.length) {
+            if (nextColumnIndex < totalColumns) {
               nextInput = inputs[nextColumnIndex] as HTMLInputElement;
             }
           } else {
-            nextInput = inputs[currentIndex + getColumnRange.length] as HTMLInputElement;
+            nextInput = inputs[currentIndex + totalColumns] as HTMLInputElement;
           }
           break;
         case "ArrowUp":
-          nextInput = inputs[currentIndex - getColumnRange.length] as HTMLInputElement;
+          if (rowIndex === 0) {
+            // Si estamos en la primera fila, ir al último input de la columna anterior
+            const prevColumnIndex = colIndex - 1;
+            if (prevColumnIndex >= 0) {
+              nextInput = inputs[(estudiantes.length - 1) * totalColumns + prevColumnIndex] as HTMLInputElement;
+            }
+          } else {
+            nextInput = inputs[currentIndex - totalColumns] as HTMLInputElement;
+          }
           break;
         default:
           return;
@@ -143,7 +173,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
         nextInput.focus();
       }
     },
-    [getColumnRange.length, estudiantes.length]
+    [estudiantes.length]
   );
 
   const handleCalificacionSave = async (
@@ -203,25 +233,44 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
 
     if (!asignatura) return;
 
-    // Preparar los datos para el Excel
+    // Preparar los datos para el Excel con ambos semestres
     const excelData = estudiantes.map((estudiante): ExcelRow => {
       const row: ExcelRow = {
         "Nombre del Estudiante": estudiante.nombre,
       };
 
-      getColumnRange.forEach((index) => {
-        const calificacionKey = `calificacion${
-          index + 1
-        }` as keyof EstudianteType;
+      // Agregar calificaciones del primer semestre (C1-C10)
+      for (let i = 0; i < 10; i++) {
+        const calificacionKey = `calificacion${i + 1}` as keyof EstudianteType;
         const calificacion = estudiante[calificacionKey] as CalificacionValue;
         const savedValue =
           studentGrades[`${estudiante.id}-${asignaturaSeleccionada}`]?.[
-            `calificacion${index + 1}`
+            `calificacion${i + 1}`
           ];
 
-        row[`C${index + 1}`] =
+        row[`C${i + 1} (1er Semestre)`] =
           savedValue !== undefined ? savedValue : calificacion || null;
-      });
+      }
+
+      // Agregar calificaciones del segundo semestre (C13-C22)
+      for (let i = 12; i < 22; i++) {
+        const calificacionKey = `calificacion${i + 1}` as keyof EstudianteType;
+        const calificacion = estudiante[calificacionKey] as CalificacionValue;
+        const savedValue =
+          studentGrades[`${estudiante.id}-${asignaturaSeleccionada}`]?.[
+            `calificacion${i + 1}`
+          ];
+
+        row[`C${i + 1} (2do Semestre)`] =
+          savedValue !== undefined ? savedValue : calificacion || null;
+      }
+
+      // Calcular promedios de cada semestre
+      const promedioPrimerSemestre = calcularPromedioSemestre(estudiante, asignaturaSeleccionada, 1);
+      const promedioSegundoSemestre = calcularPromedioSemestre(estudiante, asignaturaSeleccionada, 2);
+
+      row["Promedio 1er Semestre"] = promedioPrimerSemestre;
+      row["Promedio 2do Semestre"] = promedioSegundoSemestre;
 
       return row;
     });
@@ -233,7 +282,10 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
     // Ajustar el ancho de las columnas
     const colWidths = [
       { wch: 30 }, // Nombre del estudiante
-      ...getColumnRange.map(() => ({ wch: 10 })), // Columnas de calificaciones
+      ...Array(10).fill({ wch: 12 }), // Columnas del primer semestre
+      ...Array(10).fill({ wch: 12 }), // Columnas del segundo semestre
+      { wch: 15 }, // Promedio 1er semestre
+      { wch: 15 }, // Promedio 2do semestre
     ];
     ws["!cols"] = colWidths;
 
@@ -247,7 +299,6 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
     asignaturas,
     asignaturaSeleccionada,
     studentGrades,
-    getColumnRange,
   ]);
 
   return (
@@ -398,7 +449,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
                             WebkitAppearance: "none",
                             MozAppearance: "textfield",
                           }}
-                          onKeyDown={(e) => handleKeyDown(e, rowIndex, index)}
+                                                     onKeyDown={(e) => handleKeyDown(e, rowIndex, getColumnRange.indexOf(index))}
                           onWheel={(e) => e.currentTarget.blur()}
                           onChange={(e) => {
                             const newValue = e.target.value;

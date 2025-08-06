@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, inscribirEstudianteEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
@@ -18,8 +17,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Toaster } from "@/components/ui/toaster";
+import * as XLSX from "xlsx";
 
 const PageFD = () => {
+  // Estados para gestionar asignaturas y sus inscritos
   const [asignaturas, setAsignaturas] = useState<AsignaturaEncuestaFDType[]>([]);
   const [asignaturasExistentes, setAsignaturasExistentes] = useState<AsignaturaType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,11 +56,14 @@ const PageFD = () => {
     cupos_totales: 0,
     cupos_actuales: 0,
     estado: "visible",
-    asignatura_id: null
+    asignatura_id: null,
+    horario: null,
+    dia: null
   });
 
   const { toast } = useToast();
 
+  // Función para cargar inscritos de una asignatura y actualizar automáticamente los cupos
   const fetchInscritosAsignatura = async (asignatura_encuesta_id: number) => {
     try {
       console.log(`Fetching inscritos for asignatura ${asignatura_encuesta_id}...`);
@@ -67,10 +71,73 @@ const PageFD = () => {
       const response = await getInscritosEncuestaFD(asignatura_encuesta_id);
       console.log(`Response for asignatura ${asignatura_encuesta_id}:`, response);
       setInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: response }));
+      
+      // Los cupos se actualizan automáticamente en la base de datos
+      // Solo actualizamos el estado local con los datos más recientes
+      const asignatura = asignaturas.find(a => a.asignatura_encuesta_id === asignatura_encuesta_id);
+      if (asignatura) {
+        const inscritosActuales = response.estadisticas.total_inscritos;
+        const cuposDisponibles = Math.max(0, asignatura.cupos_totales - inscritosActuales);
+        
+        // Actualizar el estado local de las asignaturas
+        setAsignaturas(prev => prev.map(asignatura => 
+          asignatura.asignatura_encuesta_id === asignatura_encuesta_id
+            ? { ...asignatura, cupos_actuales: cuposDisponibles }
+            : asignatura
+        ));
+        
+        // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+        setSelectedAsignaturaInscritos(prev => {
+          if (prev && prev.asignatura_encuesta_id === asignatura_encuesta_id) {
+            return { ...prev, cupos_actuales: cuposDisponibles };
+          }
+          return prev;
+        });
+      }
+      
       console.log(`Estado actualizado para asignatura ${asignatura_encuesta_id}`);
-    } catch (err) {
-      console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
-      // No mostrar toast para evitar spam, solo log del error
+    } catch (err: unknown) {
+      // Si es un error 404, significa que no hay inscritos para esta asignatura
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError?.response?.status === 404) {
+        console.log(`No hay inscritos para asignatura ${asignatura_encuesta_id}`);
+        
+        // Crear una respuesta vacía para asignaturas sin inscritos
+        const emptyResponse = {
+          asignatura_id: asignatura_encuesta_id,
+          estadisticas: {
+            total_inscritos: 0,
+            por_prioridad: {
+              prioridad_1: 0,
+              prioridad_2: 0,
+              prioridad_3: 0
+            }
+          },
+          inscritos: []
+        };
+        
+        setInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: emptyResponse }));
+        
+        // Actualizar cupos disponibles (todos los cupos están disponibles)
+        const asignatura = asignaturas.find(a => a.asignatura_encuesta_id === asignatura_encuesta_id);
+        if (asignatura) {
+          setAsignaturas(prev => prev.map(asignatura => 
+            asignatura.asignatura_encuesta_id === asignatura_encuesta_id
+              ? { ...asignatura, cupos_actuales: asignatura.cupos_totales }
+              : asignatura
+          ));
+          
+          // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+          setSelectedAsignaturaInscritos(prev => {
+            if (prev && prev.asignatura_encuesta_id === asignatura_encuesta_id) {
+              return { ...prev, cupos_actuales: asignatura.cupos_totales };
+            }
+            return prev;
+          });
+        }
+      } else {
+        console.error(`Error fetching inscritos for asignatura ${asignatura_encuesta_id}:`, err);
+      }
     } finally {
       setLoadingInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: false }));
     }
@@ -82,10 +149,10 @@ const PageFD = () => {
       const response = await getAsignaturasEncuestaFD();
       setAsignaturas(response.data);
       
-      // Cargar inscritos para todas las asignaturas
-      response.data.forEach(asignatura => {
-        fetchInscritosAsignatura(asignatura.asignatura_encuesta_id);
-      });
+      // Cargar inscritos para todas las asignaturas y sincronizar cupos
+      for (const asignatura of response.data) {
+        await fetchInscritosAsignatura(asignatura.asignatura_encuesta_id);
+      }
     } catch (err) {
       setError("Error al cargar las asignaturas");
       console.error("Error fetching asignaturas:", err);
@@ -129,7 +196,9 @@ const PageFD = () => {
   };
 
   const openInscritosActualesModal = (asignatura: AsignaturaEncuestaFDType) => {
-    setSelectedAsignaturaInscritos(asignatura);
+    // Asegurar que tenemos los datos más recientes de la asignatura
+    const asignaturaActualizada = asignaturas.find(a => a.asignatura_encuesta_id === asignatura.asignatura_encuesta_id);
+    setSelectedAsignaturaInscritos(asignaturaActualizada || asignatura);
     setShowInscritosActualesModal(true);
   };
 
@@ -173,6 +242,20 @@ const PageFD = () => {
         };
         
         console.log('Estado actualizado:', updatedData);
+        
+        // Los cupos se actualizan automáticamente en la base de datos
+        // Solo actualizamos el estado local
+        const cuposDisponibles = Math.max(0, selectedAsignaturaInscritos.cupos_totales - updatedEstadisticas.total_inscritos);
+        
+        // Actualizar el estado local de las asignaturas
+        setAsignaturas(prev => prev.map(asignatura => 
+          asignatura.asignatura_encuesta_id === selectedAsignaturaInscritos.asignatura_encuesta_id
+            ? { ...asignatura, cupos_actuales: cuposDisponibles }
+            : asignatura
+        ));
+        
+        // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+        setSelectedAsignaturaInscritos(prev => prev ? { ...prev, cupos_actuales: cuposDisponibles } : null);
         
         return {
           ...prev,
@@ -274,6 +357,18 @@ const PageFD = () => {
       return;
     }
 
+    // Validar que no se excedan los cupos totales
+    if (selectedAsignaturaInscritos) {
+      if (selectedAsignaturaInscritos.cupos_actuales <= 0) {
+        toast({
+          title: "Error",
+          description: "No hay cupos disponibles para esta asignatura",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
       setInscribiendo(true);
       
@@ -283,11 +378,30 @@ const PageFD = () => {
       };
       
       console.log('Inscribiendo estudiante con datos:', data);
+      console.log('Estudiante seleccionado:', estudianteSeleccionado);
+      console.log('Elecciones:', elecciones);
       await inscribirEstudianteEncuestaFD(data);
       
       // Recargar los inscritos de la asignatura específica
       if (selectedAsignaturaInscritos) {
         await fetchInscritosAsignatura(selectedAsignaturaInscritos.asignatura_encuesta_id);
+        
+        // Los cupos se actualizan automáticamente en la base de datos
+        // Solo actualizamos el estado local
+        const inscritosActuales = inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id];
+        if (inscritosActuales) {
+          const cuposDisponibles = Math.max(0, selectedAsignaturaInscritos.cupos_totales - (inscritosActuales.estadisticas.total_inscritos + 1));
+          
+          // Actualizar el estado local de las asignaturas
+          setAsignaturas(prev => prev.map(asignatura => 
+            asignatura.asignatura_encuesta_id === selectedAsignaturaInscritos.asignatura_encuesta_id
+              ? { ...asignatura, cupos_actuales: cuposDisponibles }
+              : asignatura
+          ));
+          
+          // Actualizar también el estado de selectedAsignaturaInscritos para que el botón se actualice inmediatamente
+          setSelectedAsignaturaInscritos(prev => prev ? { ...prev, cupos_actuales: cuposDisponibles } : null);
+        }
       }
       
       toast({
@@ -300,11 +414,23 @@ const PageFD = () => {
       setCursoSeleccionado(null);
       setElecciones([]);
       
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error inscribiendo estudiante:", err);
+      
+      // Obtener más detalles del error si están disponibles
+      let errorMessage = "Error al inscribir el estudiante";
+      const axiosError = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
+      if (axiosError.response?.data?.message) {
+        errorMessage = axiosError.response.data.message;
+      } else if (axiosError.response?.data?.error) {
+        errorMessage = axiosError.response.data.error;
+      } else if (axiosError.message) {
+        errorMessage = axiosError.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Error al inscribir el estudiante",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -319,11 +445,21 @@ const PageFD = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name.includes('cupos') ? parseInt(value) || 0 : 
-              name === 'asignatura_id' ? (value === '' ? null : parseInt(value)) : value
-    }));
+    setFormData(prev => {
+      const updatedData = {
+        ...prev,
+        [name]: name.includes('cupos') ? parseInt(value) || 0 : 
+                name === 'asignatura_id' ? (value === '' ? null : parseInt(value)) :
+                name === 'horario' || name === 'dia' ? (value === '' ? null : value) : value
+      };
+      
+      // Si se cambian los cupos totales y no estamos editando, actualizar automáticamente los cupos disponibles
+      if (name === 'cupos_totales' && !editingAsignatura) {
+        updatedData.cupos_actuales = parseInt(value) || 0;
+      }
+      
+      return updatedData;
+    });
   };
 
   const resetForm = () => {
@@ -334,7 +470,9 @@ const PageFD = () => {
       cupos_totales: 0,
       cupos_actuales: 0,
       estado: "visible",
-      asignatura_id: null
+      asignatura_id: null,
+      horario: null,
+      dia: null
     });
     setEditingAsignatura(null);
   };
@@ -395,7 +533,9 @@ const PageFD = () => {
       cupos_totales: asignatura.cupos_totales,
       cupos_actuales: asignatura.cupos_actuales,
       estado: asignatura.estado,
-      asignatura_id: asignatura.asignatura_id
+      asignatura_id: asignatura.asignatura_id,
+      horario: asignatura.horario,
+      dia: asignatura.dia
     });
     setShowModal(true);
   };
@@ -448,6 +588,58 @@ const PageFD = () => {
     });
 
     return grupos;
+  };
+
+  // Función para exportar inscritos a Excel
+  const handleExportExcel = () => {
+    if (!selectedAsignaturaInscritos) return;
+
+    const inscritos = inscritosPorAsignatura[selectedAsignaturaInscritos.asignatura_encuesta_id]?.inscritos || [];
+
+    if (inscritos.length === 0) {
+      toast({
+        title: "No hay estudiantes inscritos",
+        description: "No hay estudiantes inscritos para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Preparar los datos para el Excel
+    const excelData = inscritos.map((inscrito) => ({
+      "Nombre del Estudiante": inscrito.estudiante.nombre,
+      "RUT": inscrito.estudiante.rut,
+      "Curso": inscrito.estudiante.curso,
+      "Prioridad": `Prioridad ${inscrito.asignatura.prioridad}`,
+      "Fecha de Inscripción": new Date(inscrito.fecha_creacion).toLocaleDateString('es-CL'),
+      "Última Actualización": new Date(inscrito.fecha_actualizacion).toLocaleDateString('es-CL'),
+    }));
+
+    // Crear el libro de Excel
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Ajustar el ancho de las columnas
+    const colWidths = [
+      { wch: 30 }, // Nombre del estudiante
+      { wch: 15 }, // RUT
+      { wch: 15 }, // Curso
+      { wch: 15 }, // Prioridad
+      { wch: 20 }, // Fecha de Inscripción
+      { wch: 20 }, // Última Actualización
+    ];
+    ws["!cols"] = colWidths;
+
+    // Agregar la hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, "Estudiantes Inscritos");
+
+    // Generar el archivo
+    XLSX.writeFile(wb, `Inscritos_${selectedAsignaturaInscritos.nombre}.xlsx`);
+
+    toast({
+      title: "Exportación exitosa",
+      description: `Se han exportado ${inscritos.length} estudiantes inscritos`,
+    });
   };
 
   const gruposAsignaturas = agruparPorBloque(asignaturas);
@@ -506,17 +698,51 @@ const PageFD = () => {
               <p className="text-gray-600 dark:text-gray-400">
                 Gestiona las asignaturas disponibles para la encuesta FD
               </p>
-              <button
-                onClick={openCreateModal}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Agregar Asignatura
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      for (const asignatura of asignaturas) {
+                        await fetchInscritosAsignatura(asignatura.asignatura_encuesta_id);
+                      }
+                      toast({
+                        title: "Éxito",
+                        description: "Cupos sincronizados correctamente",
+                      });
+                    } catch (error) {
+                      console.error("Error sincronizando cupos:", error);
+                      toast({
+                        title: "Error",
+                        description: "Error al sincronizar los cupos",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Sincronizar Cupos
+                </button>
+                <button
+                  onClick={openCreateModal}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Agregar Asignatura
+                </button>
+              </div>
             </div>
           </div>
+
+     
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {Object.entries(gruposAsignaturas).map(([bloque, asignaturasBloque]) => (
@@ -526,9 +752,22 @@ const PageFD = () => {
               >
                 <div className="bg-blue-600 dark:bg-blue-700 px-4 py-3">
                   <h2 className="text-lg font-semibold text-white">{bloque}</h2>
-                  <p className="text-blue-100 text-sm">
-                    {asignaturasBloque.length} asignatura{asignaturasBloque.length !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-blue-100 text-sm">
+                      {asignaturasBloque.length} asignatura{asignaturasBloque.length !== 1 ? 's' : ''}
+                    </p>
+                    <div className="flex gap-1">
+                      {asignaturasBloque.some(a => a.area === 'A') && (
+                        <span className="w-3 h-3 bg-orange-400 rounded-full" title="Área A"></span>
+                      )}
+                      {asignaturasBloque.some(a => a.area === 'B') && (
+                        <span className="w-3 h-3 bg-blue-400 rounded-full" title="Área B"></span>
+                      )}
+                      {asignaturasBloque.some(a => a.area === 'C') && (
+                        <span className="w-3 h-3 bg-purple-400 rounded-full" title="Área C"></span>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="p-4">
@@ -541,16 +780,36 @@ const PageFD = () => {
                       {asignaturasBloque.map((asignatura) => (
                         <div
                           key={asignatura.asignatura_encuesta_id}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          className={`border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                            asignatura.area === 'A' 
+                              ? 'border-orange-200 dark:border-orange-700'
+                              : asignatura.area === 'B'
+                              ? 'border-blue-200 dark:border-blue-700'
+                              : 'border-purple-200 dark:border-purple-700'
+                          }`}
                         >
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex-1">
                               <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                                 {asignatura.nombre}
                               </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                Área {asignatura.area}
-                              </p>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  asignatura.area === 'A' 
+                                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                    : asignatura.area === 'B'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                }`}>
+                                  Área {asignatura.area}
+                                </span>
+                              </div>
+                              {(asignatura.horario || asignatura.dia) && (
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                  {asignatura.dia && <span className="mr-2">📅 {asignatura.dia}</span>}
+                                  {asignatura.horario && <span>🕐 {asignatura.horario}</span>}
+                                </div>
+                              )}
                               {asignatura.asignatura_nombre && (
                                 <div className="mb-2">
                                   <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
@@ -611,8 +870,15 @@ const PageFD = () => {
                           </div>
                           
                           <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                            <span>
-                              Cupos: {asignatura.cupos_actuales}/{asignatura.cupos_totales}
+                            <span className={`${
+                              asignatura.cupos_actuales <= 0 
+                                ? 'text-red-600 dark:text-red-400 font-medium' 
+                                : ''
+                            }`}>
+                              Cupos: {asignatura.cupos_actuales} de {asignatura.cupos_totales}
+                              {asignatura.cupos_actuales <= 0 && (
+                                <span className="ml-1 text-red-600 dark:text-red-400">(Lleno)</span>
+                              )}
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs ${
                               asignatura.estado === 'visible' 
@@ -743,7 +1009,7 @@ const PageFD = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Cupos Actuales
+                    Cupos Disponibles
                   </label>
                   <input
                     type="number"
@@ -753,7 +1019,14 @@ const PageFD = () => {
                     required
                     min="0"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Cupos disponibles iniciales"
                   />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {editingAsignatura 
+                      ? "Los cupos disponibles se actualizarán automáticamente al sincronizar"
+                      : "Establece los cupos disponibles iniciales para esta asignatura"
+                    }
+                  </p>
                 </div>
               </div>
 
@@ -771,6 +1044,36 @@ const PageFD = () => {
                   <option value="visible">Visible</option>
                   <option value="oculto">Oculto</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Horario (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    name="horario"
+                    value={formData.horario || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Ej: 08:00 - 09:30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Día (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    name="dia"
+                    value={formData.dia || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Ej: Lunes"
+                  />
+                </div>
               </div>
 
               <div>
@@ -918,12 +1221,27 @@ const PageFD = () => {
               <div className="flex gap-2">
                 <button
                   onClick={openInscribirModal}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                  disabled={selectedAsignaturaInscritos.cupos_actuales <= 0}
+                  className={`px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors ${
+                    selectedAsignaturaInscritos.cupos_actuales <= 0
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                  title={selectedAsignaturaInscritos.cupos_actuales <= 0 ? "No hay cupos disponibles" : "Inscribir nuevo estudiante"}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Inscribir Estudiante
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Exportar Excel
                 </button>
                 <button
                   onClick={() => {

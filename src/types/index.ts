@@ -212,6 +212,8 @@ export interface AsignaturaEncuestaFDType {
   fecha_actualizacion: string;
   asignatura_id: number | null;
   asignatura_nombre: string | null;
+  horario: string | null;
+  dia: string | null;
 }
 
 export interface PaginationType {
