@@ -94,8 +94,13 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
       rowIndex: number,
       colIndex: number
     ) => {
-      const inputs = document.querySelectorAll('input[type="number"]');
-      const currentIndex = rowIndex * getColumnRange.length + colIndex;
+      // Seleccionar solo los inputs de la tabla actual usando un selector más específico
+      const tableContainer = e.currentTarget.closest('table');
+      const inputs = tableContainer ? 
+        Array.from(tableContainer.querySelectorAll('input[type="number"]')) as HTMLInputElement[] :
+        [];
+      const totalColumns = 10; // Siempre son 10 columnas por semestre
+      const currentIndex = rowIndex * totalColumns + colIndex;
       let nextInput: HTMLInputElement | null = null;
 
       // Prevenir el comportamiento predeterminado de las flechas arriba/abajo
@@ -109,30 +114,47 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
 
       switch (e.key) {
         case "ArrowRight":
-          if (colIndex === getColumnRange.length - 1) {
+          if (colIndex === totalColumns - 1) {
             // Si estamos en la última columna, ir al primer input de la siguiente fila
-            nextInput = inputs[currentIndex + 1] as HTMLInputElement;
+            if (rowIndex < estudiantes.length - 1) {
+              nextInput = inputs[(rowIndex + 1) * totalColumns] as HTMLInputElement;
+            }
           } else {
             nextInput = inputs[currentIndex + 1] as HTMLInputElement;
           }
           break;
         case "ArrowLeft":
-          nextInput = inputs[currentIndex - 1] as HTMLInputElement;
+          if (colIndex === 0) {
+            // Si estamos en la primera columna, ir al último input de la fila anterior
+            if (rowIndex > 0) {
+              nextInput = inputs[(rowIndex - 1) * totalColumns + (totalColumns - 1)] as HTMLInputElement;
+            }
+          } else {
+            nextInput = inputs[currentIndex - 1] as HTMLInputElement;
+          }
           break;
         case "ArrowDown":
         case "Enter":
           if (rowIndex === estudiantes.length - 1) {
             // Si estamos en la última fila, ir al primer input de la siguiente columna
             const nextColumnIndex = colIndex + 1;
-            if (nextColumnIndex < getColumnRange.length) {
+            if (nextColumnIndex < totalColumns) {
               nextInput = inputs[nextColumnIndex] as HTMLInputElement;
             }
           } else {
-            nextInput = inputs[currentIndex + getColumnRange.length] as HTMLInputElement;
+            nextInput = inputs[currentIndex + totalColumns] as HTMLInputElement;
           }
           break;
         case "ArrowUp":
-          nextInput = inputs[currentIndex - getColumnRange.length] as HTMLInputElement;
+          if (rowIndex === 0) {
+            // Si estamos en la primera fila, ir al último input de la columna anterior
+            const prevColumnIndex = colIndex - 1;
+            if (prevColumnIndex >= 0) {
+              nextInput = inputs[(estudiantes.length - 1) * totalColumns + prevColumnIndex] as HTMLInputElement;
+            }
+          } else {
+            nextInput = inputs[currentIndex - totalColumns] as HTMLInputElement;
+          }
           break;
         default:
           return;
@@ -143,7 +165,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
         nextInput.focus();
       }
     },
-    [getColumnRange.length, estudiantes.length]
+    [estudiantes.length]
   );
 
   const handleCalificacionSave = async (
@@ -398,7 +420,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
                             WebkitAppearance: "none",
                             MozAppearance: "textfield",
                           }}
-                          onKeyDown={(e) => handleKeyDown(e, rowIndex, index)}
+                                                     onKeyDown={(e) => handleKeyDown(e, rowIndex, getColumnRange.indexOf(index))}
                           onWheel={(e) => e.currentTarget.blur()}
                           onChange={(e) => {
                             const newValue = e.target.value;
