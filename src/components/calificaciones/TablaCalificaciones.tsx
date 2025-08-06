@@ -62,8 +62,16 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
       ? [...Array(10).keys()].map((n) => n + 0)
       : [...Array(10).keys()].map((n) => n + 12);
 
-  const calcularPromedioSemestre = (estudiante: EstudianteType, asignaturaId: string) => {
-    const calificaciones = getColumnRange.map(index => {
+  const calcularPromedioSemestre = (estudiante: EstudianteType, asignaturaId: string, semestre?: number) => {
+    // Si no se especifica semestre, usar el semestre seleccionado actualmente
+    const semestreACalcular = semestre || selectedSemester;
+    
+    // Definir el rango de calificaciones según el semestre
+    const rangoCalificaciones = semestreACalcular === 1 
+      ? [...Array(10).keys()].map((n) => n + 0)  // C1-C10 para primer semestre
+      : [...Array(10).keys()].map((n) => n + 12); // C13-C22 para segundo semestre
+
+    const calificaciones = rangoCalificaciones.map(index => {
       const savedValue = studentGrades[`${estudiante.id}-${asignaturaId}`]?.[`calificacion${index + 1}`];
       const calificacionKey = `calificacion${index + 1}` as keyof EstudianteType;
       const calificacion = estudiante[calificacionKey] as CalificacionValue;
@@ -225,25 +233,44 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
 
     if (!asignatura) return;
 
-    // Preparar los datos para el Excel
+    // Preparar los datos para el Excel con ambos semestres
     const excelData = estudiantes.map((estudiante): ExcelRow => {
       const row: ExcelRow = {
         "Nombre del Estudiante": estudiante.nombre,
       };
 
-      getColumnRange.forEach((index) => {
-        const calificacionKey = `calificacion${
-          index + 1
-        }` as keyof EstudianteType;
+      // Agregar calificaciones del primer semestre (C1-C10)
+      for (let i = 0; i < 10; i++) {
+        const calificacionKey = `calificacion${i + 1}` as keyof EstudianteType;
         const calificacion = estudiante[calificacionKey] as CalificacionValue;
         const savedValue =
           studentGrades[`${estudiante.id}-${asignaturaSeleccionada}`]?.[
-            `calificacion${index + 1}`
+            `calificacion${i + 1}`
           ];
 
-        row[`C${index + 1}`] =
+        row[`C${i + 1} (1er Semestre)`] =
           savedValue !== undefined ? savedValue : calificacion || null;
-      });
+      }
+
+      // Agregar calificaciones del segundo semestre (C13-C22)
+      for (let i = 12; i < 22; i++) {
+        const calificacionKey = `calificacion${i + 1}` as keyof EstudianteType;
+        const calificacion = estudiante[calificacionKey] as CalificacionValue;
+        const savedValue =
+          studentGrades[`${estudiante.id}-${asignaturaSeleccionada}`]?.[
+            `calificacion${i + 1}`
+          ];
+
+        row[`C${i + 1} (2do Semestre)`] =
+          savedValue !== undefined ? savedValue : calificacion || null;
+      }
+
+      // Calcular promedios de cada semestre
+      const promedioPrimerSemestre = calcularPromedioSemestre(estudiante, asignaturaSeleccionada, 1);
+      const promedioSegundoSemestre = calcularPromedioSemestre(estudiante, asignaturaSeleccionada, 2);
+
+      row["Promedio 1er Semestre"] = promedioPrimerSemestre;
+      row["Promedio 2do Semestre"] = promedioSegundoSemestre;
 
       return row;
     });
@@ -255,7 +282,10 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
     // Ajustar el ancho de las columnas
     const colWidths = [
       { wch: 30 }, // Nombre del estudiante
-      ...getColumnRange.map(() => ({ wch: 10 })), // Columnas de calificaciones
+      ...Array(10).fill({ wch: 12 }), // Columnas del primer semestre
+      ...Array(10).fill({ wch: 12 }), // Columnas del segundo semestre
+      { wch: 15 }, // Promedio 1er semestre
+      { wch: 15 }, // Promedio 2do semestre
     ];
     ws["!cols"] = colWidths;
 
@@ -269,7 +299,6 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
     asignaturas,
     asignaturaSeleccionada,
     studentGrades,
-    getColumnRange,
   ]);
 
   return (
