@@ -378,6 +378,8 @@ const PageFD = () => {
       };
       
       console.log('Inscribiendo estudiante con datos:', data);
+      console.log('Estudiante seleccionado:', estudianteSeleccionado);
+      console.log('Elecciones:', elecciones);
       await inscribirEstudianteEncuestaFD(data);
       
       // Recargar los inscritos de la asignatura específica
@@ -412,11 +414,23 @@ const PageFD = () => {
       setCursoSeleccionado(null);
       setElecciones([]);
       
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error inscribiendo estudiante:", err);
+      
+      // Obtener más detalles del error si están disponibles
+      let errorMessage = "Error al inscribir el estudiante";
+      const axiosError = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
+      if (axiosError.response?.data?.message) {
+        errorMessage = axiosError.response.data.message;
+      } else if (axiosError.response?.data?.error) {
+        errorMessage = axiosError.response.data.error;
+      } else if (axiosError.message) {
+        errorMessage = axiosError.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Error al inscribir el estudiante",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -728,24 +742,7 @@ const PageFD = () => {
             </div>
           </div>
 
-          {/* Leyenda de áreas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Leyenda de Áreas</h3>
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-orange-400 rounded-full"></span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Área A</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-blue-400 rounded-full"></span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Área B</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-purple-400 rounded-full"></span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Área C</span>
-              </div>
-            </div>
-          </div>
+     
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {Object.entries(gruposAsignaturas).map(([bloque, asignaturasBloque]) => (
