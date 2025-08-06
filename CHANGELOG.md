@@ -1,3 +1,23 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [4.4.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.0...v4.4.1) (2025-08-06)
+
+
+### Features
+
+* actualizar estado de cupos en PageFD ([5d29836](https://github.com/LuisSubiabre/app-react-shadc/commit/5d29836e58116ea6a30741e42fa514c2f05e02fe))
+* agregar soporte para promedios de calificaciones por semestre en TablaCalificaciones ([5be9826](https://github.com/LuisSubiabre/app-react-shadc/commit/5be9826c7ae84bf621409379ab85a4668b5afe19))
+* añadir campos de horario y día en PageFD ([aeb377b](https://github.com/LuisSubiabre/app-react-shadc/commit/aeb377b4ce8671486e786cea9d4cc93b5078502c))
+* añadir funcionalidad de exportación a Excel en PageFD y ModalInscripcionEstudiantes ([6d4942e](https://github.com/LuisSubiabre/app-react-shadc/commit/6d4942e5fcf48f8a32a64ae4bffe39f490067464))
+* añadir leyenda de áreas y mejorar visualización en PageFD ([21c5b9d](https://github.com/LuisSubiabre/app-react-shadc/commit/21c5b9d0fe2ad4b700b276c93a57610a9d6d1654))
+* detectar automáticamente el semestre en PageCalificaciones ([f3a2d21](https://github.com/LuisSubiabre/app-react-shadc/commit/f3a2d21de96b17e6d5c5054d2296598a50ed3a48))
+* manejar errores de inscripción en PageFD ([c076d65](https://github.com/LuisSubiabre/app-react-shadc/commit/c076d653a9aafe2ec280c6fa66bdde68cf4b091e))
+* mejorar gestión de cupos en PageFD ([07a366d](https://github.com/LuisSubiabre/app-react-shadc/commit/07a366d42d134a588ed5fcdbe9696bb90efd150b))
+* mejorar gestión de errores y depuración en PageFD ([58f4fe7](https://github.com/LuisSubiabre/app-react-shadc/commit/58f4fe7cc6806277354db202f20b7e6607410eb1))
+* mejorar navegación en TablaCalificaciones ([d160f8f](https://github.com/LuisSubiabre/app-react-shadc/commit/d160f8f5571405a01744f36a965bca6ae9f74edd))
+
     # Changelog
 
     All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
