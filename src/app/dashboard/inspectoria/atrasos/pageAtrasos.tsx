@@ -20,14 +20,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CursoApiResponseType, EstudianteType } from "@/types";
-import { Clock, Calendar, Search, Users, BookOpen, AlertCircle } from "lucide-react";
+import { Clock, Calendar, Search, Users, BookOpen, AlertCircle, Settings } from "lucide-react";
 import { getCursos } from "@/services/cursosService";
 import {
   estudiantesCurso,
   getEstudiantes,
 } from "@/services/estudiantesService";
 import { createAtraso } from "@/services/atrasosService";
-import { printAtraso } from "@/services/printService";
+import { printAtraso, getPrinterConfig, savePrinterConfig, DEFAULT_THERMAL_CONFIG, DEFAULT_STANDARD_CONFIG, PrinterConfig } from "@/services/printService";
 
 const PageAtrasos = () => {
   const [time, setTime] = useState(new Date());
@@ -37,6 +37,8 @@ const PageAtrasos = () => {
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingAtraso, setProcessingAtraso] = useState<{estudianteId: number, tipo: string} | null>(null);
+  const [showPrinterConfig, setShowPrinterConfig] = useState(false);
+  const [printerConfig, setPrinterConfig] = useState<PrinterConfig>(DEFAULT_THERMAL_CONFIG);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -44,6 +46,12 @@ const PageAtrasos = () => {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Cargar configuración de impresora
+    const config = getPrinterConfig();
+    setPrinterConfig(config);
   }, []);
 
   useEffect(() => {
@@ -96,6 +104,28 @@ const PageAtrasos = () => {
     minute: "2-digit",
     second: "2-digit",
   });
+
+  const handlePrinterConfigChange = (type: 'thermal' | 'laser' | 'inkjet' | 'auto') => {
+    let newConfig: PrinterConfig;
+    
+    switch (type) {
+      case 'thermal':
+        newConfig = DEFAULT_THERMAL_CONFIG;
+        break;
+      case 'laser':
+        newConfig = DEFAULT_STANDARD_CONFIG;
+        break;
+      case 'inkjet':
+        newConfig = DEFAULT_STANDARD_CONFIG;
+        break;
+      default:
+        newConfig = DEFAULT_THERMAL_CONFIG;
+    }
+    
+    setPrinterConfig(newConfig);
+    savePrinterConfig(newConfig);
+    setShowPrinterConfig(false);
+  };
 
   const handleNewAtraso = async (estudianteId: number, tipo: "llegada" | "jornada") => {
     // Buscar por estudiante_id primero, si no existe, buscar por id
@@ -224,13 +254,86 @@ const PageAtrasos = () => {
       <main className="flex-1 p-6">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Registro de Atrasos
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Registra los atrasos de los estudiantes en tiempo real
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  Registro de Atrasos
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Registra los atrasos de los estudiantes en tiempo real
+                </p>
+              </div>
+              
+              {/* Botón de configuración de impresora */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPrinterConfig(!showPrinterConfig)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Configurar Impresora
+              </Button>
+            </div>
           </div>
+
+          {/* Modal de configuración de impresora */}
+          {showPrinterConfig && (
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Configuración de Impresora
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Selecciona el tipo de impresora que estás usando para optimizar la impresión de tickets.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  variant={printerConfig.type === 'thermal' ? 'default' : 'outline'}
+                  onClick={() => handlePrinterConfigChange('thermal')}
+                  className="h-auto p-4 flex flex-col items-center gap-2"
+                >
+                  <div className="text-2xl">🖨️</div>
+                  <div className="text-center">
+                    <div className="font-semibold">Impresora Térmica</div>
+                    <div className="text-xs text-gray-500">80mm, texto simple</div>
+                  </div>
+                </Button>
+                
+                <Button
+                  variant={printerConfig.type === 'laser' ? 'default' : 'outline'}
+                  onClick={() => handlePrinterConfigChange('laser')}
+                  className="h-auto p-4 flex flex-col items-center gap-2"
+                >
+                  <div className="text-2xl">🖨️</div>
+                  <div className="text-center">
+                    <div className="font-semibold">Impresora Láser</div>
+                    <div className="text-xs text-gray-500">Alta calidad, color</div>
+                  </div>
+                </Button>
+                
+                <Button
+                  variant={printerConfig.type === 'inkjet' ? 'default' : 'outline'}
+                  onClick={() => handlePrinterConfigChange('inkjet')}
+                  className="h-auto p-4 flex flex-col items-center gap-2"
+                >
+                  <div className="text-2xl">🖨️</div>
+                  <div className="text-center">
+                    <div className="font-semibold">Impresora Inkjet</div>
+                    <div className="text-xs text-gray-500">Color, calidad media</div>
+                  </div>
+                </Button>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Configuración actual:</strong> {printerConfig.type === 'thermal' ? 'Impresora Térmica' : 
+                    printerConfig.type === 'laser' ? 'Impresora Láser' : 'Impresora Inkjet'} 
+                  ({printerConfig.width}, {printerConfig.fontSize})
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Reloj */}
           <div className="flex flex-col items-center justify-center">

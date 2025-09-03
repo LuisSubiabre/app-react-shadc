@@ -1,5 +1,266 @@
 import { EstudianteType } from "@/types";
 
+// Configuración de impresora
+export interface PrinterConfig {
+  type: 'thermal' | 'laser' | 'inkjet' | 'auto';
+  width: string;
+  fontSize: string;
+  lineHeight: string;
+  margins: string;
+}
+
+// Configuración por defecto para impresoras térmicas
+export const DEFAULT_THERMAL_CONFIG: PrinterConfig = {
+  type: 'thermal',
+  width: '80mm',
+  fontSize: '8px',
+  lineHeight: '1.0',
+  margins: '2mm'
+};
+
+// Configuración por defecto para impresoras láser/inkjet
+export const DEFAULT_STANDARD_CONFIG: PrinterConfig = {
+  type: 'laser',
+  width: '80mm',
+  fontSize: '10px',
+  lineHeight: '1.2',
+  margins: '5mm'
+};
+
+// Función para obtener la configuración de impresora
+export const getPrinterConfig = (): PrinterConfig => {
+  try {
+    const savedConfig = localStorage.getItem('printerConfig');
+    if (savedConfig) {
+      return JSON.parse(savedConfig);
+    }
+  } catch (error) {
+    console.warn('No se pudo cargar configuración de impresora:', error);
+  }
+  
+  // Intentar detectar automáticamente
+  return detectPrinterType();
+};
+
+// Función para detectar automáticamente el tipo de impresora
+export const detectPrinterType = (): PrinterConfig => {
+  // Por defecto, asumir impresora térmica para mejor compatibilidad
+  return DEFAULT_THERMAL_CONFIG;
+};
+
+// Función para guardar la configuración de impresora
+export const savePrinterConfig = (config: PrinterConfig): void => {
+  try {
+    localStorage.setItem('printerConfig', JSON.stringify(config));
+    console.log('Configuración de impresora guardada:', config);
+  } catch (error) {
+    console.error('Error al guardar configuración de impresora:', error);
+  }
+};
+
+// Función para generar ticket en formato de texto plano (mejor para impresoras térmicas)
+export const printAtrasoTextoPlano = async (
+  estudiante: EstudianteType,
+  hora: string,
+  tipo: "llegada" | "jornada" = "llegada",
+  config: PrinterConfig = DEFAULT_THERMAL_CONFIG
+): Promise<boolean> => {
+  try {
+    console.log("Iniciando impresión de texto plano para:", estudiante.nombre);
+    console.log("Configuración de impresora:", config);
+    
+    // Crear contenido de texto plano muy simple
+    const fecha = new Date().toLocaleDateString('es-CL');
+    const timestamp = new Date().toLocaleString('es-CL');
+    
+    const content = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Ticket Atraso - Texto Plano</title>
+          <meta charset="utf-8">
+          <style>
+            @page {
+              size: ${config.width} auto;
+              margin: 0;
+            }
+            
+            body {
+              font-family: monospace;
+              width: ${config.width};
+              margin: 0;
+              padding: ${config.margins};
+              font-size: ${config.fontSize};
+              line-height: ${config.lineHeight};
+              background: white;
+              color: black;
+              white-space: pre;
+            }
+            
+            .ticket {
+              width: 100%;
+              text-align: center;
+              font-family: 'Courier New', monospace;
+            }
+            
+            .centered {
+              text-align: center;
+            }
+            
+            .left {
+              text-align: left;
+            }
+            
+            .separator {
+              text-align: center;
+              margin: 1mm 0;
+            }
+            
+            @media print {
+              body {
+                width: ${config.width} !important;
+                padding: 0 !important;
+                margin: 0 !important;
+              }
+              
+              .ticket {
+                padding: 1mm !important;
+              }
+              
+              .no-print {
+                display: none !important;
+              }
+            }
+            
+            .no-print {
+              text-align: center;
+              margin-top: 3mm;
+              padding: 2mm;
+              background: #f5f5f5;
+            }
+            
+            .no-print button {
+              background: #007bff;
+              color: white;
+              border: none;
+              padding: 1mm 2mm;
+              border-radius: 1mm;
+              cursor: pointer;
+              font-size: 8px;
+              margin: 0.5mm;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="ticket">
+            <div class="centered">
+              ========================================
+              <br>
+              <br>
+              <strong>LICEO EXPERIMENTAL</strong>
+              <br>
+              <strong>TICKET DE ATRASO</strong>
+              <br>
+              <br>
+              ========================================
+              <br>
+              <br>
+              <div class="left">
+                <strong>Estudiante:</strong> ${estudiante.nombre}
+                <br>
+                <strong>RUT:</strong> ${estudiante.rut || 'N/A'}
+                <br>
+                <strong>Curso:</strong> ${estudiante.curso_nombre || 'N/A'}
+                <br>
+                <strong>Fecha:</strong> ${fecha}
+                <br>
+                <strong>Hora:</strong> ${hora}
+                <br>
+                <br>
+                ========================================
+                <br>
+                <br>
+                <div class="centered">
+                  <strong>${tipo === "llegada" ? "ATRASO EN LLEGADA" : "ATRASO EN JORNADA"}</strong>
+                  <br>
+                  <br>
+                  Generado: ${timestamp}
+                  <br>
+                  <br>
+                  ========================================
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-print">
+            <button onclick="imprimirTicket()">🖨️ Imprimir</button>
+            <button onclick="window.close()" style="background: #6c757d;">❌ Cerrar</button>
+          </div>
+
+          <script>
+            function imprimirTicket() {
+              try {
+                window.print();
+                console.log('Impresión de texto plano ejecutada');
+              } catch (error) {
+                console.error('Error al imprimir:', error);
+              }
+            }
+            
+            // Auto-imprimir después de un delay
+            setTimeout(() => {
+              console.log('Auto-imprimiendo ticket de texto plano...');
+              imprimirTicket();
+            }, 800);
+          </script>
+        </body>
+      </html>
+    `;
+
+    // Abrir ventana específica para texto plano
+    const printWindow = window.open("", "_blank", "width=320,height=400,scrollbars=no,resizable=no,menubar=no,toolbar=no,location=no,status=no");
+    if (printWindow) {
+      console.log("Ventana de texto plano abierta");
+      
+      printWindow.document.write(content);
+      printWindow.document.close();
+
+      // Esperar a que se cargue y luego imprimir
+      await new Promise<void>((resolve) => {
+        const checkReady = () => {
+          if (printWindow.document.readyState === 'complete') {
+            console.log('Ventana de texto plano lista');
+            resolve();
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        checkReady();
+      });
+
+      // Imprimir con delay
+      setTimeout(() => {
+        printWindow.print();
+      }, 600);
+
+      // Cerrar ventana después de un tiempo
+      setTimeout(() => {
+        if (printWindow && !printWindow.closed) {
+          printWindow.close();
+        }
+      }, 8000);
+
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error en impresión de texto plano:", error);
+    return false;
+  }
+};
+
 export const printAtraso = async (
   estudiante: EstudianteType,
   hora: string,
@@ -7,6 +268,23 @@ export const printAtraso = async (
 ): Promise<boolean> => {
   try {
     console.log("Iniciando proceso de impresión para:", estudiante.nombre);
+    
+    // Obtener configuración de impresora
+    const printerConfig = getPrinterConfig();
+    console.log("Configuración de impresora:", printerConfig);
+    
+    // Si es impresora térmica, usar la versión optimizada
+    if (printerConfig.type === 'thermal') {
+      console.log("Usando impresión optimizada para impresora térmica");
+      const textoPlanoResult = await printAtrasoTextoPlano(estudiante, hora, tipo, printerConfig);
+      if (textoPlanoResult) {
+        console.log("Impresión térmica exitosa");
+        return true;
+      }
+    }
+    
+    // Si no es térmica o falló, usar método estándar
+    console.log("Usando método de impresión estándar...");
     
     // Crear el contenido HTML para el ticket
     const content = `
@@ -16,119 +294,151 @@ export const printAtraso = async (
           <title>Ticket de Atraso - ${estudiante.nombre}</title>
           <meta charset="utf-8">
           <style>
+            @page {
+              size: ${printerConfig.width} auto;
+              margin: 0;
+            }
+            
             * {
               box-sizing: border-box;
+              margin: 0;
+              padding: 0;
             }
+            
             body {
               font-family: 'Courier New', monospace;
-              margin: 0;
-              padding: 15px;
-              width: 80mm;
-              font-size: 12px;
-              line-height: 1.4;
-            }
-            .ticket {
-              border: 2px solid #000;
-              padding: 10px;
+              width: ${printerConfig.width};
+              font-size: ${printerConfig.fontSize};
+              line-height: ${printerConfig.lineHeight};
               background: white;
+              color: black;
             }
+            
+            .ticket {
+              width: 100%;
+              padding: ${printerConfig.margins};
+            }
+            
             .header {
               text-align: center;
-              border-bottom: 2px solid #000;
-              padding-bottom: 10px;
-              margin-bottom: 15px;
+              border-bottom: 1px solid black;
+              padding-bottom: 3mm;
+              margin-bottom: 3mm;
             }
+            
             .logo {
-              width: 50mm;
+              width: 40mm;
               height: auto;
-              margin: 0 auto 10px;
+              margin: 0 auto 2mm;
               display: block;
             }
+            
             .header h1 {
-              margin: 0;
-              font-size: 16px;
-              font-weight: bold;
-              text-transform: uppercase;
-            }
-            .header h2 {
-              margin: 5px 0;
               font-size: 14px;
               font-weight: bold;
+              text-transform: uppercase;
+              margin: 1mm 0;
             }
+            
+            .header h2 {
+              font-size: 12px;
+              font-weight: bold;
+              margin: 1mm 0;
+            }
+            
             .info {
-              margin: 15px 0;
+              margin: 3mm 0;
             }
+            
             .info-row {
               display: flex;
               justify-content: space-between;
-              margin: 5px 0;
-              border-bottom: 1px dotted #ccc;
-              padding-bottom: 3px;
+              margin: 1mm 0;
+              padding: 1mm 0;
+              border-bottom: 1px dotted #999;
             }
+            
             .info-label {
               font-weight: bold;
-              min-width: 80px;
+              min-width: 25mm;
             }
+            
             .info-value {
               text-align: right;
               flex: 1;
             }
+            
             .footer {
               text-align: center;
-              margin-top: 15px;
-              padding-top: 10px;
-              border-top: 2px solid #000;
+              margin-top: 3mm;
+              padding-top: 3mm;
+              border-top: 1px solid black;
             }
+            
             .tipo-atraso {
-              font-size: 14px;
+              font-size: 12px;
               font-weight: bold;
               text-transform: uppercase;
-              color: #d32f2f;
+              color: black;
+              margin: 2mm 0;
             }
+            
             .timestamp {
-              font-size: 10px;
+              font-size: 8px;
               color: #666;
-              margin-top: 10px;
+              margin-top: 2mm;
             }
+            
+            .separator {
+              text-align: center;
+              margin: 3mm 0;
+              font-size: 8px;
+              color: #999;
+            }
+            
             @media print {
               body {
-                width: 80mm;
-                padding: 0;
-                margin: 0;
+                width: ${printerConfig.width} !important;
+                padding: 0 !important;
+                margin: 0 !important;
               }
+              
               .ticket {
-                border: none;
-                padding: 5px;
+                padding: 2mm !important;
               }
+              
               .no-print {
                 display: none !important;
               }
+              
+              /* Forzar colores para impresión */
+              * {
+                color: black !important;
+                background: white !important;
+              }
             }
+            
             .no-print {
               text-align: center;
-              margin-top: 20px;
-              padding: 10px;
+              margin-top: 10mm;
+              padding: 3mm;
               background: #f5f5f5;
-              border-radius: 5px;
+              border-radius: 2mm;
             }
+            
             .no-print button {
               background: #007bff;
               color: white;
               border: none;
-              padding: 8px 16px;
-              border-radius: 4px;
+              padding: 2mm 4mm;
+              border-radius: 1mm;
               cursor: pointer;
-              font-size: 14px;
-              margin: 5px;
+              font-size: 10px;
+              margin: 1mm;
             }
+            
             .no-print button:hover {
               background: #0056b3;
-            }
-            .error-message {
-              color: #d32f2f;
-              font-weight: bold;
-              text-align: center;
-              margin: 10px 0;
             }
           </style>
         </head>
@@ -163,6 +473,8 @@ export const printAtraso = async (
               </div>
             </div>
 
+            <div class="separator">--------------------------------</div>
+
             <div class="footer">
               <div class="tipo-atraso">
                 ${tipo === "llegada" ? "ATRASO EN LLEGADA" : "ATRASO EN JORNADA"}
@@ -171,6 +483,8 @@ export const printAtraso = async (
                 Generado: ${new Date().toLocaleString('es-CL')}
               </div>
             </div>
+            
+            <div class="separator">--------------------------------</div>
           </div>
 
           <div class="no-print">
@@ -182,17 +496,34 @@ export const printAtraso = async (
           <script>
             function imprimirTicket() {
               try {
-                window.print();
-                console.log('Comando de impresión ejecutado');
+                // Configurar opciones de impresión específicas
+                const printOptions = {
+                  silent: false,
+                  printBackground: false,
+                  color: false,
+                  margin: {
+                    marginType: 'none'
+                  },
+                  landscape: false,
+                  pagesPerSheet: 1,
+                  collate: false,
+                  copies: 1
+                };
+                
+                // Intentar usar la API de impresión moderna si está disponible
+                if (window.print) {
+                  window.print();
+                  console.log('Comando de impresión ejecutado');
+                } else {
+                  console.error('API de impresión no disponible');
+                }
               } catch (error) {
                 console.error('Error al imprimir:', error);
-                console.error('Error al imprimir:', error.message);
               }
             }
             
             function descargarPDF() {
               try {
-                // Crear un enlace de descarga
                 const element = document.createElement('a');
                 const htmlContent = document.documentElement.outerHTML;
                 const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -208,7 +539,6 @@ export const printAtraso = async (
                 console.log('Descarga iniciada');
               } catch (error) {
                 console.error('Error al descargar:', error);
-                console.error('Error al descargar:', error.message);
               }
             }
             
@@ -216,7 +546,7 @@ export const printAtraso = async (
             setTimeout(() => {
               console.log('Auto-imprimiendo ticket...');
               imprimirTicket();
-            }, 1000);
+            }, 1500);
             
             // Verificar si el documento está listo
             if (document.readyState === 'complete') {
@@ -231,9 +561,9 @@ export const printAtraso = async (
       </html>
     `;
 
-    // Estrategia 1: Intentar abrir ventana nueva
+    // Estrategia 1: Intentar abrir ventana nueva con configuración específica
     try {
-      const printWindow = window.open("", "_blank", "width=800,height=600,scrollbars=yes,resizable=yes");
+      const printWindow = window.open("", "_blank", "width=400,height=600,scrollbars=no,resizable=no,menubar=no,toolbar=no");
       if (printWindow) {
         console.log("Ventana de impresión abierta exitosamente");
         
@@ -241,7 +571,7 @@ export const printAtraso = async (
         printWindow.document.write(content);
         printWindow.document.close();
 
-        // Esperar a que se cargue el contenido
+        // Esperar a que se cargue el contenido completamente
         await new Promise<void>((resolve) => {
           const checkReady = () => {
             if (printWindow.document.readyState === 'complete') {
@@ -254,16 +584,18 @@ export const printAtraso = async (
           checkReady();
         });
 
-        // Ejecutar la impresión
-        console.log('Ejecutando impresión...');
-        printWindow.print();
+        // Ejecutar la impresión con delay adicional
+        setTimeout(() => {
+          console.log('Ejecutando impresión...');
+          printWindow.print();
+        }, 500);
 
         // Cerrar la ventana después de un tiempo
         setTimeout(() => {
           if (printWindow && !printWindow.closed) {
             printWindow.close();
           }
-        }, 5000);
+        }, 8000);
 
         console.log('Proceso de impresión completado exitosamente');
         return true;
@@ -272,7 +604,7 @@ export const printAtraso = async (
       console.warn("No se pudo abrir ventana nueva:", windowError);
     }
 
-    // Estrategia 2: Crear un iframe oculto
+    // Estrategia 2: Crear un iframe oculto con configuración específica
     try {
       console.log("Intentando estrategia alternativa con iframe...");
       
@@ -280,6 +612,8 @@ export const printAtraso = async (
       iframe.style.display = 'none';
       iframe.style.position = 'absolute';
       iframe.style.left = '-9999px';
+      iframe.style.width = printerConfig.width;
+      iframe.style.height = 'auto';
       document.body.appendChild(iframe);
       
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -291,55 +625,26 @@ export const printAtraso = async (
         // Esperar a que se cargue
         await new Promise<void>((resolve) => {
           iframe.onload = () => resolve();
-          setTimeout(() => resolve(), 1000);
+          setTimeout(() => resolve(), 1500);
         });
         
-        // Imprimir desde el iframe
-        iframe.contentWindow?.print();
+        // Imprimir desde el iframe con delay
+        setTimeout(() => {
+          iframe.contentWindow?.print();
+        }, 500);
         
         // Remover el iframe después de un tiempo
         setTimeout(() => {
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
           }
-        }, 5000);
+        }, 8000);
         
         console.log('Impresión desde iframe completada');
         return true;
       }
     } catch (iframeError) {
       console.warn("Error con iframe:", iframeError);
-    }
-
-    // Estrategia 3: Crear elemento temporal en la página actual
-    try {
-      console.log("Intentando estrategia con elemento temporal...");
-      
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = content;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      document.body.appendChild(tempDiv);
-      
-      // Esperar un momento para que se renderice
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Imprimir la página completa
-      window.print();
-      
-      // Remover el elemento temporal
-      setTimeout(() => {
-        if (document.body.contains(tempDiv)) {
-          document.body.removeChild(tempDiv);
-        }
-      }, 1000);
-      
-      console.log('Impresión desde elemento temporal completada');
-      return true;
-      
-    } catch (tempError) {
-      console.warn("Error con elemento temporal:", tempError);
     }
 
     // Si todas las estrategias fallan, mostrar el ticket en una nueva pestaña
