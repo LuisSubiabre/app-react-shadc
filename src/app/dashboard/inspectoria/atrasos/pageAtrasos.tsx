@@ -36,6 +36,7 @@ const PageAtrasos = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [cursos, setCursos] = useState<CursoApiResponseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [processingAtraso, setProcessingAtraso] = useState<{estudianteId: number, tipo: string} | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -102,9 +103,16 @@ const PageAtrasos = () => {
                       estudiantes.find((e) => e.id === estudianteId);
     if (!estudiante) return;
 
+    // Establecer estado de procesamiento
+    setProcessingAtraso({ estudianteId, tipo });
+
     try {
-      // Crear el atraso
-      await createAtraso({
+      // Mostrar indicador de carga
+      const loadingMessage = `Registrando atraso para ${estudiante.nombre}...`;
+      console.log(loadingMessage);
+
+      // Crear el atraso (esto puede tardar más ahora por el envío de correos)
+      const atrasoResult = await createAtraso({
         estudiante_id: estudianteId,
         fecha: new Date().toISOString(),
         hora: puntaArenasTime,
@@ -115,14 +123,37 @@ const PageAtrasos = () => {
         fecha_registro: new Date().toISOString(),
       });
 
-      // Imprimir el ticket
-      const printSuccess = await printAtraso(estudiante, puntaArenasTime, tipo);
+      console.log("Atraso registrado exitosamente:", atrasoResult);
 
-      if (!printSuccess) {
-        alert("Error al imprimir el ticket");
+      // Esperar un momento para asegurar que el backend haya terminado de procesar
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Intentar imprimir el ticket
+      try {
+        console.log("Iniciando proceso de impresión...");
+        const printSuccess = await printAtraso(estudiante, puntaArenasTime, tipo);
+        
+        if (printSuccess) {
+          console.log("Ticket impreso exitosamente");
+          // Mensaje de éxito en consola
+          console.log("¡Atraso registrado exitosamente! El correo se envió al estudiante y el ticket se imprimió correctamente.");
+        } else {
+          console.warn("Error al imprimir el ticket - printAtraso retornó false");
+          // Mensaje de advertencia en consola
+          console.warn("Atraso registrado exitosamente. El correo se envió al estudiante, pero hubo un problema con la impresión del ticket. Se abrió el ticket en una nueva pestaña para que puedas imprimirlo manualmente.");
+        }
+      } catch (printError) {
+        console.error("Error en la impresión:", printError);
+        // Mensaje de error en consola
+        console.error("Atraso registrado exitosamente. El correo se envió al estudiante, pero hubo un problema con la impresión del ticket. Se abrió el ticket en una nueva pestaña para que puedas imprimirlo manualmente.");
       }
+
     } catch (error) {
-      alert("Error al registrar el atraso:" + error);
+      console.error("Error al registrar el atraso:", error);
+      console.error("Error al registrar el atraso:", error);
+    } finally {
+      // Limpiar estado de procesamiento
+      setProcessingAtraso(null);
     }
   };
 
@@ -213,6 +244,28 @@ const PageAtrasos = () => {
               <p className="mt-2 text-gray-600 dark:text-gray-400">UTC-3</p>
             </div>
           </div>
+
+          {/* Modal de procesamiento que bloquea toda la interfaz */}
+          {processingAtraso && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-2xl max-w-md mx-4">
+                <div className="flex flex-col items-center text-center gap-4">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      Procesando atraso...
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Por favor espera mientras se registra el atraso y se envía el correo al estudiante.
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      Este proceso puede tomar unos segundos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Filtros en la parte superior */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
@@ -406,19 +459,33 @@ const PageAtrasos = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleNewAtraso(estudiante.estudiante_id || estudiante.id, "llegada")}
-                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
+                            disabled={processingAtraso !== null}
+                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <Clock className="h-4 w-4 mr-2" />
-                            Atraso Llegada
+                            {processingAtraso?.estudianteId === (estudiante.estudiante_id || estudiante.id) && 
+                             processingAtraso?.tipo === "llegada" ? (
+                              <div className="animate-spin rounded-full h-4 w-4 mr-2 border-b-2 border-blue-600"></div>
+                            ) : (
+                              <Clock className="h-4 w-4 mr-2" />
+                            )}
+                            {processingAtraso?.estudianteId === (estudiante.estudiante_id || estudiante.id) && 
+                             processingAtraso?.tipo === "llegada" ? "Procesando..." : "Atraso Llegada"}
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleNewAtraso(estudiante.estudiante_id || estudiante.id, "jornada")}
-                            className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300 transition-colors"
+                            disabled={processingAtraso !== null}
+                            className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Atraso Jornada
+                            {processingAtraso?.estudianteId === (estudiante.estudiante_id || estudiante.id) && 
+                             processingAtraso?.tipo === "jornada" ? (
+                              <div className="animate-spin rounded-full h-4 w-4 mr-2 border-b-2 border-green-600"></div>
+                            ) : (
+                              <Calendar className="h-4 w-4 mr-2" />
+                            )}
+                            {processingAtraso?.estudianteId === (estudiante.estudiante_id || estudiante.id) && 
+                             processingAtraso?.tipo === "jornada" ? "Procesando..." : "Atraso Jornada"}
                           </Button>
                         </div>
                       </TableCell>

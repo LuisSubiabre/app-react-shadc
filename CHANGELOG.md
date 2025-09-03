@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.4.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.1...v4.4.2) (2025-09-03)
+
+
+### Features
+
+* mejorar registro de atrasos en PageAtrasos ([7b53488](https://github.com/LuisSubiabre/app-react-shadc/commit/7b53488678a461d596b0ea1e8a751b803f06ecb6))
+
 ### [4.4.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.0...v4.4.1) (2025-08-06)
 
 
