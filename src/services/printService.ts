@@ -2,7 +2,8 @@ import { EstudianteType } from "@/types";
 
 export const printAtraso = async (
   estudiante: EstudianteType,
-  hora: string
+  hora: string,
+  tipo: "llegada" | "jornada"
 ): Promise<boolean> => {
   try {
     // Crear una nueva ventana para la impresión
@@ -78,7 +79,7 @@ export const printAtraso = async (
           </div>
 
           <div class="footer">
-            <p><strong>Tipo: Atraso</strong></p>
+            <p><strong>Tipo: Atraso ${tipo === 'llegada' ? 'Llegada' : 'Jornada'}</strong></p>
           </div>
 
           <div class="no-print" style="text-align: center; margin-top: 20px;">
