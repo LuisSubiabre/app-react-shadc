@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.4.3](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.2...v4.4.3) (2025-09-03)
+
+
+### Features
+
+* agregar configuración de impresora y mejoras en PageAtrasos ([6bcca10](https://github.com/LuisSubiabre/app-react-shadc/commit/6bcca10b8806e09dc62e436bf7996d84d4329dab))
+* agregar tipo de atraso en la función de impresión ([826b130](https://github.com/LuisSubiabre/app-react-shadc/commit/826b130c8eecebbadca7cf8239776e0b39637db2))
+
 ### [4.4.2](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.1...v4.4.2) (2025-09-03)
 
 
