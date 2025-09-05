@@ -62,5 +62,21 @@ export const inscribirEstudianteEncuestaFD = async (data: InscribirEstudianteEnc
   return api.post(url, data).then((response) => response.data);
 };
 
+export const visualizarEncuestaFD = async (estudiante_id: number, acceso_encuesta_fd: boolean) => {
+  const url = `/estudiantes/${estudiante_id}/acceso-encuesta`;
+  const data = { acceso_encuesta_fd };
+  console.log('=== SERVICIO visualizarEncuestaFD ===');
+  console.log('URL completa:', api.defaults.baseURL + url);
+  console.log('URL relativa:', url);
+  console.log('Datos a enviar:', data);
+  console.log('Estudiante ID:', estudiante_id);
+  console.log('Tipo de estudiante_id:', typeof estudiante_id);
+  console.log('Método HTTP: PATCH');
+  console.log('Headers:', api.defaults.headers);
+  console.log('=====================================');
+  
+  return api.patch(url, data).then((response) => response.data);
+};
+
 
 

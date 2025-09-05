@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, inscribirEstudianteEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
+import { getAsignaturasEncuestaFD, postAsignaturaEncuestaFD, updateAsignaturaEncuestaFD, deleteAsignaturaEncuestaFD, inscritosAnterioresEncuestaFD, getInscritosEncuestaFD, eliminarInscritoEncuestaFD, inscribirEstudianteEncuestaFD, visualizarEncuestaFD, CreateAsignaturaEncuestaFDType } from "@/services/encuestaFDService";
 import { getAsignaturas } from "@/services/asignaturasService";
 import { estudiantesCurso } from "@/services/estudiantesService";
 import { getCursos } from "@/services/cursosService";
@@ -49,6 +49,13 @@ const PageFD = () => {
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null);
   const [estudiantesPorCurso, setEstudiantesPorCurso] = useState<Record<number, EstudianteType[]>>({});
   const [cursos, setCursos] = useState<{ id: number; nombre: string }[]>([]);
+  const [showSeleccionModal, setShowSeleccionModal] = useState(false);
+  const [loadingSeleccion, setLoadingSeleccion] = useState(false);
+  const [cursoSeleccionadoModal, setCursoSeleccionadoModal] = useState<number | null>(null);
+  const [estudiantesPorCursoModal, setEstudiantesPorCursoModal] = useState<Record<number, EstudianteType[]>>({});
+  const [cursosModal, setCursosModal] = useState<{ id: number; nombre: string }[]>([]);
+  const [cambiandoEstado, setCambiandoEstado] = useState<Record<number, boolean>>({});
+  const [estadosEstudiantes, setEstadosEstudiantes] = useState<Record<number, boolean>>({});
   const [formData, setFormData] = useState<CreateAsignaturaEncuestaFDType>({
     nombre: "",
     area: "",
@@ -344,6 +351,102 @@ const PageFD = () => {
   const handleCursoChange = (cursoId: number | null) => {
     setCursoSeleccionado(cursoId);
     setEstudianteSeleccionado(null); // Resetear estudiante cuando cambia el curso
+  };
+
+  const openSeleccionModal = async () => {
+    setShowSeleccionModal(true);
+    setLoadingSeleccion(true);
+    setCursoSeleccionadoModal(null);
+    
+    try {
+      // Cargar información de cursos (solo cursos 25-30)
+      const cursosResponse = await getCursos();
+      if (cursosResponse && cursosResponse.data) {
+        const cursosFiltrados = cursosResponse.data
+          .filter((curso: { id: number; nombre: string }) => [25, 26, 27, 28, 29, 30].includes(curso.id))
+          .map((curso: { id: number; nombre: string }) => ({ id: curso.id, nombre: curso.nombre }));
+        setCursosModal(cursosFiltrados);
+      }
+      
+      // Cargar estudiantes de los cursos 25, 26, 27, 28, 29, 30
+      const cursosIds = [25, 26, 27, 28, 29, 30];
+      const estudiantesPorCursoData: Record<number, EstudianteType[]> = {};
+      
+      for (const cursoId of cursosIds) {
+        try {
+          const response = await estudiantesCurso(cursoId);
+          if (response && Array.isArray(response)) {
+            estudiantesPorCursoData[cursoId] = response;
+          }
+        } catch (err) {
+          console.error(`Error cargando estudiantes del curso ${cursoId}:`, err);
+        }
+      }
+      
+      console.log('Estudiantes por curso (modal):', estudiantesPorCursoData);
+      console.log('Primer estudiante de ejemplo:', estudiantesPorCursoData[25]?.[0]);
+      setEstudiantesPorCursoModal(estudiantesPorCursoData);
+      
+      // Inicializar estados de estudiantes (por defecto todos tienen acceso)
+      const estadosIniciales: Record<number, boolean> = {};
+      Object.values(estudiantesPorCursoData).forEach(estudiantes => {
+        estudiantes.forEach(estudiante => {
+          const id = estudiante.estudiante_id || estudiante.id;
+          estadosIniciales[id] = true; // Por defecto todos tienen acceso
+        });
+      });
+      setEstadosEstudiantes(estadosIniciales);
+      
+    } catch (err) {
+      console.error("Error cargando datos para selección:", err);
+      toast({
+        title: "Error",
+        description: "Error al cargar los cursos y estudiantes disponibles",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSeleccion(false);
+    }
+  };
+
+  const handleCursoChangeModal = (cursoId: number | null) => {
+    setCursoSeleccionadoModal(cursoId);
+  };
+
+  const handleCambiarEstadoEstudiante = async (estudianteId: number, nuevoEstado: boolean) => {
+    try {
+      setCambiandoEstado(prev => ({ ...prev, [estudianteId]: true }));
+      
+      console.log(`=== FUNCIÓN handleCambiarEstadoEstudiante ===`);
+      console.log(`Cambiando estado del estudiante ${estudianteId} a ${nuevoEstado}`);
+      console.log(`Tipo de estudianteId:`, typeof estudianteId);
+      console.log(`URL que se construirá: /estudiantes/${estudianteId}/acceso-encuesta`);
+      console.log(`Token en localStorage:`, localStorage.getItem('token') ? 'Presente' : 'Ausente');
+      console.log(`===============================================`);
+      
+      if (!estudianteId || estudianteId === undefined) {
+        throw new Error('ID del estudiante es undefined o inválido');
+      }
+      
+      await visualizarEncuestaFD(estudianteId, nuevoEstado);
+      
+      // Actualizar el estado local
+      setEstadosEstudiantes(prev => ({ ...prev, [estudianteId]: nuevoEstado }));
+      
+      toast({
+        title: "Éxito",
+        description: `Estado del estudiante actualizado correctamente`,
+      });
+    } catch (err) {
+      console.error("Error cambiando estado del estudiante:", err);
+      toast({
+        title: "Error",
+        description: "Error al cambiar el estado del estudiante",
+        variant: "destructive",
+      });
+    } finally {
+      setCambiandoEstado(prev => ({ ...prev, [estudianteId]: false }));
+    }
   };
 
 
@@ -699,6 +802,15 @@ const PageFD = () => {
                 Gestiona las asignaturas disponibles para la encuesta FD
               </p>
               <div className="flex gap-2">
+                <button
+                  onClick={openSeleccionModal}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Ver Cursos y Estudiantes
+                </button>
                 <button
                   onClick={async () => {
                     try {
@@ -1487,6 +1599,224 @@ const PageFD = () => {
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {inscribiendo ? "Inscribiendo..." : "Inscribir Estudiante"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal para seleccionar cursos y estudiantes */}
+      {showSeleccionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Cursos y Estudiantes Disponibles
+              </h2>
+              <button
+                onClick={() => {
+                  setShowSeleccionModal(false);
+                  setCursoSeleccionadoModal(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {loadingSeleccion ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando cursos y estudiantes...</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Resumen general de estados */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Resumen de Estados</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {Object.values(estudiantesPorCursoModal).flat().length}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Total Estudiantes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {Object.values(estudiantesPorCursoModal).flat().filter(est => estadosEstudiantes[est.estudiante_id || est.id] ?? true).length}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Con Acceso</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {Object.values(estudiantesPorCursoModal).flat().filter(est => !(estadosEstudiantes[est.estudiante_id || est.id] ?? true)).length}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Sin Acceso</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Selección de curso */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Seleccionar Curso
+                  </label>
+                  <select
+                    value={cursoSeleccionadoModal || ''}
+                    onChange={(e) => {
+                      const cursoId = e.target.value ? parseInt(e.target.value) : null;
+                      handleCursoChangeModal(cursoId);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Selecciona un curso para ver sus estudiantes</option>
+                    {cursosModal.map((curso) => (
+                      <option key={curso.id} value={curso.id}>
+                        {curso.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Lista de estudiantes del curso seleccionado */}
+                {cursoSeleccionadoModal && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                      Estudiantes del Curso: {cursosModal.find(c => c.id === cursoSeleccionadoModal)?.nombre}
+                    </h3>
+                    {estudiantesPorCursoModal[cursoSeleccionadoModal] && estudiantesPorCursoModal[cursoSeleccionadoModal].length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                              <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Nombre</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">RUT</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Curso</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">ID Estudiante</th>
+                              <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-white">Acceso Encuesta FD</th>
+                              <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-white">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {estudiantesPorCursoModal[cursoSeleccionadoModal].map((estudiante) => {
+                              const estudianteId = estudiante.estudiante_id || estudiante.id;
+                              const tieneAcceso = estadosEstudiantes[estudianteId] ?? true;
+                              const estaCambiando = cambiandoEstado[estudianteId] ?? false;
+                              
+                              return (
+                                <tr
+                                  key={estudianteId}
+                                  className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                >
+                                  <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
+                                    {estudiante.nombre}
+                                  </td>
+                                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                    {estudiante.rut}
+                                  </td>
+                                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                    {cursosModal.find(c => c.id === estudiante.curso_id)?.nombre || `Curso ${estudiante.curso_id}`}
+                                  </td>
+                                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                                    {estudianteId}
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      tieneAcceso 
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                    }`}>
+                                      {tieneAcceso ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <button
+                                      onClick={() => handleCambiarEstadoEstudiante(estudianteId, !tieneAcceso)}
+                                      disabled={estaCambiando}
+                                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        tieneAcceso
+                                          ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800'
+                                          : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800'
+                                      }`}
+                                    >
+                                      {estaCambiando ? (
+                                        <div className="flex items-center gap-1">
+                                          <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div>
+                                          <span>Cambiando...</span>
+                                        </div>
+                                      ) : (
+                                        tieneAcceso ? 'Desactivar' : 'Activar'
+                                      )}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                          Total de estudiantes: {estudiantesPorCursoModal[cursoSeleccionadoModal].length}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 text-4xl mb-2">👥</div>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          No hay estudiantes disponibles en este curso
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Resumen de todos los cursos */}
+                <div className="mt-8">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                    Resumen de Cursos Disponibles
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {cursosModal.map((curso) => (
+                      <div
+                        key={curso.id}
+                        className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
+                      >
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                          {curso.nombre}
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          ID: {curso.id}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Estudiantes: {estudiantesPorCursoModal[curso.id]?.length || 0}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Con acceso: {estudiantesPorCursoModal[curso.id]?.filter(est => estadosEstudiantes[est.estudiante_id || est.id] ?? true).length || 0}
+                        </p>
+                        <button
+                          onClick={() => handleCursoChangeModal(curso.id)}
+                          className="mt-2 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        >
+                          Ver estudiantes
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botón de cerrar */}
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={() => {
+                      setShowSeleccionModal(false);
+                      setCursoSeleccionadoModal(null);
+                    }}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  >
+                    Cerrar
                   </button>
                 </div>
               </div>
