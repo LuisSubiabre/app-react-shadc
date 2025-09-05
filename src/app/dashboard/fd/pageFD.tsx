@@ -373,12 +373,13 @@ const PageFD = () => {
       
       setEstudiantesPorCursoModal(estudiantesPorCursoData);
       
-      // Inicializar estados de estudiantes (por defecto todos tienen acceso)
+      // Inicializar estados de estudiantes con los valores reales del backend
       const estadosIniciales: Record<number, boolean> = {};
       Object.values(estudiantesPorCursoData).forEach(estudiantes => {
         estudiantes.forEach(estudiante => {
           const id = estudiante.estudiante_id || estudiante.id;
-          estadosIniciales[id] = true; // Por defecto todos tienen acceso
+          // Usar el valor real del campo acceso_encuesta_fd del backend
+          estadosIniciales[id] = estudiante.acceso_encuesta_fd ?? true;
         });
       });
       setEstadosEstudiantes(estadosIniciales);
