@@ -73,10 +73,8 @@ const PageFD = () => {
   // Función para cargar inscritos de una asignatura y actualizar automáticamente los cupos
   const fetchInscritosAsignatura = async (asignatura_encuesta_id: number) => {
     try {
-      console.log(`Fetching inscritos for asignatura ${asignatura_encuesta_id}...`);
       setLoadingInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: true }));
       const response = await getInscritosEncuestaFD(asignatura_encuesta_id);
-      console.log(`Response for asignatura ${asignatura_encuesta_id}:`, response);
       setInscritosPorAsignatura(prev => ({ ...prev, [asignatura_encuesta_id]: response }));
       
       // Los cupos se actualizan automáticamente en la base de datos
@@ -102,12 +100,10 @@ const PageFD = () => {
         });
       }
       
-      console.log(`Estado actualizado para asignatura ${asignatura_encuesta_id}`);
     } catch (err: unknown) {
       // Si es un error 404, significa que no hay inscritos para esta asignatura
       const axiosError = err as { response?: { status?: number } };
       if (axiosError?.response?.status === 404) {
-        console.log(`No hay inscritos para asignatura ${asignatura_encuesta_id}`);
         
         // Crear una respuesta vacía para asignaturas sin inscritos
         const emptyResponse = {
@@ -180,9 +176,7 @@ const PageFD = () => {
   const fetchInscritosAnteriores = async (asignatura_encuesta_id: number) => {
     try {
       setLoadingInscritos(true);
-      console.log('Fetching inscritos for asignatura_encuesta_id:', asignatura_encuesta_id);
       const response = await inscritosAnterioresEncuestaFD(asignatura_encuesta_id);
-      console.log('Response from inscritosAnterioresEncuestaFD:', response);
       setInscritosAnteriores(response);
     } catch (err) {
       console.error("Error fetching inscritos anteriores:", err);
@@ -219,10 +213,7 @@ const PageFD = () => {
 
     try {
       setDeletingInscrito(true);
-      console.log('Eliminando inscrito:', inscritoToDelete.eleccion_id);
       await eliminarInscritoEncuestaFD(inscritoToDelete.eleccion_id);
-      
-      console.log('Inscrito eliminado, actualizando estado...');
       
       // Actualizar el estado inmediatamente removiendo el inscrito eliminado
       setInscritosPorAsignatura(prev => {
@@ -248,7 +239,6 @@ const PageFD = () => {
           estadisticas: updatedEstadisticas
         };
         
-        console.log('Estado actualizado:', updatedData);
         
         // Los cupos se actualizan automáticamente en la base de datos
         // Solo actualizamos el estado local
@@ -321,7 +311,6 @@ const PageFD = () => {
         }
       }
       
-      console.log('Estudiantes por curso:', estudiantesPorCursoData);
       setEstudiantesPorCurso(estudiantesPorCursoData);
       
       // Inicializar elección solo para la asignatura específica
@@ -344,7 +333,6 @@ const PageFD = () => {
   };
 
   const handleEstudianteChange = (estudiante: EstudianteType | null) => {
-    console.log('Estudiante seleccionado:', estudiante);
     setEstudianteSeleccionado(estudiante);
   };
 
@@ -383,8 +371,6 @@ const PageFD = () => {
         }
       }
       
-      console.log('Estudiantes por curso (modal):', estudiantesPorCursoData);
-      console.log('Primer estudiante de ejemplo:', estudiantesPorCursoData[25]?.[0]);
       setEstudiantesPorCursoModal(estudiantesPorCursoData);
       
       // Inicializar estados de estudiantes (por defecto todos tienen acceso)
@@ -416,13 +402,6 @@ const PageFD = () => {
   const handleCambiarEstadoEstudiante = async (estudianteId: number, nuevoEstado: boolean) => {
     try {
       setCambiandoEstado(prev => ({ ...prev, [estudianteId]: true }));
-      
-      console.log(`=== FUNCIÓN handleCambiarEstadoEstudiante ===`);
-      console.log(`Cambiando estado del estudiante ${estudianteId} a ${nuevoEstado}`);
-      console.log(`Tipo de estudianteId:`, typeof estudianteId);
-      console.log(`URL que se construirá: /estudiantes/${estudianteId}/acceso-encuesta`);
-      console.log(`Token en localStorage:`, localStorage.getItem('token') ? 'Presente' : 'Ausente');
-      console.log(`===============================================`);
       
       if (!estudianteId || estudianteId === undefined) {
         throw new Error('ID del estudiante es undefined o inválido');
@@ -480,9 +459,6 @@ const PageFD = () => {
         elecciones: elecciones
       };
       
-      console.log('Inscribiendo estudiante con datos:', data);
-      console.log('Estudiante seleccionado:', estudianteSeleccionado);
-      console.log('Elecciones:', elecciones);
       await inscribirEstudianteEncuestaFD(data);
       
       // Recargar los inscritos de la asignatura específica

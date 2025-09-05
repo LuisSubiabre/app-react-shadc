@@ -40,41 +40,27 @@ export const deleteAsignaturaEncuestaFD = async (asignatura_encuesta_id: number)
 
 export const inscritosAnterioresEncuestaFD = async (asignatura_encuesta_id: number): Promise<InscritoAnteriorEncuestaFDType[]> => {
   const url = `/fd-encuesta/anterior/${asignatura_encuesta_id}`;
-  console.log('Calling inscritosAnterioresEncuestaFD with URL:', url);
   return api.get(url).then((response) => response.data);
 };
 
 export const getInscritosEncuestaFD = async (asignatura_encuesta_id: number): Promise<InscritosEncuestaFDResponseType> => {
   const url = `/fd-encuesta/elecciones/asignatura/${asignatura_encuesta_id}`;
-  console.log('Calling getInscritosEncuestaFD with URL:', url);
   return api.get(url).then((response) => response.data);
 };
 
 export const eliminarInscritoEncuestaFD = async (inscrito_encuesta_id: number) => {
   const url = `/fd-encuesta/elecciones/${inscrito_encuesta_id}`;
-  console.log('Calling eliminarInscritoEncuestaFD with URL:', url);
   return api.delete(url).then((response) => response.data);
 };
 
 export const inscribirEstudianteEncuestaFD = async (data: InscribirEstudianteEncuestaFDType) => {
   const url = `/fd-encuesta/elecciones`;
-  console.log('Calling inscribirEstudianteEncuestaFD with URL:', url, 'and data:', data);
   return api.post(url, data).then((response) => response.data);
 };
 
 export const visualizarEncuestaFD = async (estudiante_id: number, acceso_encuesta_fd: boolean) => {
   const url = `/estudiantes/${estudiante_id}/acceso-encuesta`;
   const data = { acceso_encuesta_fd };
-  console.log('=== SERVICIO visualizarEncuestaFD ===');
-  console.log('URL completa:', api.defaults.baseURL + url);
-  console.log('URL relativa:', url);
-  console.log('Datos a enviar:', data);
-  console.log('Estudiante ID:', estudiante_id);
-  console.log('Tipo de estudiante_id:', typeof estudiante_id);
-  console.log('Método HTTP: PATCH');
-  console.log('Headers:', api.defaults.headers);
-  console.log('=====================================');
-  
   return api.patch(url, data).then((response) => response.data);
 };
 
