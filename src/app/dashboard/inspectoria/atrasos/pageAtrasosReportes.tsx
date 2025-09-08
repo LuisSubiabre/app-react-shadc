@@ -10,6 +10,7 @@ import { getCursos } from "@/services/cursosService";
 import { CursoApiResponseType } from "@/types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import AtrasosEstadisticas from "@/components/estadisticas/AtrasosEstadisticas";
 import {
   Dialog,
   DialogContent,
@@ -495,6 +496,12 @@ const PageAtrasosReportes = () => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Estadísticas y Gráficos */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Estadísticas y Gráficos de Atrasos</h2>
+            <AtrasosEstadisticas />
           </div>
         </div>
       </main>
