@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.4.5](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.4...v4.4.5) (2025-09-09)
+
+### [4.4.4](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.3...v4.4.4) (2025-09-09)
+
+
+### Features
+
+* actualizar lógica de acceso a encuesta FD en PageFD ([018c572](https://github.com/LuisSubiabre/app-react-shadc/commit/018c5728f264ffade48e0d7ba79f9a31b8e93cde))
+* actualizar texto del botón en PageFD ([f762328](https://github.com/LuisSubiabre/app-react-shadc/commit/f7623281a295426844de499d500c92fa5e6f0a04))
+* agregar funcionalidad de selección de cursos y estudiantes en PageFD ([81ed7d9](https://github.com/LuisSubiabre/app-react-shadc/commit/81ed7d9222852f2fe57b3dad37dd4b82f9941a18))
+* agregar sección de estadísticas y gráficos de atrasos en PageAtrasosReportes ([70c5579](https://github.com/LuisSubiabre/app-react-shadc/commit/70c5579e9841aa62b33bc3f37b6fe6b5ad0e5525))
+
 ### [4.4.3](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.2...v4.4.3) (2025-09-03)
 
 

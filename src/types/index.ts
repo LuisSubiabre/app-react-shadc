@@ -37,6 +37,7 @@ export interface EstudianteType {
   fecha_creacion?: Date;
   clave?: string; // Agregamos password como opcional
   curso_nombre?: string; // Agregamos curso_nombre como opcional
+  acceso_encuesta_fd?: boolean; // Campo para controlar acceso a encuesta FD
   calificacion1?: number | null;
   calificacion2?: number | null;
   calificacion3?: number | null;
