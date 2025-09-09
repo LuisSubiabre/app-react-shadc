@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,7 +94,7 @@ const AtrasosEstadisticas = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
   // Función para cargar datos
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     if (!fechaInicio || !fechaFin) {
       return;
     }
@@ -128,7 +128,7 @@ const AtrasosEstadisticas = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fechaInicio, fechaFin]);
 
   // Función para calcular estadísticas
   const calcularEstadisticas = (datos: AtrasoReporteType[]) => {
@@ -198,7 +198,6 @@ const AtrasosEstadisticas = () => {
     atrasos.forEach(atraso => {
       const fecha = new Date(atraso.fecha);
       const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-      const nombreMes = fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
       if (!datosPorMes[mes]) {
         datosPorMes[mes] = { atrasos: 0, llegadas: 0, jornadas: 0 };
@@ -226,10 +225,6 @@ const AtrasosEstadisticas = () => {
 
     atrasos.forEach(atraso => {
       const fecha = atraso.fecha.split('T')[0];
-      const fechaFormateada = new Date(fecha).toLocaleDateString('es-ES', { 
-        day: '2-digit', 
-        month: '2-digit' 
-      });
 
       if (!datosPorDia[fecha]) {
         datosPorDia[fecha] = { atrasos: 0, llegadas: 0, jornadas: 0 };
@@ -380,7 +375,7 @@ const AtrasosEstadisticas = () => {
     if (fechaInicio && fechaFin) {
       cargarDatos();
     }
-  }, [fechaInicio, fechaFin]);
+  }, [fechaInicio, fechaFin, cargarDatos]);
 
   const datosPorMes = generarDatosPorMes();
   const datosPorDia = generarDatosPorDia();
@@ -624,7 +619,7 @@ const AtrasosEstadisticas = () => {
                     fill="#8884d8"
                     dataKey="atrasos"
                   >
-                    {datosPorCurso.map((entry, index) => (
+                    {datosPorCurso.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
