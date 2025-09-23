@@ -212,7 +212,10 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
 
           {/* Estadísticas */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setStatusFilter('all')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
