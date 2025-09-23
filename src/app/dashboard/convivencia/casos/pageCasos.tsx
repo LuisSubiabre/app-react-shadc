@@ -25,7 +25,7 @@ import {
   estudiantesCurso,
   getEstudiantes,
 } from "@/services/estudiantesService";
-import { Search, Users, BookOpen, AlertCircle, List } from "lucide-react";
+import { Search, List } from "lucide-react";
 import { ModalCasos } from "@/components/convivencia/ModalCasos";
 import { ModalTodosCasos } from "@/components/convivencia/ModalTodosCasos";
 
