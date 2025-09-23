@@ -188,7 +188,7 @@ const PageCasos = () => {
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm font-semibold mb-2 block text-gray-700 dark:text-gray-300">
                   Filtrar por curso
@@ -225,55 +225,9 @@ const PageCasos = () => {
                   />
                 </div>
               </div>
-
-              <div className="flex items-end">
-                <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white">
-                  <Search className="h-4 w-4 mr-2" />
-                  Buscar
-                </Button>
-              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total estudiantes</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{filteredEstudiantes.length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiantes activos</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {filteredEstudiantes.filter((e) => e.activo).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiantes inactivos</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {filteredEstudiantes.filter((e) => !e.activo).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
