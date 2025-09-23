@@ -67,9 +67,9 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
           case "completed":
             return progreso === 100;
           case "in-progress":
-            return progreso >= 50 && progreso < 100;
+            return progreso >= 25 && progreso < 100;
           case "started":
-            return progreso < 50;
+            return progreso === 0;
           default:
             return true;
         }
@@ -225,7 +225,10 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setStatusFilter('completed')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -240,7 +243,10 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setStatusFilter('in-progress')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
@@ -249,22 +255,25 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">En progreso</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {casos.filter(c => getProgresoTotal(c) >= 50 && getProgresoTotal(c) < 100).length}
+                      {casos.filter(c => getProgresoTotal(c) >= 25 && getProgresoTotal(c) < 100).length}
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setStatusFilter('started')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                     <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Estudiantes únicos</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Iniciados</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {new Set(casos.map(c => c.estudiante_id)).size}
+                      {casos.filter(c => getProgresoTotal(c) === 0).length}
                     </p>
                   </div>
                 </div>
