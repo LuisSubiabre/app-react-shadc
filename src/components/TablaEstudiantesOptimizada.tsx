@@ -24,6 +24,8 @@ import { createAtraso } from "@/services/atrasosService";
 import { printAtraso } from "@/services/printService";
 import TalleresInscritosButton from "./TalleresInscritosButton";
 import { Badge } from "@/components/ui/badge";
+import { ModalCasosReadOnly } from "./ModalCasosReadOnly";
+import { FileText } from "lucide-react";
 
 interface TablaEstudiantesOptimizadaProps {
   showAtrasosButtons?: boolean;
@@ -40,6 +42,8 @@ const TablaEstudiantesOptimizada = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [cursoSeleccionado, setCursoSeleccionado] = useState<string>("todos");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCasosModalOpen, setIsCasosModalOpen] = useState(false);
+  const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
 
   useEffect(() => {
     const fetchEstudiantes = async () => {
@@ -113,6 +117,16 @@ const TablaEstudiantesOptimizada = ({
     } catch (error) {
       alert("Error al registrar el atraso:" + error);
     }
+  };
+
+  const handleOpenCasosModal = (estudiante: EstudianteType) => {
+    setSelectedEstudiante(estudiante);
+    setIsCasosModalOpen(true);
+  };
+
+  const handleCloseCasosModal = () => {
+    setIsCasosModalOpen(false);
+    setSelectedEstudiante(null);
   };
 
   const filteredEstudiantes = useMemo(() => {
@@ -290,19 +304,20 @@ const TablaEstudiantesOptimizada = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40%]">Estudiante</TableHead>
-                <TableHead className="w-[25%]">Curso</TableHead>
+                <TableHead className="w-[35%]">Estudiante</TableHead>
+                <TableHead className="w-[20%]">Curso</TableHead>
                 {showAtrasosButtons && (
-                  <TableHead className="w-[20%] text-center">Acciones</TableHead>
+                  <TableHead className="w-[15%] text-center">Acciones</TableHead>
                 )}
                 <TableHead className="w-[15%] text-center">Talleres</TableHead>
+                <TableHead className="w-[15%] text-center">Casos</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedEstudiantes.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={showAtrasosButtons ? 4 : 3}
+                    colSpan={showAtrasosButtons ? 5 : 4}
                     className="text-center py-8"
                   >
                     <div className="flex flex-col items-center gap-2">
@@ -360,6 +375,18 @@ const TablaEstudiantesOptimizada = ({
                     <TableCell className="text-center">
                       <TalleresInscritosButton estudianteId={estudiante.id} />
                     </TableCell>
+                    
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenCasosModal(estudiante)}
+                        className="h-7 px-3 text-xs"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Casos
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -414,6 +441,13 @@ const TablaEstudiantesOptimizada = ({
           </div>
         )}
       </CardContent>
+
+      {/* Modal de Casos (Solo Lectura) */}
+      <ModalCasosReadOnly
+        isOpen={isCasosModalOpen}
+        onClose={handleCloseCasosModal}
+        estudiante={selectedEstudiante}
+      />
     </Card>
   );
 };

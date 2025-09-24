@@ -66,4 +66,51 @@ export const getAllCasos = async () => {
   const response = await api.get('/convivencia-casos/all');
   return response.data;
 }
-  
+
+// ** Servicios para Comentarios de Convivencia **
+
+export const getComentariosConvivenciaCaso = async (casoId: number) => {
+  try {
+    const response = await api.get(`/convivencia-casos/comentarios/${casoId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error en getComentariosConvivenciaCaso:', error);
+    throw error;
+  }
+};
+
+export const insertComentarioConvivencia = async (data: {
+  caso_id: number;
+  comentario: string;
+  usuario_id?: number;
+}) => {
+  try {
+    const response = await api.post('/convivencia-casos/comentarios', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error en insertComentarioConvivencia:', error);
+    throw error;
+  }
+};
+
+export const updateComentarioConvivencia = async (comentarioId: number, data: {
+  comentario: string;
+}) => {
+  try {
+    const response = await api.put(`/convivencia-casos/comentarios/${comentarioId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error en updateComentarioConvivencia:', error);
+    throw error;
+  }
+};
+
+export const deleteComentarioConvivencia = async (comentarioId: number) => {
+  try {
+    const response = await api.delete(`/convivencia-casos/comentarios/${comentarioId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error en deleteComentarioConvivencia:', error);
+    throw error;
+  }
+};
