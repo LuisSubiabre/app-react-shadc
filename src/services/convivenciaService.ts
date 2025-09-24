@@ -97,7 +97,7 @@ export const updateComentarioConvivencia = async (comentarioId: number, data: {
   comentario: string;
 }) => {
   try {
-    const response = await api.put(`/convivencia-comentarios/${comentarioId}`, data);
+    const response = await api.put(`/convivencia-casos/comentarios/${comentarioId}/`, data);
     return response.data;
   } catch (error) {
     console.error('Error en updateComentarioConvivencia:', error);
@@ -107,7 +107,7 @@ export const updateComentarioConvivencia = async (comentarioId: number, data: {
 
 export const deleteComentarioConvivencia = async (comentarioId: number) => {
   try {
-    const response = await api.delete(`/convivencia-comentarios/${comentarioId}`);
+    const response = await api.delete(`/convivencia-casos/comentarios/${comentarioId}/`);
     return response.data;
   } catch (error) {
     console.error('Error en deleteComentarioConvivencia:', error);

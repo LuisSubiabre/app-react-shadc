@@ -152,7 +152,13 @@ export function ModalCasosReadOnly({
   };
 
   const puedeEditarComentario = (comentario: ComentarioConvivenciaType) => {
-    return user && comentario.usuario_id === parseInt(user.id);
+    if (!user) return false;
+    
+    // Comparar IDs como números para mayor precisión
+    const userId = parseInt(user.id);
+    const comentarioUsuarioId = parseInt(comentario.usuario_id.toString());
+    
+    return userId === comentarioUsuarioId;
   };
 
   const formatearFecha = (fechaStr: string) => {
