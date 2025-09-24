@@ -71,7 +71,7 @@ export const getAllCasos = async () => {
 
 export const getComentariosConvivenciaCaso = async (casoId: number) => {
   try {
-    const response = await api.get(`/convivencia-casos/comentarios/${casoId}`);
+    const response = await api.get(`/convivencia-casos/comentarios/${casoId}/`);
     return response.data;
   } catch (error) {
     console.error('Error en getComentariosConvivenciaCaso:', error);
@@ -82,10 +82,10 @@ export const getComentariosConvivenciaCaso = async (casoId: number) => {
 export const insertComentarioConvivencia = async (data: {
   caso_id: number;
   comentario: string;
-  usuario_id?: number;
+  usuario_id: number;
 }) => {
   try {
-    const response = await api.post('/convivencia-casos/comentarios', data);
+    const response = await api.post('/convivencia-casos/comentarios/', data);
     return response.data;
   } catch (error) {
     console.error('Error en insertComentarioConvivencia:', error);
@@ -97,7 +97,7 @@ export const updateComentarioConvivencia = async (comentarioId: number, data: {
   comentario: string;
 }) => {
   try {
-    const response = await api.put(`/convivencia-casos/comentarios/${comentarioId}`, data);
+    const response = await api.put(`/convivencia-comentarios/${comentarioId}`, data);
     return response.data;
   } catch (error) {
     console.error('Error en updateComentarioConvivencia:', error);
@@ -107,7 +107,7 @@ export const updateComentarioConvivencia = async (comentarioId: number, data: {
 
 export const deleteComentarioConvivencia = async (comentarioId: number) => {
   try {
-    const response = await api.delete(`/convivencia-casos/comentarios/${comentarioId}`);
+    const response = await api.delete(`/convivencia-comentarios/${comentarioId}`);
     return response.data;
   } catch (error) {
     console.error('Error en deleteComentarioConvivencia:', error);

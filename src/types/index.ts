@@ -201,6 +201,16 @@ export interface CasoConvivenciaType {
   fecha_actualizacion: string;
 }
 
+export interface ComentarioConvivenciaType {
+  comentario_id: number;
+  caso_id: number;
+  comentario: string;
+  usuario_id: number;
+  usuario_nombre?: string;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+}
+
 export interface AsignaturaEncuestaFDType {
   asignatura_encuesta_id: number;
   nombre: string;
