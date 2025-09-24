@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EstudianteType, CasoConvivenciaType, ComentarioConvivenciaType } from "@/types";
@@ -50,6 +60,8 @@ export function ModalCasosReadOnly({
   const [nuevoComentario, setNuevoComentario] = useState<{ [casoId: number]: string }>({});
   const [editandoComentario, setEditandoComentario] = useState<{ [comentarioId: number]: string }>({});
   const [casoSeleccionado, setCasoSeleccionado] = useState<number | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [comentarioToDelete, setComentarioToDelete] = useState<{ id: number; casoId: number } | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -129,25 +141,36 @@ export function ModalCasosReadOnly({
     try {
       await updateComentarioConvivencia(comentarioId, { comentario });
       
-      // Limpiar el estado de edición y recargar comentarios
-      setEditandoComentario(prev => ({
-        ...prev,
-        [comentarioId]: ""
-      }));
+      // Limpiar completamente el estado de edición
+      setEditandoComentario(prev => {
+        const newState = { ...prev };
+        delete newState[comentarioId];
+        return newState;
+      });
+      
+      // Recargar comentarios para mostrar la actualización
       fetchComentarios(casoId);
     } catch (error) {
       console.error("Error al editar comentario:", error);
     }
   };
 
-  const handleEliminarComentario = async (comentarioId: number, casoId: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este comentario?")) return;
+  const handleEliminarComentario = (comentarioId: number, casoId: number) => {
+    setComentarioToDelete({ id: comentarioId, casoId });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteComentario = async () => {
+    if (!comentarioToDelete) return;
 
     try {
-      await deleteComentarioConvivencia(comentarioId);
-      fetchComentarios(casoId);
+      await deleteComentarioConvivencia(comentarioToDelete.id);
+      fetchComentarios(comentarioToDelete.casoId);
     } catch (error) {
       console.error("Error al eliminar comentario:", error);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setComentarioToDelete(null);
     }
   };
 
@@ -430,6 +453,27 @@ export function ModalCasosReadOnly({
           )}
         </div>
       </DialogContent>
+
+      {/* Dialog de confirmación de eliminación */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar comentario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar este comentario? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteComentario}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
