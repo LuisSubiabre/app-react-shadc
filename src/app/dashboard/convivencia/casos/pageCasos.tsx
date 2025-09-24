@@ -26,7 +26,7 @@ import {
   getEstudiantes,
 } from "@/services/estudiantesService";
 import { Search, List } from "lucide-react";
-import { ModalCasos } from "@/components/convivencia/ModalCasos";
+import { ModalCasosCompleto } from "@/components/ModalCasosCompleto";
 import { ModalTodosCasos } from "@/components/convivencia/ModalTodosCasos";
 
 const PageCasos = () => {
@@ -373,7 +373,7 @@ const PageCasos = () => {
       </main>
 
       {/* Modal de Casos */}
-      <ModalCasos
+      <ModalCasosCompleto
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         estudiante={selectedEstudiante}
