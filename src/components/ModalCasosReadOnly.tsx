@@ -266,13 +266,13 @@ export function ModalCasosReadOnly({
               <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando casos...</p>
             </div>
           ) : casos.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Lista de casos */}
-              <div className="space-y-4">
+              <div className="lg:col-span-1 space-y-4">
                 {casos.map((caso) => (
                 <div
                   key={caso.caso_id}
-                  className={`bg-white dark:bg-gray-800 border rounded-lg p-4 shadow-sm cursor-pointer transition-colors ${
+                  className={`bg-white dark:bg-gray-800 border rounded-lg p-3 shadow-sm cursor-pointer transition-colors ${
                     casoSeleccionado === caso.caso_id 
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
@@ -280,12 +280,12 @@ export function ModalCasosReadOnly({
                   onClick={() => setCasoSeleccionado(caso.caso_id)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <AlertCircle className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
                           Caso #{caso.caso_id}
                         </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -294,35 +294,186 @@ export function ModalCasosReadOnly({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-sm font-bold text-blue-600">
                         {getProgresoTotal(caso)}%
                       </div>
                       <div className="text-xs text-gray-500">Progreso</div>
-                    </div>
-                  </div>
-
-                  {/* Información básica */}
-                  <div className="mt-3">
-                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>Actualizado: {formatearFecha(caso.fecha_actualizacion)}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
               ))}
               </div>
 
-              {/* Sección de comentarios */}
+              {/* Información detallada del caso seleccionado */}
               {casoSeleccionado && (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <MessageSquare className="h-5 w-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Comentarios
-                    </h3>
-                  </div>
+                <div className="lg:col-span-2 space-y-4">
+                  {/* Información del caso */}
+                  {(() => {
+                    const caso = casos.find(c => c.caso_id === casoSeleccionado);
+                    if (!caso) return null;
+                    
+                    return (
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Caso #{caso.caso_id}
+                              </h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Creado el {formatearFecha(caso.fecha_creacion)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {getProgresoTotal(caso)}%
+                            </div>
+                            <div className="text-sm text-gray-500">Progreso</div>
+                          </div>
+                        </div>
+
+                        {/* Progreso de pasos */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            Progreso del Protocolo
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {/* Paso 1 */}
+                            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Paso 1
+                                  </span>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">Inicio</p>
+                                </div>
+                                {getEstadoPaso(caso.paso1, caso.fecha_paso1)}
+                              </div>
+                              {caso.fecha_paso1 && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                                  {formatearFecha(caso.fecha_paso1)}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Paso 2 */}
+                            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Paso 2
+                                  </span>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">Investigación</p>
+                                </div>
+                                {getEstadoPaso(caso.paso2, caso.fecha_paso2)}
+                              </div>
+                              {caso.fecha_paso2 && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                                  {formatearFecha(caso.fecha_paso2)}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Paso 3 */}
+                            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Paso 3
+                                  </span>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">Cierre</p>
+                                </div>
+                                {getEstadoPaso(caso.paso3, caso.fecha_paso3)}
+                              </div>
+                              {caso.fecha_paso3 && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                                  {formatearFecha(caso.fecha_paso3)}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Paso 4 */}
+                            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Paso 4
+                                  </span>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">Seguimiento</p>
+                                </div>
+                                {getEstadoPaso(caso.paso4, caso.fecha_paso4)}
+                              </div>
+                              {caso.fecha_paso4 && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded border">
+                                  {formatearFecha(caso.fecha_paso4)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Información adicional */}
+                        {(caso.observaciones || caso.url) && (
+                          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                            {caso.observaciones && (
+                              <div className="mb-3">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                  <FileText className="h-4 w-4" />
+                                  Observaciones:
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 p-3 rounded border">
+                                  {caso.observaciones}
+                                </p>
+                              </div>
+                            )}
+                            {caso.url && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                  <Link className="h-4 w-4" />
+                                  Enlace:
+                                </p>
+                                <a
+                                  href={caso.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline break-all"
+                                >
+                                  {caso.url}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Fechas */}
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>Creado: {formatearFecha(caso.fecha_creacion)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>Actualizado: {formatearFecha(caso.fecha_actualizacion)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Sección de comentarios */}
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <MessageSquare className="h-5 w-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Comentarios
+                      </h3>
+                    </div>
 
                   {/* Lista de comentarios */}
                   <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
@@ -434,6 +585,7 @@ export function ModalCasosReadOnly({
                         </Button>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
               )}
