@@ -272,22 +272,41 @@ export function ModalCasosReadOnly({
                 {casos.map((caso) => (
                 <div
                   key={caso.caso_id}
-                  className={`bg-white dark:bg-gray-800 border rounded-lg p-3 shadow-sm cursor-pointer transition-colors ${
+                  className={`bg-white dark:bg-gray-800 border rounded-lg p-3 shadow-sm cursor-pointer transition-colors relative ${
                     casoSeleccionado === caso.caso_id 
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
+                  style={{ borderLeft: `3px solid ${caso.falta_color}` }}
                   onClick={() => setCasoSeleccionado(caso.caso_id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <AlertCircle className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      <div 
+                        className="p-1.5 rounded-lg"
+                        style={{ 
+                          backgroundColor: `${caso.falta_color}20`,
+                          border: `1px solid ${caso.falta_color}40`
+                        }}
+                      >
+                        <AlertCircle 
+                          className="h-3 w-3" 
+                          style={{ color: caso.falta_color }}
+                        />
                       </div>
                       <div>
                         <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
                           Caso #{caso.caso_id}
                         </h3>
+                        <div className="flex items-center gap-1 mt-1">
+                          <div 
+                            className="w-2 h-2 rounded-full border border-gray-300"
+                            style={{ backgroundColor: caso.falta_color }}
+                          />
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            {caso.falta_nombre}
+                          </span>
+                        </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {formatearFecha(caso.fecha_creacion)}
                         </p>
@@ -313,16 +332,37 @@ export function ModalCasosReadOnly({
                     if (!caso) return null;
                     
                     return (
-                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                      <div 
+                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 relative"
+                        style={{ borderLeft: `4px solid ${caso.falta_color}` }}
+                      >
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <div 
+                              className="p-2 rounded-lg"
+                              style={{ 
+                                backgroundColor: `${caso.falta_color}20`,
+                                border: `2px solid ${caso.falta_color}40`
+                              }}
+                            >
+                              <AlertCircle 
+                                className="h-5 w-5" 
+                                style={{ color: caso.falta_color }}
+                              />
                             </div>
                             <div>
                               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Caso #{caso.caso_id}
                               </h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-gray-300"
+                                  style={{ backgroundColor: caso.falta_color }}
+                                />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {caso.falta_nombre}
+                                </span>
+                              </div>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
                                 Creado el {formatearFecha(caso.fecha_creacion)}
                               </p>
