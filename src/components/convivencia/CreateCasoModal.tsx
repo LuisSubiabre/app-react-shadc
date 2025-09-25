@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { EstudianteType } from "@/types";
-import { createCaso } from "@/services/convivenciaService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EstudianteType, FaltaType } from "@/types";
+import { createCaso, getFaltas } from "@/services/convivenciaService";
 import { format } from "date-fns";
-import { Plus, Link, FileText, Save, X } from "lucide-react";
+import { Plus, Link, FileText, Save, X, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface CreateCasoModalProps {
@@ -41,11 +48,46 @@ export function CreateCasoModal({
     fecha_paso4: "",
     url: "",
     observaciones: "",
+    falta_id: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [faltas, setFaltas] = useState<FaltaType[]>([]);
+  const [loadingFaltas, setLoadingFaltas] = useState(false);
+
+  useEffect(() => {
+    const fetchFaltas = async () => {
+      setLoadingFaltas(true);
+      try {
+        const response = await getFaltas();
+        setFaltas(response.data || response);
+      } catch (error) {
+        console.error("Error al obtener faltas:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los tipos de falta.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingFaltas(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchFaltas();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async () => {
     if (!estudiante) return;
+
+    if (!formData.falta_id) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar un tipo de falta.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -61,6 +103,7 @@ export function CreateCasoModal({
         fecha_paso4: formData.paso4 && formData.fecha_paso4 ? new Date(formData.fecha_paso4).toISOString() : null,
         url: formData.url || null,
         observaciones: formData.observaciones || null,
+        falta_id: parseInt(formData.falta_id),
       };
 
       await createCaso(createData);
@@ -96,6 +139,7 @@ export function CreateCasoModal({
       fecha_paso4: "",
       url: "",
       observaciones: "",
+      falta_id: "",
     });
     onClose();
   };
@@ -136,6 +180,45 @@ export function CreateCasoModal({
                   {estudiante.curso_nombre}
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Selección de tipo de falta */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Tipo de Falta
+            </h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="falta_id" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Seleccionar tipo de falta *
+              </Label>
+              <Select
+                value={formData.falta_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, falta_id: value }))}
+                disabled={loadingFaltas}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={loadingFaltas ? "Cargando faltas..." : "Seleccionar tipo de falta"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {faltas.map((falta) => (
+                    <SelectItem key={falta.falta_id} value={falta.falta_id.toString()}>
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded-full border-2 border-gray-300"
+                          style={{ backgroundColor: falta.color }}
+                        />
+                        <div>
+                          <div className="font-medium">{falta.nombre}</div>
+                          <div className="text-sm text-gray-500">{falta.descripcion}</div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -309,8 +392,8 @@ export function CreateCasoModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+            disabled={isLoading || !formData.falta_id}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
             {isLoading ? "Creando..." : "Crear Caso"}

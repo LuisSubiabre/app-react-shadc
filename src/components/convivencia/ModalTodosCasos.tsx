@@ -322,6 +322,15 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
                                 {formatearFecha(caso.fecha_creacion)}
                               </span>
                             </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div 
+                                className="w-2 h-2 rounded-full border border-gray-300"
+                                style={{ backgroundColor: caso.falta_color }}
+                              />
+                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                {caso.falta_nombre}
+                              </span>
+                            </div>
                           </div>
                         </div>
 

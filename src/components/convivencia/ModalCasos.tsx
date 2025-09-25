@@ -242,6 +242,15 @@ export function ModalCasos({
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Caso #{caso.caso_id}
                           </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div 
+                              className="w-3 h-3 rounded-full border border-gray-300"
+                              style={{ backgroundColor: caso.falta_color }}
+                            />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {caso.falta_nombre}
+                            </span>
+                          </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             Creado el {formatearFecha(caso.fecha_creacion)}
                           </p>

@@ -35,6 +35,7 @@ export const createCaso = async (data: {
   fecha_paso4: string | null;
   url: string | null;
   observaciones: string | null;
+  falta_id: number;
 }) => {
   const response = await api.post('/convivencia-casos', data);
   return response.data;
@@ -52,6 +53,7 @@ export const updateCaso = async (caso_id: number, data: {
   fecha_paso4: string | null;
   url: string | null;
   observaciones: string | null;
+  falta_id: number;
 }) => {
   const response = await api.put(`/convivencia-casos/${caso_id}`, data);
   return response.data;
@@ -111,6 +113,51 @@ export const deleteComentarioConvivencia = async (comentarioId: number) => {
     return response.data;
   } catch (error) {
     console.error('Error en deleteComentarioConvivencia:', error);
+    throw error;
+  }
+};
+
+export const getFaltas = async () => {
+  const response = await api.get(`/convivencia-casos/faltas`);
+  return response.data;
+};
+
+// ** Servicios para Gestión de Faltas **
+
+export const postFaltas = async (data: {
+  nombre: string;
+  descripcion: string;
+  color: string;
+}) => {
+  try {
+    const response = await api.post('/convivencia-casos/faltas', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error en postFaltas:', error);
+    throw error;
+  }
+};
+
+export const updateFaltas = async (faltaId: number, data: {
+  nombre: string;
+  descripcion: string;
+  color: string;
+}) => {
+  try {
+    const response = await api.put(`/convivencia-casos/faltas/${faltaId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error en updateFaltas:', error);
+    throw error;
+  }
+};
+
+export const deleteFaltas = async (faltaId: number) => {
+  try {
+    const response = await api.delete(`/convivencia-casos/faltas/${faltaId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error en deleteFaltas:', error);
     throw error;
   }
 };
