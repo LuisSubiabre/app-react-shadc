@@ -11,7 +11,7 @@ import { EstudianteType } from "@/types";
 import { useState, useEffect, useMemo } from "react";
 import { getEstudiantes } from "@/services/estudiantesService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Clock, Users, BookOpen, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Clock, Users, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,

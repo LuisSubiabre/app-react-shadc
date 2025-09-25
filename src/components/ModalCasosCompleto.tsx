@@ -24,8 +24,6 @@ import {
   insertComentarioConvivencia, 
   updateComentarioConvivencia, 
   deleteComentarioConvivencia,
-  createCaso,
-  updateCaso,
   deleteCaso
 } from "@/services/convivenciaService";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,7 +36,6 @@ import {
   Calendar,
   AlertCircle,
   Link,
-  Eye,
   MessageSquare,
   Send,
   Edit,
