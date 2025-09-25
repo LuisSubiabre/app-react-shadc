@@ -295,19 +295,32 @@ export const ModalTodosCasos = ({ isOpen, onClose }: ModalTodosCasosProps) => {
           ) : filteredCasos.length > 0 ? (
             <div className="space-y-3">
               {filteredCasos.map((caso) => (
-                <Card key={caso.caso_id} className="hover:shadow-md transition-shadow">
+                <Card 
+                  key={caso.caso_id} 
+                  className="hover:shadow-md transition-shadow relative"
+                  style={{ borderLeft: `4px solid ${caso.falta_color}` }}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       {/* Información principal */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                                {caso.caso_id}
-                              </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="flex-shrink-0">
+                              <div 
+                                className="w-10 h-10 rounded-full flex items-center justify-center border-2"
+                                style={{ 
+                                  backgroundColor: `${caso.falta_color}20`,
+                                  borderColor: caso.falta_color
+                                }}
+                              >
+                                <span 
+                                  className="text-sm font-bold"
+                                  style={{ color: caso.falta_color }}
+                                >
+                                  {caso.caso_id}
+                                </span>
+                              </div>
                             </div>
-                          </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
                               {caso.estudiante_nombre}

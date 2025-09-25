@@ -231,12 +231,22 @@ export function ModalCasos({
                 {casos.map((caso) => (
                   <div
                     key={caso.caso_id}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm"
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm relative"
+                    style={{ borderLeft: `4px solid ${caso.falta_color}` }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                          <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ 
+                            backgroundColor: `${caso.falta_color}20`,
+                            border: `2px solid ${caso.falta_color}40`
+                          }}
+                        >
+                          <AlertCircle 
+                            className="h-5 w-5" 
+                            style={{ color: caso.falta_color }}
+                          />
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
