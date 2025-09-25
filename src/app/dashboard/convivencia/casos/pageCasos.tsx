@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,15 +19,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { CursoApiResponseType, EstudianteType } from "@/types";
 import { getCursos } from "@/services/cursosService";
 import {
   estudiantesCurso,
   getEstudiantes,
 } from "@/services/estudiantesService";
-import { Search, Users, BookOpen, AlertCircle, List } from "lucide-react";
-import { ModalCasos } from "@/components/convivencia/ModalCasos";
+import { Search, List, Users, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModalCasosCompleto } from "@/components/ModalCasosCompleto";
 import { ModalTodosCasos } from "@/components/convivencia/ModalTodosCasos";
+
+const ITEMS_PER_PAGE = 20;
 
 const PageCasos = () => {
   const [estudiantes, setEstudiantes] = useState<EstudianteType[]>([]);
@@ -38,6 +42,7 @@ const PageCasos = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEstudiante, setSelectedEstudiante] = useState<EstudianteType | null>(null);
   const [isTodosCasosModalOpen, setIsTodosCasosModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchCursos = async () => {
@@ -84,60 +89,79 @@ const PageCasos = () => {
   const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const filteredEstudiantes = estudiantes
-    .filter((estudiante) => {
-      if (!searchTerm) return true;
+  const filteredEstudiantes = useMemo(() => {
+    return estudiantes
+      .filter((estudiante) => {
+        if (!searchTerm) return true;
 
-      const searchTermNormalized = normalizeString(
-        searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
-      );
-      const nombreNormalized = normalizeString(estudiante.nombre.toLowerCase());
-      const rutNormalized = normalizeString(
-        estudiante.rut?.toLowerCase() || ""
-      );
-      const emailNormalized = normalizeString(
-        estudiante.email?.toLowerCase() || ""
-      );
-      const cursoNormalized = normalizeString(
-        estudiante.curso_nombre?.toLowerCase() || ""
-      );
-
-      if (searchTermNormalized.includes(" ")) {
-        const searchWords = searchTermNormalized.split(" ");
-        return searchWords.every(
-          (word) =>
-            nombreNormalized.includes(word) ||
-            rutNormalized.includes(word) ||
-            emailNormalized.includes(word) ||
-            cursoNormalized.includes(word)
+        const searchTermNormalized = normalizeString(
+          searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
         );
-      }
+        const nombreNormalized = normalizeString(estudiante.nombre.toLowerCase());
+        const rutNormalized = normalizeString(
+          estudiante.rut?.toLowerCase() || ""
+        );
+        const emailNormalized = normalizeString(
+          estudiante.email?.toLowerCase() || ""
+        );
+        const cursoNormalized = normalizeString(
+          estudiante.curso_nombre?.toLowerCase() || ""
+        );
 
-      return (
-        nombreNormalized.includes(searchTermNormalized) ||
-        rutNormalized.includes(searchTermNormalized) ||
-        emailNormalized.includes(searchTermNormalized) ||
-        cursoNormalized.includes(searchTermNormalized)
-      );
-    })
-    .sort((a, b) => {
-      if (!searchTerm) return 0;
+        if (searchTermNormalized.includes(" ")) {
+          const searchWords = searchTermNormalized.split(" ");
+          return searchWords.every(
+            (word) =>
+              nombreNormalized.includes(word) ||
+              rutNormalized.includes(word) ||
+              emailNormalized.includes(word) ||
+              cursoNormalized.includes(word)
+          );
+        }
 
-      const searchTermNormalized = normalizeString(
-        searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
-      );
-      const nombreANormalized = normalizeString(a.nombre.toLowerCase());
-      const nombreBNormalized = normalizeString(b.nombre.toLowerCase());
+        return (
+          nombreNormalized.includes(searchTermNormalized) ||
+          rutNormalized.includes(searchTermNormalized) ||
+          emailNormalized.includes(searchTermNormalized) ||
+          cursoNormalized.includes(searchTermNormalized)
+        );
+      })
+      .sort((a, b) => {
+        if (!searchTerm) return 0;
 
-      const posA = nombreANormalized.indexOf(searchTermNormalized);
-      const posB = nombreBNormalized.indexOf(searchTermNormalized);
+        const searchTermNormalized = normalizeString(
+          searchTerm.toLowerCase().replace(/\s+/g, " ").trim()
+        );
+        const nombreANormalized = normalizeString(a.nombre.toLowerCase());
+        const nombreBNormalized = normalizeString(b.nombre.toLowerCase());
 
-      if (posA !== posB) {
-        return posA - posB;
-      }
+        const posA = nombreANormalized.indexOf(searchTermNormalized);
+        const posB = nombreBNormalized.indexOf(searchTermNormalized);
 
-      return nombreANormalized.localeCompare(nombreBNormalized);
-    });
+        if (posA !== posB) {
+          return posA - posB;
+        }
+
+        return nombreANormalized.localeCompare(nombreBNormalized);
+      });
+  }, [estudiantes, searchTerm]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredEstudiantes.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedEstudiantes = filteredEstudiantes.slice(startIndex, endIndex);
+
+  // Resetear página cuando cambien los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCurso]);
+
+  const stats = useMemo(() => ({
+    total: filteredEstudiantes.length,
+    activos: filteredEstudiantes.filter((e) => e.activo).length,
+    inactivos: filteredEstudiantes.filter((e) => !e.activo).length,
+  }), [filteredEstudiantes]);
 
   const handleOpenModal = (estudiante: EstudianteType) => {
     setSelectedEstudiante(estudiante);
@@ -187,18 +211,48 @@ const PageCasos = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="text-sm font-semibold mb-2 block text-gray-700 dark:text-gray-300">
-                  Filtrar por curso
-                </label>
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Estudiantes</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.total} estudiantes registrados
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    <Users className="w-3 h-3 mr-1" />
+                    {stats.activos} activos
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {stats.inactivos} inactivos
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {/* Filtros compactos */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Buscar por nombre, RUT o email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 h-9"
+                    />
+                  </div>
+                </div>
                 <Select
                   value={selectedCurso}
                   onValueChange={setSelectedCurso}
                 >
-                  <SelectTrigger className="w-full h-11 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                    <SelectValue placeholder="Seleccionar curso" />
+                  <SelectTrigger className="w-48 h-9">
+                    <SelectValue placeholder="Filtrar por curso" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los cursos</SelectItem>
@@ -211,215 +265,139 @@ const PageCasos = () => {
                 </Select>
               </div>
 
-              <div>
-                <label className="text-sm font-semibold mb-2 block text-gray-700 dark:text-gray-300">
-                  Buscar estudiante
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Nombre, RUT o email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-11 pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-end">
-                <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white">
-                  <Search className="h-4 w-4 mr-2" />
-                  Buscar
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total estudiantes</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{filteredEstudiantes.length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiantes activos</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {filteredEstudiantes.filter((e) => e.activo).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estudiantes inactivos</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {filteredEstudiantes.filter((e) => !e.activo).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Lista de Estudiantes
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {filteredEstudiantes.length} estudiantes encontrados
-              </p>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900">
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">ID</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Nombre</TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Curso</TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">
-                    Acciones
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                        <p className="text-muted-foreground font-medium">
-                          Cargando estudiantes...
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : estudiantes.length > 0 ? (
-                  filteredEstudiantes.map((estudiante) => (
-                    <TableRow
-                      key={estudiante.estudiante_id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                    >
-                      <TableCell className="font-mono">
-                        <span
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                            estudiante.activo
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
-                        >
-                          {estudiante.activo ? (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={1.5}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                              />
-                            </svg>
-                          ) : (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={1.5}
-                              stroke="currentColor"
-                              className="w-4 h-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18 18 6M6 6l12 12"
-                              />
-                            </svg>
-                          )}
-                          {estudiante.estudiante_id}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {estudiante.nombre}
-                          </span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {estudiante.email}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-sm font-medium text-blue-700 dark:text-blue-400 ring-1 ring-inset ring-blue-700/10">
-                          {estudiante.curso_nombre}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenModal(estudiante)}
-                          className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
-                        >
-                          Gestionar Casos
-                        </Button>
-                      </TableCell>
+              {/* Tabla optimizada */}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[35%]">Estudiante</TableHead>
+                      <TableHead className="w-[20%]">Curso</TableHead>
+                      <TableHead className="w-[15%] text-center">Acciones</TableHead>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                            stroke="currentColor"
-                            className="w-8 h-8 text-gray-400"
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white"></div>
+                            <span className="text-sm text-muted-foreground">
+                              Cargando estudiantes...
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : paginatedEstudiantes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8">
+                          <div className="flex flex-col items-center gap-2">
+                            <Search className="h-8 w-8 text-gray-400" />
+                            <p className="text-sm text-muted-foreground">
+                              No se encontraron estudiantes
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedEstudiantes.map((estudiante) => (
+                        <TableRow
+                          key={estudiante.estudiante_id}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                estudiante.activo ? "bg-green-500" : "bg-red-500"
+                              }`} />
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-sm truncate">
+                                  {estudiante.nombre}
+                                </div>
+                                {estudiante.email && (
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {estudiante.email}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">
+                              {estudiante.curso_nombre || "Sin asignar"}
+                            </Badge>
+                          </TableCell>
+                          
+                          <TableCell className="text-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenModal(estudiante)}
+                              className="h-7 px-3 text-xs"
+                            >
+                              Gestionar Casos
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando {startIndex + 1} a {Math.min(endIndex, filteredEstudiantes.length)} de {filteredEstudiantes.length} estudiantes
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="h-8 w-8 p-0 text-xs"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                            />
-                          </svg>
-                        </div>
-                        <p className="text-gray-900 dark:text-white font-medium">
-                          No hay estudiantes disponibles
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Intenta cambiar los filtros de búsqueda
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
 
       {/* Modal de Casos */}
-      <ModalCasos
+      <ModalCasosCompleto
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         estudiante={selectedEstudiante}

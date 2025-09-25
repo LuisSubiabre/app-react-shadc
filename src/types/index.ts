@@ -182,6 +182,13 @@ export interface TalleresInscritosResponseType {
   talleres: TallerInscritoType[];
 }
 
+export interface FaltaType {
+  falta_id: number;
+  nombre: string;
+  descripcion: string;
+  color: string;
+}
+
 export interface CasoConvivenciaType {
   estudiante_nombre: string;
   curso_nombre: string;
@@ -197,6 +204,20 @@ export interface CasoConvivenciaType {
   fecha_paso4: string | null;
   url: string | null;
   observaciones: string | null;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+  falta_id: number;
+  falta_nombre: string;
+  falta_descripcion: string;
+  falta_color: string;
+}
+
+export interface ComentarioConvivenciaType {
+  comentario_id: number;
+  caso_id: number;
+  comentario: string;
+  usuario_id: number;
+  usuario_nombre?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
 }

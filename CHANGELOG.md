@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.5...v5.0.0) (2025-09-25)
+
+
+### Features
+
+* añadir diálogo de confirmación para eliminar comentarios en ModalCasosReadOnly ([2348333](https://github.com/LuisSubiabre/app-react-shadc/commit/2348333e49e7fcbf8e7e22f11f8e3e6c6435dbd5))
+* añadir funcionalidad de comentarios en el modal de casos ([67c3543](https://github.com/LuisSubiabre/app-react-shadc/commit/67c35437a5d2db14fcf95b8afb84c89bb3b8f989))
+* añadir funcionalidad de modal para casos en TablaEstudiantesOptimizada ([200bbbb](https://github.com/LuisSubiabre/app-react-shadc/commit/200bbbba0cbb52667be40feb16bcad738f8bf998))
+* añadir selección de tipo de falta en el modal de creación de casos y mejorar la visualización de faltas en los modales ([69ad9a0](https://github.com/LuisSubiabre/app-react-shadc/commit/69ad9a0e9a5b10da72f7b57eb3547dc35a8fc65d))
+* añadir selección de tipo de falta en el modal de edición de casos ([b97eaac](https://github.com/LuisSubiabre/app-react-shadc/commit/b97eaac66670af5905a5a6cd55a2b2c4341a725e))
+* eliminar importaciones innecesarias en ModalCasosCompleto y TablaEstudiantesOptimizada ([2347b3c](https://github.com/LuisSubiabre/app-react-shadc/commit/2347b3cd3bc5ede29614f8043c3c17580dfa1938))
+* mejorar diseño y funcionalidad del ModalCasosReadOnly ([873caeb](https://github.com/LuisSubiabre/app-react-shadc/commit/873caebf1e80755449256e4944064dcd8c20aa2c))
+* mejorar visualización de casos en los modales con colores personalizados ([8f7b828](https://github.com/LuisSubiabre/app-react-shadc/commit/8f7b82888b1bdba4305b6a3810dd20811258341e))
+* mejorar visualización de casos en ModalCasosReadOnly ([a9935d5](https://github.com/LuisSubiabre/app-react-shadc/commit/a9935d5e2aa4428f669ed0bbc3584fe360eb11bd))
+* optimizar el componente PageCasos con mejoras en la lógica y diseño ([f604353](https://github.com/LuisSubiabre/app-react-shadc/commit/f604353bdb5dd95dc8aff1d82699a52b645aee8d))
+* optimizar el componente PageCasos con paginación y mejoras en la búsqueda ([ff8fc3f](https://github.com/LuisSubiabre/app-react-shadc/commit/ff8fc3f1bd121e8b68d980e82a364b01e0f26de4))
+* reemplazar ModalCasos por ModalCasosCompleto en PageCasos ([e52625b](https://github.com/LuisSubiabre/app-react-shadc/commit/e52625b06792ba8e2330bd7fb4c9b7ec74807140))
+
+
+### Bug Fixes
+
+* corregir lógica de comparación de IDs en ModalCasosReadOnly y actualizar rutas en convivenciaService ([d9f7974](https://github.com/LuisSubiabre/app-react-shadc/commit/d9f7974b9f33932d828e125a022d74b1f63ffa12))
+
 ### [4.4.5](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.4...v4.4.5) (2025-09-09)
 
 ### [4.4.4](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.3...v4.4.4) (2025-09-09)

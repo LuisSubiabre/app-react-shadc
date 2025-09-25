@@ -1,36 +1,41 @@
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import UltimosIncorporados from "@/components/UltimosIncorporados";
-import TablaEstudiantes from "@/components/TablaEstudiantes";
-import UltimosRetirados from "@/components/UltimosRetirados";
-// import UltimosAtrasos from "@/components/UltimosAtrasos";
-// import UltimosIncorporados from "@/components/UltimosIncorporados";
+import MovimientosEstudiantes from "@/components/MovimientosEstudiantes";
+import TablaEstudiantesOptimizada from "@/components/TablaEstudiantesOptimizada";
 
 const Dashboard = () => {
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      <header className="flex h-14 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <Breadcrumbs />
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="grid auto-rows-min gap-4 md:grid-cols-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-muted/50 p-4">
-              <UltimosIncorporados />
+        <div className="grid gap-4">
+          {/* Movimientos recientes y mensajes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <MovimientosEstudiantes />
             </div>
-
-            <div className="rounded-xl bg-muted/50 p-4">
-              <UltimosRetirados />
+            
+            {/* Mensajes de la plataforma */}
+            <div className="rounded-lg border bg-card">
+              <div className="p-4 border-b">
+                <h3 className="font-semibold text-sm">Mensajes de la plataforma</h3>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center justify-center h-32">
+                  <p className="text-sm text-muted-foreground">
+                    No hay mensajes disponibles
+                  </p>
+                </div>
+              </div>
             </div>
-            </div>
-          <div className="rounded-xl bg-muted/50 p-4">
-            <TablaEstudiantes showAtrasosButtons={false} />
           </div>
-         
+          
+          {/* Tabla de estudiantes optimizada */}
+          <TablaEstudiantesOptimizada showAtrasosButtons={false} />
         </div>
-
-        <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
       </div>
     </>
   );
