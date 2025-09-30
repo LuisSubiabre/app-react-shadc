@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -100,6 +106,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const [loadingUsuarios, setLoadingUsuarios] = useState(true);
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
+  const [estudiantesSinAsignaturas, setEstudiantesSinAsignaturas] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
   const [loadingPDF, setLoadingPDF] = useState(false);
 
@@ -175,20 +182,24 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
       // Filtrar estudiantes que tienen datos de calificaciones
       const estudiantesConCalificaciones = [];
+      const estudiantesSinDatos = [];
       
       for (const estudiante of estudiantes) {
         try {
           const libretaResponse = await getLibretaEstudiante(estudiante.id);
           if (libretaResponse.data && libretaResponse.data.length > 0) {
             estudiantesConCalificaciones.push(estudiante);
+          } else {
+            estudiantesSinDatos.push(estudiante);
           }
         } catch (error) {
           console.warn(`Estudiante ${estudiante.nombre} sin datos de calificaciones:`, error);
-          // Continuar con el siguiente estudiante sin agregarlo a la lista
+          estudiantesSinDatos.push(estudiante);
         }
       }
 
       setDataEstudiantes(estudiantesConCalificaciones);
+      setEstudiantesSinAsignaturas(estudiantesSinDatos);
     } catch (error) {
       console.error("Error al cargar estudiantes:", error);
     } finally {
@@ -1152,99 +1163,186 @@ const AcademicoImprimirLibreta: React.FC = () => {
               <Spinner />
             </div>
           ) : (
-            <div className="space-y-4 flex-1 overflow-hidden">
-              <div className="rounded-lg border overflow-hidden">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Atención</AlertTitle>
-                  <AlertDescription>
-                    Esta funcionalidad está en desarrollo y puede no funcionar
-                    correctamente. Solo se muestran estudiantes con datos de calificaciones.
-                  </AlertDescription>
-                </Alert>
-                <div className="flex justify-between items-center p-4">
-                  <div className="text-sm text-muted-foreground">
-                    {dataEstudiantes.length > 0 
-                      ? `${dataEstudiantes.length} estudiante${dataEstudiantes.length !== 1 ? 's' : ''} con datos de calificaciones`
-                      : 'No hay estudiantes con datos de calificaciones'
-                    }
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generarPDFConsolidado}
-                    className="flex items-center gap-2"
-                    disabled={loadingPDF || dataEstudiantes.length === 0}
-                  >
-                    {loadingPDF ? (
-                      <>
-                        <Spinner />
-                        Generando PDF...
-                      </>
-                    ) : (
-                      <>
-                        <FileDown className="h-4 w-4" />
-                        Descargar PDF Consolidado
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <div className="overflow-auto max-h-[50vh]">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background">
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>RUT</TableHead>
-                        <TableHead>N° Lista</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {dataEstudiantes.length > 0 ? (
-                        dataEstudiantes.map((estudiante) => (
-                          <TableRow key={estudiante.id}>
-                            <TableCell>{estudiante.nombre}</TableCell>
-                            <TableCell>{estudiante.rut}</TableCell>
-                            <TableCell>{estudiante.numlista}</TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="hover:bg-primary/10 hover:text-primary"
-                                onClick={() => generarPDFLibreta(estudiante)}
-                                disabled={loadingPDF}
-                              >
-                                {loadingPDF ? (
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex justify-center">
-                                      <Spinner />
-                                    </div>
-                                    <span>Generando PDF...</span>
+            <div className="flex-1 overflow-hidden">
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Atención</AlertTitle>
+                <AlertDescription>
+                  Esta funcionalidad está en desarrollo y puede no funcionar
+                  correctamente.
+                </AlertDescription>
+              </Alert>
+
+              <Tabs defaultValue="con-datos" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="con-datos" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Con Datos ({dataEstudiantes.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="sin-datos" className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Sin Asignaturas ({estudiantesSinAsignaturas.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="con-datos" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-muted-foreground">
+                        {dataEstudiantes.length > 0 
+                          ? `${dataEstudiantes.length} estudiante${dataEstudiantes.length !== 1 ? 's' : ''} con datos de calificaciones`
+                          : 'No hay estudiantes con datos de calificaciones'
+                        }
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={generarPDFConsolidado}
+                        className="flex items-center gap-2"
+                        disabled={loadingPDF || dataEstudiantes.length === 0}
+                      >
+                        {loadingPDF ? (
+                          <>
+                            <Spinner />
+                            Generando PDF...
+                          </>
+                        ) : (
+                          <>
+                            <FileDown className="h-4 w-4" />
+                            Descargar PDF Consolidado
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <div className="rounded-lg border overflow-hidden">
+                      <div className="overflow-auto max-h-[50vh]">
+                        <Table>
+                          <TableHeader className="sticky top-0 bg-background">
+                            <TableRow>
+                            <TableHead>N° Lista</TableHead>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>RUT</TableHead>
+                             
+                              <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {dataEstudiantes.length > 0 ? (
+                              dataEstudiantes.map((estudiante) => (
+                                
+                                <TableRow key={estudiante.id}>
+                                   <TableCell>{estudiante.numlista}</TableCell>
+                                  <TableCell>{estudiante.nombre}</TableCell>
+                                  <TableCell>{estudiante.rut}</TableCell>
+                                 
+                                  <TableCell className="text-right">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="hover:bg-primary/10 hover:text-primary"
+                                      onClick={() => generarPDFLibreta(estudiante)}
+                                      disabled={loadingPDF}
+                                    >
+                                      {loadingPDF ? (
+                                        <div className="flex items-center gap-2">
+                                          <div className="flex justify-center">
+                                            <Spinner />
+                                          </div>
+                                          <span>Generando PDF...</span>
+                                        </div>
+                                      ) : (
+                                        "Imprimir Libreta"
+                                      )}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center py-8">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Users className="h-8 w-8 text-muted-foreground" />
+                                    <p className="text-muted-foreground">
+                                      No hay estudiantes con datos de calificaciones
+                                    </p>
                                   </div>
-                                ) : (
-                                  "Imprimir Libreta"
-                                )}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-4">
-                            No hay estudiantes en este curso
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="sin-datos" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="h-5 w-5 text-yellow-600" />
+                        <h4 className="font-semibold text-yellow-800">
+                          Estudiantes sin asignaturas registradas ({estudiantesSinAsignaturas.length})
+                        </h4>
+                      </div>
+                      <p className="text-sm text-yellow-700 mb-3">
+                        Estos estudiantes no tienen asignaturas registradas, no se generará su PDF.
+                      </p>
+                    </div>
+                    
+                    {estudiantesSinAsignaturas.length > 0 ? (
+                      <div className="rounded-lg border overflow-hidden">
+                        <div className="overflow-auto max-h-[50vh]">
+                          <Table>
+                            <TableHeader className="sticky top-0 bg-background">
+                              <TableRow>
+                              <TableHead>N° Lista</TableHead>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>RUT</TableHead>
+                                <TableHead className="text-center">Estado</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {estudiantesSinAsignaturas.map((estudiante) => (
+                                <TableRow key={estudiante.id}>
+                                   <TableCell>{estudiante.numlista}</TableCell>
+                                  <TableCell>{estudiante.nombre}</TableCell>
+                                  <TableCell>{estudiante.rut}</TableCell>
+                                 
+                                  <TableCell className="text-center">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      Sin Asignaturas
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2">
+                          <AlertCircle className="h-8 w-8 text-green-500" />
+                          <p className="text-muted-foreground">
+                            Todos los estudiantes tienen asignaturas registradas
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           )}
+
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsModalEstudiantesOpen(false)}
+              onClick={() => {
+                setIsModalEstudiantesOpen(false);
+                setEstudiantesSinAsignaturas([]);
+              }}
             >
               Cerrar
             </Button>
