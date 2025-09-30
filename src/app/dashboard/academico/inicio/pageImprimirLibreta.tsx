@@ -172,7 +172,23 @@ const AcademicoImprimirLibreta: React.FC = () => {
             id: estudiante.estudiante_id,
           }))
         : [];
-      setDataEstudiantes(estudiantes);
+
+      // Filtrar estudiantes que tienen datos de calificaciones
+      const estudiantesConCalificaciones = [];
+      
+      for (const estudiante of estudiantes) {
+        try {
+          const libretaResponse = await getLibretaEstudiante(estudiante.id);
+          if (libretaResponse.data && libretaResponse.data.length > 0) {
+            estudiantesConCalificaciones.push(estudiante);
+          }
+        } catch (error) {
+          console.warn(`Estudiante ${estudiante.nombre} sin datos de calificaciones:`, error);
+          // Continuar con el siguiente estudiante sin agregarlo a la lista
+        }
+      }
+
+      setDataEstudiantes(estudiantesConCalificaciones);
     } catch (error) {
       console.error("Error al cargar estudiantes:", error);
     } finally {
@@ -189,7 +205,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
     const libreta: AsignaturaLibreta[] = response.data;
 
     if (!libreta || libreta.length === 0) {
-      throw new Error("No hay datos de calificaciones para este estudiante");
+      // Generar página especial para estudiantes sin datos
+      return await generarPDFEstudianteSinDatos(estudiante, doc, fecha);
     }
 
     // Obtener promedios del curso
@@ -717,6 +734,105 @@ const AcademicoImprimirLibreta: React.FC = () => {
     return libreta[0].nombre_estudiante;
   };
 
+  const generarPDFEstudianteSinDatos = async (
+    estudiante: Estudiante,
+    doc: JsPDFWithAutoTable,
+    fecha: string
+  ) => {
+    // Agregar logo
+    const logoUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
+    const logoWidth = 50;
+    const logoHeight = 15;
+    doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
+
+    // Establecer fuente y colores
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+
+    // Nombre de la institución
+    doc.setFontSize(12);
+    doc.text("Liceo Experimental UMAG", 80, 20);
+
+    // Título principal
+    doc.setFontSize(16);
+    doc.text("Informe Parcial de Calificaciones.", 105, 30, { align: "center" });
+
+    // Línea decorativa superior
+    doc.setDrawColor(41, 128, 185);
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+
+    // Información del estudiante
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+
+    const infoY = 45;
+    doc.text(`Estudiante: ${estudiante.nombre}`, 20, infoY + 7);
+    doc.text(`Curso: ${currentCurso?.nombre || 'N/A'}`, 20, infoY + 14);
+    doc.text(`RUT: ${estudiante.rut}`, 20, infoY + 21);
+
+    // Mensaje de sin datos
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 0, 0);
+    doc.text("ESTUDIANTE SIN ASIGNATURAS REGISTRADAS", 105, 120, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text("Este estudiante no tiene asignaturas registradas en el sistema.", 105, 140, { align: "center" });
+    doc.text("Por favor, contacte al administrador para registrar las asignaturas correspondientes.", 105, 155, { align: "center" });
+
+    // Espacio para firmas y timbres
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+
+    // Línea izquierda (Profesor Jefe)
+    doc.line(20, 250, 100, 250);
+    doc.setFontSize(8);
+    const nombreProfesor = currentCurso?.jefatura || "N/A";
+    const anchoProfesor = doc.getTextWidth(nombreProfesor);
+    const xProfesor = 20 + (80 - anchoProfesor) / 2;
+    doc.text(nombreProfesor, xProfesor, 255);
+
+    doc.setFontSize(7);
+    const textoProfesor = "PROFESOR JEFE";
+    const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
+    const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
+    doc.text(textoProfesor, xTextoProfesor, 260);
+
+    // Línea derecha (Director)
+    doc.line(110, 250, 190, 250);
+
+    // Agregar imagen de firma
+    const firmaUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1746451823/varios/zrnowutpg5fgaijjxkpm.png";
+    const firmaWidth = 65;
+    const firmaHeight = 20;
+    doc.addImage(firmaUrl, "PNG", 120, 235, firmaWidth, firmaHeight);
+
+    doc.setFontSize(8);
+    const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
+    const anchoDirector = doc.getTextWidth(nombreDirector);
+    const xDirector = 110 + (80 - anchoDirector) / 2;
+    doc.text(nombreDirector, xDirector, 255);
+
+    doc.setFontSize(7);
+    const textoDirector = "DIRECTOR";
+    const anchoTextoDirector = doc.getTextWidth(textoDirector);
+    const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
+    doc.text(textoDirector, xTextoDirector, 260);
+
+    // Pie de página
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Impreso el: ${fecha}`, 20, 280);
+
+    return estudiante.nombre;
+  };
+
   const generarPDFLibreta = async (estudiante: Estudiante) => {
     try {
       setLoadingPDF(true);
@@ -731,6 +847,19 @@ const AcademicoImprimirLibreta: React.FC = () => {
       doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
     } catch (error) {
       console.error("Error al generar el PDF:", error);
+      // Intentar generar PDF con página de error
+      try {
+        const doc = new jsPDF() as JsPDFWithAutoTable;
+        const fecha = new Date().toLocaleDateString();
+        const nombreEstudiante = await generarPDFEstudianteSinDatos(
+          estudiante,
+          doc,
+          fecha
+        );
+        doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
+      } catch (fallbackError) {
+        console.error("Error al generar PDF de respaldo:", fallbackError);
+      }
     } finally {
       setLoadingPDF(false);
     }
@@ -743,18 +872,35 @@ const AcademicoImprimirLibreta: React.FC = () => {
       setLoadingPDF(true);
       const doc = new jsPDF() as JsPDFWithAutoTable;
       const fecha = new Date().toLocaleDateString();
+      let estudiantesConError = 0;
 
       // Generar PDF para cada estudiante
       for (let i = 0; i < dataEstudiantes.length; i++) {
         const estudiante = dataEstudiantes[i];
-        if (i > 0) {
-          doc.addPage();
+        try {
+          if (i > 0) {
+            doc.addPage();
+          }
+          await generarPDFEstudiante(estudiante, doc, fecha);
+        } catch (error) {
+          console.error(`Error al procesar estudiante ${estudiante.nombre}:`, error);
+          estudiantesConError++;
+          
+          // Agregar página de error para este estudiante
+          if (i > 0) {
+            doc.addPage();
+          }
+          await generarPDFEstudianteSinDatos(estudiante, doc, fecha);
         }
-        await generarPDFEstudiante(estudiante, doc, fecha);
       }
 
       // Guardar el PDF consolidado
       doc.save(`libretas_${currentCurso.nombre}_${fecha}.pdf`);
+      
+      // Mostrar resumen si hubo errores
+      if (estudiantesConError > 0) {
+        console.warn(`PDF generado con ${estudiantesConError} estudiante(s) sin datos de calificaciones`);
+      }
     } catch (error) {
       console.error("Error al generar el PDF consolidado:", error);
     } finally {
@@ -1013,16 +1159,22 @@ const AcademicoImprimirLibreta: React.FC = () => {
                   <AlertTitle>Atención</AlertTitle>
                   <AlertDescription>
                     Esta funcionalidad está en desarrollo y puede no funcionar
-                    correctamente.
+                    correctamente. Solo se muestran estudiantes con datos de calificaciones.
                   </AlertDescription>
                 </Alert>
-                <div className="flex justify-end p-4">
+                <div className="flex justify-between items-center p-4">
+                  <div className="text-sm text-muted-foreground">
+                    {dataEstudiantes.length > 0 
+                      ? `${dataEstudiantes.length} estudiante${dataEstudiantes.length !== 1 ? 's' : ''} con datos de calificaciones`
+                      : 'No hay estudiantes con datos de calificaciones'
+                    }
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={generarPDFConsolidado}
                     className="flex items-center gap-2"
-                    disabled={loadingPDF}
+                    disabled={loadingPDF || dataEstudiantes.length === 0}
                   >
                     {loadingPDF ? (
                       <>
