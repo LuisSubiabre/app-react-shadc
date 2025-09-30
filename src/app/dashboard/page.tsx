@@ -1,8 +1,14 @@
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import MovimientosEstudiantes from "@/components/MovimientosEstudiantes";
 import TablaEstudiantesOptimizada from "@/components/TablaEstudiantesOptimizada";
+import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  
+  // Verificar si el usuario tiene un email del liceo experimental
+  const isLiceoExperimentalUser = user?.email?.endsWith('@liceoexperimental.cl') || false;
+
   return (
     <>
       <header className="flex h-14 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -33,8 +39,10 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Tabla de estudiantes optimizada */}
-          <TablaEstudiantesOptimizada showAtrasosButtons={false} />
+          {/* Tabla de estudiantes optimizada - Solo visible para usuarios del liceo experimental */}
+          {isLiceoExperimentalUser && (
+            <TablaEstudiantesOptimizada showAtrasosButtons={false} />
+          )}
         </div>
       </div>
     </>
