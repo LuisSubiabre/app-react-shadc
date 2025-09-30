@@ -60,7 +60,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
   const getColumnRange =
     selectedSemester === 1
       ? [...Array(10).keys()].map((n) => n + 0)
-      : [...Array(10).keys()].map((n) => n + 12);
+      : [...Array(10).keys()].map((n) => n + 10);
 
   const calcularPromedioSemestre = (estudiante: EstudianteType, asignaturaId: string, semestre?: number) => {
     // Si no se especifica semestre, usar el semestre seleccionado actualmente
@@ -69,7 +69,7 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
     // Definir el rango de calificaciones según el semestre
     const rangoCalificaciones = semestreACalcular === 1 
       ? [...Array(10).keys()].map((n) => n + 0)  // C1-C10 para primer semestre
-      : [...Array(10).keys()].map((n) => n + 12); // C13-C22 para segundo semestre
+      : [...Array(10).keys()].map((n) => n + 10); // C11-C20 para segundo semestre
 
     const calificaciones = rangoCalificaciones.map(index => {
       const savedValue = studentGrades[`${estudiante.id}-${asignaturaId}`]?.[`calificacion${index + 1}`];
@@ -252,8 +252,8 @@ export const TablaCalificaciones: React.FC<TablaCalificacionesProps> = ({
           savedValue !== undefined ? savedValue : calificacion || null;
       }
 
-      // Agregar calificaciones del segundo semestre (C13-C22)
-      for (let i = 12; i < 22; i++) {
+      // Agregar calificaciones del segundo semestre (C11-C20)
+      for (let i = 10; i < 20; i++) {
         const calificacionKey = `calificacion${i + 1}` as keyof EstudianteType;
         const calificacion = estudiante[calificacionKey] as CalificacionValue;
         const savedValue =
