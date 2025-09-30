@@ -109,6 +109,20 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const [estudiantesSinAsignaturas, setEstudiantesSinAsignaturas] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
   const [loadingPDF, setLoadingPDF] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageSinDatos, setCurrentPageSinDatos] = useState(1);
+  const itemsPerPage = 15;
+
+  // Funciones de paginación
+  const getPaginatedStudents = (students: Estudiante[], page: number) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return students.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (students: Estudiante[]) => {
+    return Math.ceil(students.length / itemsPerPage);
+  };
 
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -156,6 +170,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
     setIsModalEstudiantesOpen(true);
     setCurrentCurso(curso);
     setLoadingEstudiantes(true);
+    setCurrentPage(1);
+    setCurrentPageSinDatos(1);
 
     try {
       const response = await fetch(
@@ -1152,7 +1168,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
         open={isModalEstudiantesOpen}
         onOpenChange={setIsModalEstudiantesOpen}
       >
-        <DialogContent className="sm:max-w-[800px] max-h-[80vh] flex flex-col">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               Estudiantes - {currentCurso?.nombre}
@@ -1214,27 +1230,27 @@ const AcademicoImprimirLibreta: React.FC = () => {
                         )}
                       </Button>
                     </div>
-                    <div className="rounded-lg border overflow-hidden">
-                      <div className="overflow-auto max-h-[50vh]">
+                    <div className="rounded-lg border">
+                      <div className="overflow-auto max-h-[40vh]">
                         <Table>
                           <TableHeader className="sticky top-0 bg-background">
                             <TableRow>
                             <TableHead>N° Lista</TableHead>
                               <TableHead>Nombre</TableHead>
                               <TableHead>RUT</TableHead>
-                             
+                              
                               <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {dataEstudiantes.length > 0 ? (
-                              dataEstudiantes.map((estudiante) => (
+                              getPaginatedStudents(dataEstudiantes, currentPage).map((estudiante) => (
                                 
                                 <TableRow key={estudiante.id}>
-                                   <TableCell>{estudiante.numlista}</TableCell>
+                                  <TableCell>{estudiante.numlista}</TableCell>
                                   <TableCell>{estudiante.nombre}</TableCell>
                                   <TableCell>{estudiante.rut}</TableCell>
-                                 
+                                  
                                   <TableCell className="text-right">
                                     <Button
                                       variant="outline"
@@ -1272,6 +1288,36 @@ const AcademicoImprimirLibreta: React.FC = () => {
                           </TableBody>
                         </Table>
                       </div>
+                      
+                      {/* Controles de paginación para estudiantes con datos */}
+                      {dataEstudiantes.length > 15 && (
+                        <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
+                          <div className="text-sm text-muted-foreground">
+                            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, dataEstudiantes.length)} de {dataEstudiantes.length} estudiantes
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                              disabled={currentPage === 1}
+                            >
+                              Anterior
+                            </Button>
+                            <span className="text-sm">
+                              Página {currentPage} de {getTotalPages(dataEstudiantes)}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, getTotalPages(dataEstudiantes)))}
+                              disabled={currentPage === getTotalPages(dataEstudiantes)}
+                            >
+                              Siguiente
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </TabsContent>
@@ -1291,35 +1337,67 @@ const AcademicoImprimirLibreta: React.FC = () => {
                     </div>
                     
                     {estudiantesSinAsignaturas.length > 0 ? (
-                      <div className="rounded-lg border overflow-hidden">
-                        <div className="overflow-auto max-h-[50vh]">
-                          <Table>
-                            <TableHeader className="sticky top-0 bg-background">
-                              <TableRow>
-                              <TableHead>N° Lista</TableHead>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>RUT</TableHead>
-                                <TableHead className="text-center">Estado</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {estudiantesSinAsignaturas.map((estudiante) => (
-                                <TableRow key={estudiante.id}>
-                                   <TableCell>{estudiante.numlista}</TableCell>
-                                  <TableCell>{estudiante.nombre}</TableCell>
-                                  <TableCell>{estudiante.rut}</TableCell>
-                                 
-                                  <TableCell className="text-center">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                      Sin Asignaturas
-                                    </span>
-                                  </TableCell>
+                      <>
+                        <div className="rounded-lg border">
+                          <div className="overflow-auto max-h-[40vh]">
+                            <Table>
+                              <TableHeader className="sticky top-0 bg-background">
+                                <TableRow>
+                                <TableHead>N° Lista</TableHead>
+                                  <TableHead>Nombre</TableHead>
+                                  <TableHead>RUT</TableHead>
+                                  <TableHead className="text-center">Estado</TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                              </TableHeader>
+                              <TableBody>
+                                {getPaginatedStudents(estudiantesSinAsignaturas, currentPageSinDatos).map((estudiante) => (
+                                  <TableRow key={estudiante.id}>
+                                    <TableCell>{estudiante.numlista}</TableCell>
+                                    <TableCell>{estudiante.nombre}</TableCell>
+                                    <TableCell>{estudiante.rut}</TableCell>
+                                    
+                                    <TableCell className="text-center">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Sin Asignaturas
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          
+                          {/* Controles de paginación para estudiantes sin datos */}
+                          {estudiantesSinAsignaturas.length > 15 && (
+                            <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
+                              <div className="text-sm text-muted-foreground">
+                                Mostrando {((currentPageSinDatos - 1) * itemsPerPage) + 1} a {Math.min(currentPageSinDatos * itemsPerPage, estudiantesSinAsignaturas.length)} de {estudiantesSinAsignaturas.length} estudiantes
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPageSinDatos(prev => Math.max(prev - 1, 1))}
+                                  disabled={currentPageSinDatos === 1}
+                                >
+                                  Anterior
+                                </Button>
+                                <span className="text-sm">
+                                  Página {currentPageSinDatos} de {getTotalPages(estudiantesSinAsignaturas)}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPageSinDatos(prev => Math.min(prev + 1, getTotalPages(estudiantesSinAsignaturas)))}
+                                  disabled={currentPageSinDatos === getTotalPages(estudiantesSinAsignaturas)}
+                                >
+                                  Siguiente
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      </>
                     ) : (
                       <div className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
