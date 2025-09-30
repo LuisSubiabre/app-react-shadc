@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { crearFechaUTCMagallanes } from "@/utils/dateUtils";
 
 interface ModalAtrasosProps {
   isOpen: boolean;
@@ -42,12 +43,29 @@ export function ModalAtrasos({
   const [observaciones, setObservaciones] = useState("");
   const [tipo, setTipo] = useState<"llegada" | "jornada">("llegada");
 
+  // Función para formatear fecha con manejo correcto de zona horaria
   const formatearFecha = (fechaStr: string) => {
-    // Crear una fecha desde el string, asumiendo que es UTC
-    const fecha = new Date(fechaStr);
-    // Ajustar 3 horas para Magallanes
-    fecha.setHours(fecha.getHours() + 3);
-    return format(fecha, "dd/MM/yyyy");
+    if (!fechaStr) return 'Sin fecha';
+    
+    try {
+      // Crear fecha desde el string ISO
+      const fecha = new Date(fechaStr);
+      
+      if (isNaN(fecha.getTime())) {
+        return 'Fecha inválida';
+      }
+      
+      // Para fechas en UTC con hora 00:00:00, simplemente extraer la fecha sin conversión de zona horaria
+      // ya que representan el día completo en UTC
+      const dia = fecha.getUTCDate().toString().padStart(2, '0');
+      const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0');
+      const año = fecha.getUTCFullYear();
+      
+      return `${dia}/${mes}/${año}`;
+    } catch (error) {
+      console.error('Error al formatear fecha:', fechaStr, error);
+      return 'Error en fecha';
+    }
   };
 
   const handleSubmit = async () => {
@@ -59,12 +77,8 @@ export function ModalAtrasos({
       // Separamos la fecha en sus componentes
       const [year, month, day] = fecha.split("-").map(Number);
 
-      // Creamos la fecha local directamente con los componentes
-
-      // Convertimos a UTC manteniendo los componentes de fecha y hora exactos
-      const fechaUTC = new Date(
-        Date.UTC(year, month - 1, day, hours, minutes, 0)
-      );
+      // Usar la función utilitaria para crear la fecha UTC consistentemente
+      const fechaUTC = new Date(crearFechaUTCMagallanes(year, month, day, hours, minutes));
 
       await createAtraso({
         estudiante_id: estudiante.id,
