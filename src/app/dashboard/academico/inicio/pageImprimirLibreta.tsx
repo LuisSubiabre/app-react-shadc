@@ -111,6 +111,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const [loadingPDF, setLoadingPDF] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPageSinDatos, setCurrentPageSinDatos] = useState(1);
+  const [tipoInforme, setTipoInforme] = useState<'parcial' | 'final'>('parcial');
   const itemsPerPage = 15;
 
   // Funciones de paginación
@@ -226,14 +227,15 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const generarPDFEstudiante = async (
     estudiante: Estudiante,
     doc: JsPDFWithAutoTable,
-    fecha: string
+    fecha: string,
+    tipoInforme: 'parcial' | 'final' = 'parcial'
   ) => {
     const response = await getLibretaEstudiante(estudiante.id);
     const libreta: AsignaturaLibreta[] = response.data;
 
     if (!libreta || libreta.length === 0) {
       // Generar página especial para estudiantes sin datos
-      return await generarPDFEstudianteSinDatos(estudiante, doc, fecha);
+      return await generarPDFEstudianteSinDatos(estudiante, doc, fecha, tipoInforme);
     }
 
     // Obtener promedios del curso
@@ -266,7 +268,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Título principal
     doc.setFontSize(16);
-    doc.text("Informe Parcial de Calificaciones.", 105, 30, { align: "center" });
+    const tituloInforme = tipoInforme === 'parcial' ? "Informe Parcial de Calificaciones." : "Informe Final de Calificaciones.";
+    doc.text(tituloInforme, 105, 30, { align: "center" });
 
     // Línea decorativa superior
     doc.setDrawColor(41, 128, 185);
@@ -553,7 +556,9 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     doc.text(`Promedio General 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
     doc.text(`Promedio General 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
-    doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, promediosY + 11000000);
+    // Solo mostrar el promedio final si es un informe final
+    const yFinal = tipoInforme === 'final' ? promediosY + 11 : promediosY + 11000000;
+    doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, yFinal);
 
     // Agregar gráfico después de la tabla
     const chartY = promediosY + 25;
@@ -764,7 +769,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const generarPDFEstudianteSinDatos = async (
     estudiante: Estudiante,
     doc: JsPDFWithAutoTable,
-    fecha: string
+    fecha: string,
+    tipoInforme: 'parcial' | 'final' = 'parcial'
   ) => {
     // Agregar logo
     const logoUrl =
@@ -783,7 +789,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Título principal
     doc.setFontSize(16);
-    doc.text("Informe Parcial de Calificaciones.", 105, 30, { align: "center" });
+    const tituloInforme = tipoInforme === 'parcial' ? "Informe Parcial de Calificaciones." : "Informe Final de Calificaciones.";
+    doc.text(tituloInforme, 105, 30, { align: "center" });
 
     // Línea decorativa superior
     doc.setDrawColor(41, 128, 185);
@@ -869,7 +876,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
       const nombreEstudiante = await generarPDFEstudiante(
         estudiante,
         doc,
-        fecha
+        fecha,
+        tipoInforme
       );
       doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
     } catch (error) {
@@ -881,7 +889,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
         const nombreEstudiante = await generarPDFEstudianteSinDatos(
           estudiante,
           doc,
-          fecha
+          fecha,
+          tipoInforme
         );
         doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
       } catch (fallbackError) {
@@ -908,7 +917,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
           if (i > 0) {
             doc.addPage();
           }
-          await generarPDFEstudiante(estudiante, doc, fecha);
+          await generarPDFEstudiante(estudiante, doc, fecha, tipoInforme);
         } catch (error) {
           console.error(`Error al procesar estudiante ${estudiante.nombre}:`, error);
           estudiantesConError++;
@@ -917,7 +926,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
           if (i > 0) {
             doc.addPage();
           }
-          await generarPDFEstudianteSinDatos(estudiante, doc, fecha);
+          await generarPDFEstudianteSinDatos(estudiante, doc, fecha, tipoInforme);
         }
       }
 
@@ -1204,11 +1213,24 @@ const AcademicoImprimirLibreta: React.FC = () => {
                 <TabsContent value="con-datos" className="mt-4">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <div className="text-sm text-muted-foreground">
-                        {dataEstudiantes.length > 0 
-                          ? `${dataEstudiantes.length} estudiante${dataEstudiantes.length !== 1 ? 's' : ''} con datos de calificaciones`
-                          : 'No hay estudiantes con datos de calificaciones'
-                        }
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-muted-foreground">
+                          {dataEstudiantes.length > 0 
+                            ? `${dataEstudiantes.length} estudiante${dataEstudiantes.length !== 1 ? 's' : ''} con datos de calificaciones`
+                            : 'No hay estudiantes con datos de calificaciones'
+                          }
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Tipo de Informe:</label>
+                          <select
+                            value={tipoInforme}
+                            onChange={(e) => setTipoInforme(e.target.value as 'parcial' | 'final')}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          >
+                            <option value="parcial">Informe Parcial</option>
+                            <option value="final">Informe Final</option>
+                          </select>
+                        </div>
                       </div>
                       <Button
                         variant="outline"
