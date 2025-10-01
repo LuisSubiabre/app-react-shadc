@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import Spinner from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -100,8 +106,24 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const [loadingUsuarios, setLoadingUsuarios] = useState(true);
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
   const [dataEstudiantes, setDataEstudiantes] = useState<Estudiante[]>([]);
+  const [estudiantesSinAsignaturas, setEstudiantesSinAsignaturas] = useState<Estudiante[]>([]);
   const [loadingEstudiantes, setLoadingEstudiantes] = useState(true);
   const [loadingPDF, setLoadingPDF] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageSinDatos, setCurrentPageSinDatos] = useState(1);
+  const [tipoInforme, setTipoInforme] = useState<'parcial' | 'final'>('parcial');
+  const itemsPerPage = 15;
+
+  // Funciones de paginación
+  const getPaginatedStudents = (students: Estudiante[], page: number) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return students.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (students: Estudiante[]) => {
+    return Math.ceil(students.length / itemsPerPage);
+  };
 
   const getTokenFromContext = useAuth();
   if (!getTokenFromContext || !getTokenFromContext.authToken) {
@@ -149,6 +171,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
     setIsModalEstudiantesOpen(true);
     setCurrentCurso(curso);
     setLoadingEstudiantes(true);
+    setCurrentPage(1);
+    setCurrentPageSinDatos(1);
 
     try {
       const response = await fetch(
@@ -172,7 +196,27 @@ const AcademicoImprimirLibreta: React.FC = () => {
             id: estudiante.estudiante_id,
           }))
         : [];
-      setDataEstudiantes(estudiantes);
+
+      // Filtrar estudiantes que tienen datos de calificaciones
+      const estudiantesConCalificaciones = [];
+      const estudiantesSinDatos = [];
+      
+      for (const estudiante of estudiantes) {
+        try {
+          const libretaResponse = await getLibretaEstudiante(estudiante.id);
+          if (libretaResponse.data && libretaResponse.data.length > 0) {
+            estudiantesConCalificaciones.push(estudiante);
+          } else {
+            estudiantesSinDatos.push(estudiante);
+          }
+        } catch (error) {
+          console.warn(`Estudiante ${estudiante.nombre} sin datos de calificaciones:`, error);
+          estudiantesSinDatos.push(estudiante);
+        }
+      }
+
+      setDataEstudiantes(estudiantesConCalificaciones);
+      setEstudiantesSinAsignaturas(estudiantesSinDatos);
     } catch (error) {
       console.error("Error al cargar estudiantes:", error);
     } finally {
@@ -183,13 +227,15 @@ const AcademicoImprimirLibreta: React.FC = () => {
   const generarPDFEstudiante = async (
     estudiante: Estudiante,
     doc: JsPDFWithAutoTable,
-    fecha: string
+    fecha: string,
+    tipoInforme: 'parcial' | 'final' = 'parcial'
   ) => {
     const response = await getLibretaEstudiante(estudiante.id);
     const libreta: AsignaturaLibreta[] = response.data;
 
     if (!libreta || libreta.length === 0) {
-      throw new Error("No hay datos de calificaciones para este estudiante");
+      // Generar página especial para estudiantes sin datos
+      return await generarPDFEstudianteSinDatos(estudiante, doc, fecha, tipoInforme);
     }
 
     // Obtener promedios del curso
@@ -222,7 +268,8 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Título principal
     doc.setFontSize(16);
-    doc.text("Informe Parcial de Calificaciones.", 105, 30, { align: "center" });
+    const tituloInforme = tipoInforme === 'parcial' ? "Informe Parcial de Calificaciones." : "Informe Final de Calificaciones.";
+    doc.text(tituloInforme, 105, 30, { align: "center" });
 
     // Línea decorativa superior
     doc.setDrawColor(41, 128, 185);
@@ -509,7 +556,9 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     doc.text(`Promedio General 1° Semestre: ${promedio1S}`, 20, promediosY + 3);
     doc.text(`Promedio General 2° Semestre: ${promedio2S}`, 20, promediosY + 7);
-    doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, promediosY + 11000000);
+    // Solo mostrar el promedio final si es un informe final
+    const yFinal = tipoInforme === 'final' ? promediosY + 11 : promediosY + 11000000;
+    doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, yFinal);
 
     // Agregar gráfico después de la tabla
     const chartY = promediosY + 25;
@@ -717,6 +766,107 @@ const AcademicoImprimirLibreta: React.FC = () => {
     return libreta[0].nombre_estudiante;
   };
 
+  const generarPDFEstudianteSinDatos = async (
+    estudiante: Estudiante,
+    doc: JsPDFWithAutoTable,
+    fecha: string,
+    tipoInforme: 'parcial' | 'final' = 'parcial'
+  ) => {
+    // Agregar logo
+    const logoUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1744723831/varios/urcbzygzvfvzupglmwqy.png";
+    const logoWidth = 50;
+    const logoHeight = 15;
+    doc.addImage(logoUrl, "PNG", 20, 10, logoWidth, logoHeight);
+
+    // Establecer fuente y colores
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(41, 128, 185);
+
+    // Nombre de la institución
+    doc.setFontSize(12);
+    doc.text("Liceo Experimental UMAG", 80, 20);
+
+    // Título principal
+    doc.setFontSize(16);
+    const tituloInforme = tipoInforme === 'parcial' ? "Informe Parcial de Calificaciones." : "Informe Final de Calificaciones.";
+    doc.text(tituloInforme, 105, 30, { align: "center" });
+
+    // Línea decorativa superior
+    doc.setDrawColor(41, 128, 185);
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+
+    // Información del estudiante
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+
+    const infoY = 45;
+    doc.text(`Estudiante: ${estudiante.nombre}`, 20, infoY + 7);
+    doc.text(`Curso: ${currentCurso?.nombre || 'N/A'}`, 20, infoY + 14);
+    doc.text(`RUT: ${estudiante.rut}`, 20, infoY + 21);
+
+    // Mensaje de sin datos
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 0, 0);
+    doc.text("ESTUDIANTE SIN ASIGNATURAS REGISTRADAS", 105, 120, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text("Este estudiante no tiene asignaturas registradas en el sistema.", 105, 140, { align: "center" });
+    doc.text("Por favor, contacte al administrador para registrar las asignaturas correspondientes.", 105, 155, { align: "center" });
+
+    // Espacio para firmas y timbres
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+
+    // Línea izquierda (Profesor Jefe)
+    doc.line(20, 250, 100, 250);
+    doc.setFontSize(8);
+    const nombreProfesor = currentCurso?.jefatura || "N/A";
+    const anchoProfesor = doc.getTextWidth(nombreProfesor);
+    const xProfesor = 20 + (80 - anchoProfesor) / 2;
+    doc.text(nombreProfesor, xProfesor, 255);
+
+    doc.setFontSize(7);
+    const textoProfesor = "PROFESOR JEFE";
+    const anchoTextoProfesor = doc.getTextWidth(textoProfesor);
+    const xTextoProfesor = 20 + (80 - anchoTextoProfesor) / 2;
+    doc.text(textoProfesor, xTextoProfesor, 260);
+
+    // Línea derecha (Director)
+    doc.line(110, 250, 190, 250);
+
+    // Agregar imagen de firma
+    const firmaUrl =
+      "https://res.cloudinary.com/dx219dazh/image/upload/v1746451823/varios/zrnowutpg5fgaijjxkpm.png";
+    const firmaWidth = 65;
+    const firmaHeight = 20;
+    doc.addImage(firmaUrl, "PNG", 120, 235, firmaWidth, firmaHeight);
+
+    doc.setFontSize(8);
+    const nombreDirector = "BRAVO JORQUERA PATRICIO BRAVO";
+    const anchoDirector = doc.getTextWidth(nombreDirector);
+    const xDirector = 110 + (80 - anchoDirector) / 2;
+    doc.text(nombreDirector, xDirector, 255);
+
+    doc.setFontSize(7);
+    const textoDirector = "DIRECTOR";
+    const anchoTextoDirector = doc.getTextWidth(textoDirector);
+    const xTextoDirector = 110 + (80 - anchoTextoDirector) / 2;
+    doc.text(textoDirector, xTextoDirector, 260);
+
+    // Pie de página
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Impreso el: ${fecha}`, 20, 280);
+
+    return estudiante.nombre;
+  };
+
   const generarPDFLibreta = async (estudiante: Estudiante) => {
     try {
       setLoadingPDF(true);
@@ -726,11 +876,26 @@ const AcademicoImprimirLibreta: React.FC = () => {
       const nombreEstudiante = await generarPDFEstudiante(
         estudiante,
         doc,
-        fecha
+        fecha,
+        tipoInforme
       );
       doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
     } catch (error) {
       console.error("Error al generar el PDF:", error);
+      // Intentar generar PDF con página de error
+      try {
+        const doc = new jsPDF() as JsPDFWithAutoTable;
+        const fecha = new Date().toLocaleDateString();
+        const nombreEstudiante = await generarPDFEstudianteSinDatos(
+          estudiante,
+          doc,
+          fecha,
+          tipoInforme
+        );
+        doc.save(`libreta_${nombreEstudiante}_${fecha}.pdf`);
+      } catch (fallbackError) {
+        console.error("Error al generar PDF de respaldo:", fallbackError);
+      }
     } finally {
       setLoadingPDF(false);
     }
@@ -743,18 +908,35 @@ const AcademicoImprimirLibreta: React.FC = () => {
       setLoadingPDF(true);
       const doc = new jsPDF() as JsPDFWithAutoTable;
       const fecha = new Date().toLocaleDateString();
+      let estudiantesConError = 0;
 
       // Generar PDF para cada estudiante
       for (let i = 0; i < dataEstudiantes.length; i++) {
         const estudiante = dataEstudiantes[i];
-        if (i > 0) {
-          doc.addPage();
+        try {
+          if (i > 0) {
+            doc.addPage();
+          }
+          await generarPDFEstudiante(estudiante, doc, fecha, tipoInforme);
+        } catch (error) {
+          console.error(`Error al procesar estudiante ${estudiante.nombre}:`, error);
+          estudiantesConError++;
+          
+          // Agregar página de error para este estudiante
+          if (i > 0) {
+            doc.addPage();
+          }
+          await generarPDFEstudianteSinDatos(estudiante, doc, fecha, tipoInforme);
         }
-        await generarPDFEstudiante(estudiante, doc, fecha);
       }
 
       // Guardar el PDF consolidado
       doc.save(`libretas_${currentCurso.nombre}_${fecha}.pdf`);
+      
+      // Mostrar resumen si hubo errores
+      if (estudiantesConError > 0) {
+        console.warn(`PDF generado con ${estudiantesConError} estudiante(s) sin datos de calificaciones`);
+      }
     } catch (error) {
       console.error("Error al generar el PDF consolidado:", error);
     } finally {
@@ -995,7 +1177,7 @@ const AcademicoImprimirLibreta: React.FC = () => {
         open={isModalEstudiantesOpen}
         onOpenChange={setIsModalEstudiantesOpen}
       >
-        <DialogContent className="sm:max-w-[800px] max-h-[80vh] flex flex-col">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               Estudiantes - {currentCurso?.nombre}
@@ -1006,93 +1188,261 @@ const AcademicoImprimirLibreta: React.FC = () => {
               <Spinner />
             </div>
           ) : (
-            <div className="space-y-4 flex-1 overflow-hidden">
-              <div className="rounded-lg border overflow-hidden">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Atención</AlertTitle>
-                  <AlertDescription>
-                    Esta funcionalidad está en desarrollo y puede no funcionar
-                    correctamente.
-                  </AlertDescription>
-                </Alert>
-                <div className="flex justify-end p-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generarPDFConsolidado}
-                    className="flex items-center gap-2"
-                    disabled={loadingPDF}
-                  >
-                    {loadingPDF ? (
+            <div className="flex-1 overflow-hidden">
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Atención</AlertTitle>
+                <AlertDescription>
+                  Esta funcionalidad está en desarrollo y puede no funcionar
+                  correctamente.
+                </AlertDescription>
+              </Alert>
+
+              <Tabs defaultValue="con-datos" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="con-datos" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Con Datos ({dataEstudiantes.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="sin-datos" className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Sin Asignaturas ({estudiantesSinAsignaturas.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="con-datos" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-muted-foreground">
+                          {dataEstudiantes.length > 0 
+                            ? `${dataEstudiantes.length} estudiante${dataEstudiantes.length !== 1 ? 's' : ''} con datos de calificaciones`
+                            : 'No hay estudiantes con datos de calificaciones'
+                          }
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">Tipo de Informe:</label>
+                          <select
+                            value={tipoInforme}
+                            onChange={(e) => setTipoInforme(e.target.value as 'parcial' | 'final')}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          >
+                            <option value="parcial">Informe Parcial</option>
+                            <option value="final">Informe Final</option>
+                          </select>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={generarPDFConsolidado}
+                        className="flex items-center gap-2"
+                        disabled={loadingPDF || dataEstudiantes.length === 0}
+                      >
+                        {loadingPDF ? (
+                          <>
+                            <Spinner />
+                            Generando PDF...
+                          </>
+                        ) : (
+                          <>
+                            <FileDown className="h-4 w-4" />
+                            Descargar PDF Consolidado
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <div className="rounded-lg border">
+                      <div className="overflow-auto max-h-[40vh]">
+                        <Table>
+                          <TableHeader className="sticky top-0 bg-background">
+                            <TableRow>
+                            <TableHead>N° Lista</TableHead>
+                              <TableHead>Nombre</TableHead>
+                              <TableHead>RUT</TableHead>
+                              
+                              <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {dataEstudiantes.length > 0 ? (
+                              getPaginatedStudents(dataEstudiantes, currentPage).map((estudiante) => (
+                                
+                                <TableRow key={estudiante.id}>
+                                  <TableCell>{estudiante.numlista}</TableCell>
+                                  <TableCell>{estudiante.nombre}</TableCell>
+                                  <TableCell>{estudiante.rut}</TableCell>
+                                  
+                                  <TableCell className="text-right">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="hover:bg-primary/10 hover:text-primary"
+                                      onClick={() => generarPDFLibreta(estudiante)}
+                                      disabled={loadingPDF}
+                                    >
+                                      {loadingPDF ? (
+                                        <div className="flex items-center gap-2">
+                                          <div className="flex justify-center">
+                                            <Spinner />
+                                          </div>
+                                          <span>Generando PDF...</span>
+                                        </div>
+                                      ) : (
+                                        "Imprimir Libreta"
+                                      )}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center py-8">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Users className="h-8 w-8 text-muted-foreground" />
+                                    <p className="text-muted-foreground">
+                                      No hay estudiantes con datos de calificaciones
+                                    </p>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      
+                      {/* Controles de paginación para estudiantes con datos */}
+                      {dataEstudiantes.length > 15 && (
+                        <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
+                          <div className="text-sm text-muted-foreground">
+                            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, dataEstudiantes.length)} de {dataEstudiantes.length} estudiantes
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                              disabled={currentPage === 1}
+                            >
+                              Anterior
+                            </Button>
+                            <span className="text-sm">
+                              Página {currentPage} de {getTotalPages(dataEstudiantes)}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, getTotalPages(dataEstudiantes)))}
+                              disabled={currentPage === getTotalPages(dataEstudiantes)}
+                            >
+                              Siguiente
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="sin-datos" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="h-5 w-5 text-yellow-600" />
+                        <h4 className="font-semibold text-yellow-800">
+                          Estudiantes sin asignaturas registradas ({estudiantesSinAsignaturas.length})
+                        </h4>
+                      </div>
+                      <p className="text-sm text-yellow-700 mb-3">
+                        Estos estudiantes no tienen asignaturas registradas, no se generará su PDF.
+                      </p>
+                    </div>
+                    
+                    {estudiantesSinAsignaturas.length > 0 ? (
                       <>
-                        <Spinner />
-                        Generando PDF...
+                        <div className="rounded-lg border">
+                          <div className="overflow-auto max-h-[40vh]">
+                            <Table>
+                              <TableHeader className="sticky top-0 bg-background">
+                                <TableRow>
+                                <TableHead>N° Lista</TableHead>
+                                  <TableHead>Nombre</TableHead>
+                                  <TableHead>RUT</TableHead>
+                                  <TableHead className="text-center">Estado</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {getPaginatedStudents(estudiantesSinAsignaturas, currentPageSinDatos).map((estudiante) => (
+                                  <TableRow key={estudiante.id}>
+                                    <TableCell>{estudiante.numlista}</TableCell>
+                                    <TableCell>{estudiante.nombre}</TableCell>
+                                    <TableCell>{estudiante.rut}</TableCell>
+                                    
+                                    <TableCell className="text-center">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Sin Asignaturas
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          
+                          {/* Controles de paginación para estudiantes sin datos */}
+                          {estudiantesSinAsignaturas.length > 15 && (
+                            <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
+                              <div className="text-sm text-muted-foreground">
+                                Mostrando {((currentPageSinDatos - 1) * itemsPerPage) + 1} a {Math.min(currentPageSinDatos * itemsPerPage, estudiantesSinAsignaturas.length)} de {estudiantesSinAsignaturas.length} estudiantes
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPageSinDatos(prev => Math.max(prev - 1, 1))}
+                                  disabled={currentPageSinDatos === 1}
+                                >
+                                  Anterior
+                                </Button>
+                                <span className="text-sm">
+                                  Página {currentPageSinDatos} de {getTotalPages(estudiantesSinAsignaturas)}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentPageSinDatos(prev => Math.min(prev + 1, getTotalPages(estudiantesSinAsignaturas)))}
+                                  disabled={currentPageSinDatos === getTotalPages(estudiantesSinAsignaturas)}
+                                >
+                                  Siguiente
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </>
                     ) : (
-                      <>
-                        <FileDown className="h-4 w-4" />
-                        Descargar PDF Consolidado
-                      </>
+                      <div className="text-center py-8">
+                        <div className="flex flex-col items-center gap-2">
+                          <AlertCircle className="h-8 w-8 text-green-500" />
+                          <p className="text-muted-foreground">
+                            Todos los estudiantes tienen asignaturas registradas
+                          </p>
+                        </div>
+                      </div>
                     )}
-                  </Button>
-                </div>
-                <div className="overflow-auto max-h-[50vh]">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background">
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>RUT</TableHead>
-                        <TableHead>N° Lista</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {dataEstudiantes.length > 0 ? (
-                        dataEstudiantes.map((estudiante) => (
-                          <TableRow key={estudiante.id}>
-                            <TableCell>{estudiante.nombre}</TableCell>
-                            <TableCell>{estudiante.rut}</TableCell>
-                            <TableCell>{estudiante.numlista}</TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="hover:bg-primary/10 hover:text-primary"
-                                onClick={() => generarPDFLibreta(estudiante)}
-                                disabled={loadingPDF}
-                              >
-                                {loadingPDF ? (
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex justify-center">
-                                      <Spinner />
-                                    </div>
-                                    <span>Generando PDF...</span>
-                                  </div>
-                                ) : (
-                                  "Imprimir Libreta"
-                                )}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-4">
-                            No hay estudiantes en este curso
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           )}
+
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsModalEstudiantesOpen(false)}
+              onClick={() => {
+                setIsModalEstudiantesOpen(false);
+                setEstudiantesSinAsignaturas([]);
+              }}
             >
               Cerrar
             </Button>

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.0.0...v5.1.0) (2025-10-01)
+
+
+### Features
+
+* añadir opción de tipo de informe en la generación de PDF ([ca1f95a](https://github.com/LuisSubiabre/app-react-shadc/commit/ca1f95a0bfd07e3c0e0f9bc3dc1ae4e9efcf4648))
+* añadir pestañas para visualizar estudiantes con y sin asignaturas ([ac9931e](https://github.com/LuisSubiabre/app-react-shadc/commit/ac9931e48126f79850ad7593490ea890877d22da))
+* añadir verificación de usuario para mostrar tabla de estudiantes en el dashboard ([e94befc](https://github.com/LuisSubiabre/app-react-shadc/commit/e94befc8fb5c2329a0452069655d7d0799e9175e))
+* implementar generación de PDF para estudiantes sin calificaciones ([b926a2f](https://github.com/LuisSubiabre/app-react-shadc/commit/b926a2f26494542d1ffe000709a53780c6d2804b))
+* implementar paginación en la visualización de estudiantes ([b8d99b0](https://github.com/LuisSubiabre/app-react-shadc/commit/b8d99b0c4906f6604f9ccca6dce928020686eccd))
+* mejorar el manejo de fechas en los componentes de atrasos ([c495202](https://github.com/LuisSubiabre/app-react-shadc/commit/c495202395f47a4eff6bcb1bcbb27196e65ca640))
+
+
+### Bug Fixes
+
+* corregir rangos de calificaciones en TablaCalificaciones ([00b1732](https://github.com/LuisSubiabre/app-react-shadc/commit/00b17320d2fe6a9f6fc399469f1d2bd9c40b80bb))
+
 ## [5.0.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v4.4.5...v5.0.0) (2025-09-25)
 
 
