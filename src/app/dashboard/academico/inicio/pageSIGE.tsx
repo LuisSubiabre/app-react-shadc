@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import { AlertCircle } from "lucide-react";
 import {
@@ -14,9 +14,93 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Spinner from "@/components/Spinner";
 import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts";
 import { CursoApiResponseType } from "@/types";
+import { getSigeArchivo4 } from "@/services/sigeService";
+import { useToast } from "@/hooks/use-toast";
 
 const PageSIGE: React.FC = () => {
   const { loading, error, funcionarioCursos } = useCursosFuncionarios();
+  const { toast } = useToast();
+  const [downloadingCursoId, setDownloadingCursoId] = useState<number | null>(
+    null
+  );
+
+  type Archivo4Item = {
+    numero_fijo_1: number | string;
+    numero_fijo_2: number | string;
+    numero_fijo_3: number | string;
+    nivel_educativo: number | string;
+    numero_curso: number | string;
+    letra_curso: string;
+    anio_actual: number | string;
+    rut_numero: string;
+    rut_dv: string;
+    numero_fijo_4: number | string;
+    numero_fijo_5: number | string;
+    codigo_sige: number | string;
+    promedio: string | number;
+  };
+
+  const handleDownloadArchivo4 = async (curso: CursoApiResponseType) => {
+    try {
+      setDownloadingCursoId(curso.id);
+      const response = await getSigeArchivo4(curso.id);
+      const data: Archivo4Item[] = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
+
+      if (data.length === 0) {
+        toast({
+          title: "Sin datos",
+          description: "No se encontraron registros para este curso.",
+        });
+        return;
+      }
+
+      const lines = data
+        .map((item) =>
+          [
+            item.numero_fijo_1 ?? "",
+            item.numero_fijo_2 ?? "",
+            item.numero_fijo_3 ?? "",
+            item.nivel_educativo ?? "",
+            item.numero_curso ?? "",
+            item.letra_curso ?? "",
+            item.anio_actual ?? "",
+            item.rut_numero ?? "",
+            item.rut_dv ?? "",
+            item.numero_fijo_4 ?? "",
+            item.numero_fijo_5 ?? "",
+            item.codigo_sige ?? "",
+            item.promedio ?? "",
+          ]
+            .map((value) => `${value}`)
+            .join("\t")
+        )
+        .join("\n");
+
+      const blob = new Blob([lines], { type: "text/plain;charset=utf-8" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `archivo4_${curso.nombre.replace(/\s+/g, "_")}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error generando Archivo 4:", err);
+      toast({
+        title: "Error",
+        description:
+          "No fue posible generar el Archivo 4. Intenta nuevamente más tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingCursoId(null);
+    }
+  };
 
   if (loading)
     return (
@@ -63,8 +147,15 @@ const PageSIGE: React.FC = () => {
                       {curso.jefatura}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">
-                        Archivo 4
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadArchivo4(curso)}
+                        disabled={downloadingCursoId === curso.id}
+                      >
+                        {downloadingCursoId === curso.id
+                          ? "Generando..."
+                          : "Archivo 4"}
                       </Button>
                     </TableCell>
                   </TableRow>
