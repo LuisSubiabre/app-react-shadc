@@ -126,6 +126,10 @@ const data = {
           title: "Promedios",
           url: "/dashboard/academico/asignaturas",
         },
+        {
+          title: "SIGE",
+          url: "/dashboard/academico/sige",
+        },
       ],
     },
     {
