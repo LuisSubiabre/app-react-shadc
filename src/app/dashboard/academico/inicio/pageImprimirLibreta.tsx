@@ -417,14 +417,18 @@ const AcademicoImprimirLibreta: React.FC = () => {
       (item) => !item.esConcepto && item.pf > 0
     );
     let promedioFINAL = null;
+    let promedioFINALSinAproximar = null;
     if (asignaturasFinal.length > 0) {
       const promedio = asignaturasFinal.reduce((acc, item) => acc + item.pf, 0) / asignaturasFinal.length;
+      // Guardar el promedio sin aproximar (con decimales)
+      promedioFINALSinAproximar = promedio.toFixed(2);
+      
       const config = configPromedios.promedioAnualAsignatura;
       
       if (config.aproximar) {
-        const base = config.reglaAproximacion?.base || 0.05;
+        // Usar redondeo estándar: >= 0.5 redondea hacia arriba, < 0.5 redondea hacia abajo
         const parteDecimal = promedio - Math.floor(promedio);
-        promedioFINAL = parteDecimal >= base ? Math.ceil(promedio) : Math.floor(promedio);
+        promedioFINAL = parteDecimal >= 0.5 ? Math.ceil(promedio) : Math.floor(promedio);
       } else {
         promedioFINAL = Math.round(promedio);
       }
@@ -537,12 +541,12 @@ const AcademicoImprimirLibreta: React.FC = () => {
 
     // Fondo para la sección de promedios
     doc.setFillColor(245, 245, 245);
-    doc.rect(15, promediosY - 2, 180, 15, "F");
+    doc.rect(15, promediosY - 2, 180, 19, "F");
 
     // Borde de la sección
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
-    doc.rect(15, promediosY - 2, 180, 15);
+    doc.rect(15, promediosY - 2, 180, 19);
 
     // Promedios en una sola línea
     doc.setFontSize(8);
@@ -559,6 +563,9 @@ const AcademicoImprimirLibreta: React.FC = () => {
     // Solo mostrar el promedio final si es un informe final
     const yFinal = tipoInforme === 'final' ? promediosY + 11 : promediosY + 11000000;
     doc.text(`Promedio General Final: ${promedioFINAL || "-"}`, 20, yFinal);
+    // Mostrar también el promedio final sin aproximar
+    const yFinalSinAproximar = tipoInforme === 'final' ? promediosY + 15 : promediosY + 11000000;
+    doc.text(`Promedio General Final (sin aproximar): ${promedioFINALSinAproximar || "-"}`, 20, yFinalSinAproximar);
 
     // Agregar gráfico después de la tabla
     const chartY = promediosY + 25;
