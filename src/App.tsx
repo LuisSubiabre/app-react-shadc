@@ -73,6 +73,9 @@ const Convivencia = lazy(
 const FD = lazy(
   () => import("@/app/dashboard/fd/pageFD")
 );
+const PageSIGE = lazy(
+  () => import("@/app/dashboard/academico/inicio/pageSIGE")
+);
 
 function App() {
   return (
@@ -197,7 +200,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
+              <Route
+                path="/dashboard/academico/sige"
+                element={
+                  <ProtectedRoute requiredRoles={[2]}>
+                    <Layout>
+                      <PageSIGE />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/dashboard/academico/inicio"
                 element={

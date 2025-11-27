@@ -419,12 +419,13 @@ const AcademicoImprimirLibreta: React.FC = () => {
     let promedioFINAL = null;
     if (asignaturasFinal.length > 0) {
       const promedio = asignaturasFinal.reduce((acc, item) => acc + item.pf, 0) / asignaturasFinal.length;
+      
       const config = configPromedios.promedioAnualAsignatura;
       
       if (config.aproximar) {
-        const base = config.reglaAproximacion?.base || 0.05;
+        // Usar redondeo estándar: >= 0.5 redondea hacia arriba, < 0.5 redondea hacia abajo
         const parteDecimal = promedio - Math.floor(promedio);
-        promedioFINAL = parteDecimal >= base ? Math.ceil(promedio) : Math.floor(promedio);
+        promedioFINAL = parteDecimal >= 0.5 ? Math.ceil(promedio) : Math.floor(promedio);
       } else {
         promedioFINAL = Math.round(promedio);
       }
