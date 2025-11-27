@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.1.0...v5.2.0) (2025-11-27)
+
+
+### Features
+
+* agregar cálculo de promedio final sin aproximar en la generación de informes ([0b3a549](https://github.com/LuisSubiabre/app-react-shadc/commit/0b3a549518d47e941d31c8fa275b02ae4902b6c2))
+* agregar servicio para obtener archivo en SIGE ([490205d](https://github.com/LuisSubiabre/app-react-shadc/commit/490205d565e452b89bf7312656401c2f23b42911))
+* añadir nueva ruta y opción en el sidebar para SIGE ([56a6922](https://github.com/LuisSubiabre/app-react-shadc/commit/56a6922a22b29e4bd1b6020d19709486101c159f))
+* implementar descarga de Archivo 4 en la página SIGE ([5832578](https://github.com/LuisSubiabre/app-react-shadc/commit/58325781c13d06723a6d926182dd3aa09e1e808a))
+
+## [5.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.1.0...v5.2.0) (2025-11-27)
+
+
+### Features
+
+* agregar cálculo de promedio final sin aproximar en la generación de informes ([0b3a549](https://github.com/LuisSubiabre/app-react-shadc/commit/0b3a549518d47e941d31c8fa275b02ae4902b6c2))
+* agregar servicio para obtener archivo en SIGE ([490205d](https://github.com/LuisSubiabre/app-react-shadc/commit/490205d565e452b89bf7312656401c2f23b42911))
+* añadir nueva ruta y opción en el sidebar para SIGE ([56a6922](https://github.com/LuisSubiabre/app-react-shadc/commit/56a6922a22b29e4bd1b6020d19709486101c159f))
+* implementar descarga de Archivo 4 en la página SIGE ([5832578](https://github.com/LuisSubiabre/app-react-shadc/commit/58325781c13d06723a6d926182dd3aa09e1e808a))
+
 ## [5.1.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.0.0...v5.1.0) (2025-10-01)
 
 
