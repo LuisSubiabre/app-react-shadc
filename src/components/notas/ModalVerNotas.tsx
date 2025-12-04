@@ -258,14 +258,14 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
     return redondearPromedio(promedioGeneral).toString();
   };
 
-  const getPromedioFinal = (asignatura: AsignaturaNota) => {
+  const getPromedioFinal = (asignatura: AsignaturaNota): string | null => {
     const promedioSemestre1 = getPromedioNumericoSemestre(asignatura, "1");
     const promedioSemestre2 = getPromedioNumericoSemestre(asignatura, "2");
 
     if (!promedioSemestre1 && !promedioSemestre2) return null;
 
-    if (!promedioSemestre1) return promedioSemestre2?.toString();
-    if (!promedioSemestre2) return promedioSemestre1?.toString();
+    if (!promedioSemestre1) return promedioSemestre2?.toString() || null;
+    if (!promedioSemestre2) return promedioSemestre1?.toString() || null;
 
     const promedioFinal = (promedioSemestre1 + promedioSemestre2) / 2;
     const promedioRedondeado = redondearPromedio(promedioFinal);
