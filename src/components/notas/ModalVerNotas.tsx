@@ -72,6 +72,8 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
         const response = await getLibretaEstudiante(
           estudiante.estudiante_id || estudiante.id
         );
+        console.log("Respuesta del backend (getLibretaEstudiante):", response);
+        console.log("Datos de las notas:", response.data);
         if (response.data) {
           setNotas(response.data);
         }
