@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.3.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.3.0...v5.3.1) (2025-12-04)
+
+
+### Bug Fixes
+
+* corregir tipo de retorno en getPromedioFinal en ModalVerNotas ([358d5e6](https://github.com/LuisSubiabre/app-react-shadc/commit/358d5e6dfc79ca57c88d6ab62df609143313296e))
+
 ## [5.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.2.0...v5.3.0) (2025-12-04)
 
 
