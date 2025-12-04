@@ -228,18 +228,33 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
     return Math.floor(promedioGeneral).toString();
   };
 
-  const getPromedioGeneralFinal = () => {
-    const promedioSemestre1 = getPromedioGeneralSemestre("1");
-    const promedioSemestre2 = getPromedioGeneralSemestre("2");
+  const getPromedioFinalNumerico = (asignatura: AsignaturaNota) => {
+    const promedioSemestre1 = getPromedioNumericoSemestre(asignatura, "1");
+    const promedioSemestre2 = getPromedioNumericoSemestre(asignatura, "2");
 
     if (!promedioSemestre1 && !promedioSemestre2) return null;
 
     if (!promedioSemestre1) return promedioSemestre2;
     if (!promedioSemestre2) return promedioSemestre1;
 
-    const promedioFinal =
-      (Number(promedioSemestre1) + Number(promedioSemestre2)) / 2;
-    return redondearPromedio(promedioFinal).toString();
+    const promedioFinal = (promedioSemestre1 + promedioSemestre2) / 2;
+    return redondearPromedio(promedioFinal);
+  };
+
+  const getPromedioGeneralFinal = () => {
+    // Obtener todos los promedios finales de asignaturas no conceptuales
+    const promediosFinales = notas
+      .filter((asignatura) => !asignatura.concepto) // Excluir asignaturas conceptuales
+      .map((asignatura) => getPromedioFinalNumerico(asignatura))
+      .filter((promedio): promedio is number => promedio !== null);
+
+    if (promediosFinales.length === 0) return null;
+
+    // Sumar todos los promedios finales
+    const sumaPromedios = promediosFinales.reduce((a, b) => a + b, 0);
+    
+    // Redondear el resultado (60.5 -> 61, 60.4 -> 60)
+    return redondearPromedio(sumaPromedios).toString();
   };
 
   const getPromedioFinal = (asignatura: AsignaturaNota) => {
