@@ -201,6 +201,7 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
 
   const getPromedioGeneralSemestre = (semestre: "1" | "2") => {
     const promediosAsignaturas = notas
+      .filter((asignatura) => !asignatura.concepto) // Excluir asignaturas conceptuales
       .map((asignatura) => getPromedioNumericoSemestre(asignatura, semestre))
       .filter((promedio): promedio is number => promedio !== null);
 
