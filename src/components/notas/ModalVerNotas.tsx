@@ -250,11 +250,12 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
 
     if (promediosFinales.length === 0) return null;
 
-    // Sumar todos los promedios finales
+    // Sumar todos los promedios finales y dividir por la cantidad
     const sumaPromedios = promediosFinales.reduce((a, b) => a + b, 0);
+    const promedioGeneral = sumaPromedios / promediosFinales.length;
     
     // Redondear el resultado (60.5 -> 61, 60.4 -> 60)
-    return redondearPromedio(sumaPromedios).toString();
+    return redondearPromedio(promedioGeneral).toString();
   };
 
   const getPromedioFinal = (asignatura: AsignaturaNota) => {
