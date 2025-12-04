@@ -72,6 +72,8 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
         const response = await getLibretaEstudiante(
           estudiante.estudiante_id || estudiante.id
         );
+        console.log("Respuesta del backend (getLibretaEstudiante):", response);
+        console.log("Datos de las notas:", response.data);
         if (response.data) {
           setNotas(response.data);
         }
@@ -105,6 +107,19 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
     return { valor: "I", esRojo: true };
   };
 
+  const esValorRojo = (valor: string | null, esConcepto: boolean) => {
+    if (!valor || valor === "-") return false;
+    
+    if (esConcepto) {
+      // Para conceptos, solo "I" es rojo
+      return valor === "I";
+    }
+    
+    // Para notas numéricas, verificar si es menor a 40
+    const numValor = Number(valor);
+    return !isNaN(numValor) && numValor < 40;
+  };
+
   const redondearPromedio = (promedio: number) => {
     const decimal = promedio - Math.floor(promedio);
     if (decimal >= 0.5) {
@@ -127,10 +142,10 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
             asignatura.calificacion8,
             asignatura.calificacion9,
             asignatura.calificacion10,
-            asignatura.calificacion11,
-            asignatura.calificacion12,
           ]
         : [
+            asignatura.calificacion11,
+            asignatura.calificacion12,
             asignatura.calificacion13,
             asignatura.calificacion14,
             asignatura.calificacion15,
@@ -140,8 +155,6 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
             asignatura.calificacion19,
             asignatura.calificacion20,
             asignatura.calificacion21,
-            asignatura.calificacion22,
-            asignatura.calificacion23,
           ];
 
     const notasValidas = calificaciones.filter(
@@ -175,10 +188,10 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
             asignatura.calificacion8,
             asignatura.calificacion9,
             asignatura.calificacion10,
-            asignatura.calificacion11,
-            asignatura.calificacion12,
           ]
         : [
+            asignatura.calificacion11,
+            asignatura.calificacion12,
             asignatura.calificacion13,
             asignatura.calificacion14,
             asignatura.calificacion15,
@@ -188,8 +201,6 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
             asignatura.calificacion19,
             asignatura.calificacion20,
             asignatura.calificacion21,
-            asignatura.calificacion22,
-            asignatura.calificacion23,
           ];
 
     const notasValidas = calificaciones.filter(
@@ -205,6 +216,7 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
 
   const getPromedioGeneralSemestre = (semestre: "1" | "2") => {
     const promediosAsignaturas = notas
+      .filter((asignatura) => !asignatura.concepto) // Excluir asignaturas conceptuales
       .map((asignatura) => getPromedioNumericoSemestre(asignatura, semestre))
       .filter((promedio): promedio is number => promedio !== null);
 
@@ -216,28 +228,44 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
     return Math.floor(promedioGeneral).toString();
   };
 
-  const getPromedioGeneralFinal = () => {
-    const promedioSemestre1 = getPromedioGeneralSemestre("1");
-    const promedioSemestre2 = getPromedioGeneralSemestre("2");
+  const getPromedioFinalNumerico = (asignatura: AsignaturaNota) => {
+    const promedioSemestre1 = getPromedioNumericoSemestre(asignatura, "1");
+    const promedioSemestre2 = getPromedioNumericoSemestre(asignatura, "2");
 
     if (!promedioSemestre1 && !promedioSemestre2) return null;
 
     if (!promedioSemestre1) return promedioSemestre2;
     if (!promedioSemestre2) return promedioSemestre1;
 
-    const promedioFinal =
-      (Number(promedioSemestre1) + Number(promedioSemestre2)) / 2;
-    return redondearPromedio(promedioFinal).toString();
+    const promedioFinal = (promedioSemestre1 + promedioSemestre2) / 2;
+    return redondearPromedio(promedioFinal);
   };
 
-  const getPromedioFinal = (asignatura: AsignaturaNota) => {
+  const getPromedioGeneralFinal = () => {
+    // Obtener todos los promedios finales de asignaturas no conceptuales
+    const promediosFinales = notas
+      .filter((asignatura) => !asignatura.concepto) // Excluir asignaturas conceptuales
+      .map((asignatura) => getPromedioFinalNumerico(asignatura))
+      .filter((promedio): promedio is number => promedio !== null);
+
+    if (promediosFinales.length === 0) return null;
+
+    // Sumar todos los promedios finales y dividir por la cantidad
+    const sumaPromedios = promediosFinales.reduce((a, b) => a + b, 0);
+    const promedioGeneral = sumaPromedios / promediosFinales.length;
+    
+    // Redondear el resultado (60.5 -> 61, 60.4 -> 60)
+    return redondearPromedio(promedioGeneral).toString();
+  };
+
+  const getPromedioFinal = (asignatura: AsignaturaNota): string | null => {
     const promedioSemestre1 = getPromedioNumericoSemestre(asignatura, "1");
     const promedioSemestre2 = getPromedioNumericoSemestre(asignatura, "2");
 
     if (!promedioSemestre1 && !promedioSemestre2) return null;
 
-    if (!promedioSemestre1) return promedioSemestre2?.toString();
-    if (!promedioSemestre2) return promedioSemestre1?.toString();
+    if (!promedioSemestre1) return promedioSemestre2?.toString() || null;
+    if (!promedioSemestre2) return promedioSemestre1?.toString() || null;
 
     const promedioFinal = (promedioSemestre1 + promedioSemestre2) / 2;
     const promedioRedondeado = redondearPromedio(promedioFinal);
@@ -323,11 +351,11 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                         <TableHead>N8</TableHead>
                         <TableHead>N9</TableHead>
                         <TableHead>N10</TableHead>
-                        <TableHead>N11</TableHead>
-                        <TableHead>N12</TableHead>
                       </>
                     ) : (
                       <>
+                        <TableHead>N11</TableHead>
+                        <TableHead>N12</TableHead>
                         <TableHead>N13</TableHead>
                         <TableHead>N14</TableHead>
                         <TableHead>N15</TableHead>
@@ -337,8 +365,6 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                         <TableHead>N19</TableHead>
                         <TableHead>N20</TableHead>
                         <TableHead>N21</TableHead>
-                        <TableHead>N22</TableHead>
-                        <TableHead>N23</TableHead>
                       </>
                     )}
                     <TableHead>Promedio Semestre</TableHead>
@@ -543,44 +569,6 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                               }
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                transformarNota(
-                                  asignatura.calificacion11,
-                                  asignatura.concepto
-                                ).esRojo
-                                  ? "text-red-600 font-medium"
-                                  : ""
-                              }
-                            >
-                              {
-                                transformarNota(
-                                  asignatura.calificacion11,
-                                  asignatura.concepto
-                                ).valor
-                              }
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                transformarNota(
-                                  asignatura.calificacion12,
-                                  asignatura.concepto
-                                ).esRojo
-                                  ? "text-red-600 font-medium"
-                                  : ""
-                              }
-                            >
-                              {
-                                transformarNota(
-                                  asignatura.calificacion12,
-                                  asignatura.concepto
-                                ).valor
-                              }
-                            </span>
-                          </TableCell>
                         </>
                       ) : (
                         <>
@@ -588,6 +576,44 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                             <span
                               className={
                                 transformarNota(
+                                  asignatura.calificacion11,
+                                  asignatura.concepto
+                                ).esRojo
+                                  ? "text-red-600 font-medium"
+                                  : ""
+                              }
+                            >
+                              {
+                                transformarNota(
+                                  asignatura.calificacion11,
+                                  asignatura.concepto
+                                ).valor
+                              }
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={
+                                transformarNota(
+                                  asignatura.calificacion12,
+                                  asignatura.concepto
+                                ).esRojo
+                                  ? "text-red-600 font-medium"
+                                  : ""
+                              }
+                            >
+                              {
+                                transformarNota(
+                                  asignatura.calificacion12,
+                                  asignatura.concepto
+                                ).valor
+                              }
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={
+                                transformarNota(
                                   asignatura.calificacion13,
                                   asignatura.concepto
                                 ).esRojo
@@ -750,44 +776,6 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                               {
                                 transformarNota(
                                   asignatura.calificacion21,
-                                  asignatura.concepto
-                                ).valor
-                              }
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                transformarNota(
-                                  asignatura.calificacion22,
-                                  asignatura.concepto
-                                ).esRojo
-                                  ? "text-red-600 font-medium"
-                                  : ""
-                              }
-                            >
-                              {
-                                transformarNota(
-                                  asignatura.calificacion22,
-                                  asignatura.concepto
-                                ).valor
-                              }
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                transformarNota(
-                                  asignatura.calificacion23,
-                                  asignatura.concepto
-                                ).esRojo
-                                  ? "text-red-600 font-medium"
-                                  : ""
-                              }
-                            >
-                              {
-                                transformarNota(
-                                  asignatura.calificacion23,
                                   asignatura.concepto
                                 ).valor
                               }
@@ -796,32 +784,40 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                         </>
                       )}
                       <TableCell className="font-bold">
-                        <span
-                          className={
-                            transformarNota(
-                              Number(getPromedioSemestre(asignatura)),
-                              asignatura.concepto
-                            ).esRojo
-                              ? "text-red-600"
-                              : ""
-                          }
-                        >
-                          {getPromedioSemestre(asignatura) || "-"}
-                        </span>
+                        {asignatura.concepto ? (
+                          "-"
+                        ) : (
+                          <span
+                            className={
+                              esValorRojo(
+                                getPromedioSemestre(asignatura),
+                                asignatura.concepto
+                              )
+                                ? "text-red-600"
+                                : ""
+                            }
+                          >
+                            {getPromedioSemestre(asignatura) || "-"}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="font-bold">
-                        <span
-                          className={
-                            transformarNota(
-                              Number(getPromedioFinal(asignatura)),
-                              asignatura.concepto
-                            ).esRojo
-                              ? "text-red-600"
-                              : ""
-                          }
-                        >
-                          {getPromedioFinal(asignatura) || "-"}
-                        </span>
+                        {asignatura.concepto ? (
+                          "-"
+                        ) : (
+                          <span
+                            className={
+                              esValorRojo(
+                                getPromedioFinal(asignatura),
+                                asignatura.concepto
+                              )
+                                ? "text-red-600"
+                                : ""
+                            }
+                          >
+                            {getPromedioFinal(asignatura) || "-"}
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.3.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.3.0...v5.3.1) (2025-12-04)
+
+
+### Bug Fixes
+
+* corregir tipo de retorno en getPromedioFinal en ModalVerNotas ([358d5e6](https://github.com/LuisSubiabre/app-react-shadc/commit/358d5e6dfc79ca57c88d6ab62df609143313296e))
+
+## [5.3.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.2.0...v5.3.0) (2025-12-04)
+
+
+### Features
+
+* agregar lógica para determinar si el valor es rojo en ModalVerNotas ([ef15751](https://github.com/LuisSubiabre/app-react-shadc/commit/ef15751cc4aabcdde5e907e65addd224588964a2))
+* agregar logs para depuración en ModalVerNotas ([f4d576e](https://github.com/LuisSubiabre/app-react-shadc/commit/f4d576edad49d1adab598bf6a1b25366ea47ca92))
+* mejorar cálculo de promedios finales en ModalVerNotas ([3b23589](https://github.com/LuisSubiabre/app-react-shadc/commit/3b2358971f87cc6a26a2be0dfb5cd26628b92d42))
+* mejorar cálculo del promedio general en ModalVerNotas ([3678a32](https://github.com/LuisSubiabre/app-react-shadc/commit/3678a32d2d87670792489d4507abc51a1182f3f6))
+
+
+### Bug Fixes
+
+* ajustar calificaciones visibles en ModalVerNotas ([496217d](https://github.com/LuisSubiabre/app-react-shadc/commit/496217d36617ad0e8de02c43fb57770ca12fa9ec))
+
 ## [5.2.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.1.0...v5.2.0) (2025-11-27)
 
 
