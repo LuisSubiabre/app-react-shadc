@@ -107,6 +107,19 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
     return { valor: "I", esRojo: true };
   };
 
+  const esValorRojo = (valor: string | null, esConcepto: boolean) => {
+    if (!valor || valor === "-") return false;
+    
+    if (esConcepto) {
+      // Para conceptos, solo "I" es rojo
+      return valor === "I";
+    }
+    
+    // Para notas numéricas, verificar si es menor a 40
+    const numValor = Number(valor);
+    return !isNaN(numValor) && numValor < 40;
+  };
+
   const redondearPromedio = (promedio: number) => {
     const decimal = promedio - Math.floor(promedio);
     if (decimal >= 0.5) {
@@ -755,32 +768,40 @@ const ModalVerNotas = ({ isOpen, onClose, estudiante }: ModalVerNotasProps) => {
                         </>
                       )}
                       <TableCell className="font-bold">
-                        <span
-                          className={
-                            transformarNota(
-                              Number(getPromedioSemestre(asignatura)),
-                              asignatura.concepto
-                            ).esRojo
-                              ? "text-red-600"
-                              : ""
-                          }
-                        >
-                          {getPromedioSemestre(asignatura) || "-"}
-                        </span>
+                        {asignatura.concepto ? (
+                          "-"
+                        ) : (
+                          <span
+                            className={
+                              esValorRojo(
+                                getPromedioSemestre(asignatura),
+                                asignatura.concepto
+                              )
+                                ? "text-red-600"
+                                : ""
+                            }
+                          >
+                            {getPromedioSemestre(asignatura) || "-"}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="font-bold">
-                        <span
-                          className={
-                            transformarNota(
-                              Number(getPromedioFinal(asignatura)),
-                              asignatura.concepto
-                            ).esRojo
-                              ? "text-red-600"
-                              : ""
-                          }
-                        >
-                          {getPromedioFinal(asignatura) || "-"}
-                        </span>
+                        {asignatura.concepto ? (
+                          "-"
+                        ) : (
+                          <span
+                            className={
+                              esValorRojo(
+                                getPromedioFinal(asignatura),
+                                asignatura.concepto
+                              )
+                                ? "text-red-600"
+                                : ""
+                            }
+                          >
+                            {getPromedioFinal(asignatura) || "-"}
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
