@@ -59,8 +59,11 @@ const PageSIGE: React.FC = () => {
       }
 
       const lines = data
-        .map((item) =>
-          [
+        .map((item) => {
+          const promedio = `${item.promedio ?? ""}`;
+          const esConcepto = ["MB", "B", "S", "I"].includes(promedio.toUpperCase());
+          
+          const valores = [
             item.numero_fijo_1 ?? "",
             item.numero_fijo_2 ?? "",
             item.numero_fijo_3 ?? "",
@@ -73,11 +76,19 @@ const PageSIGE: React.FC = () => {
             item.numero_fijo_4 ?? "",
             item.numero_fijo_5 ?? "",
             item.codigo_sige ?? "",
-            item.promedio ?? "",
-          ]
+          ];
+          
+          // Si el promedio es un concepto, añadir un tabulador extra delante
+          if (esConcepto) {
+            valores.push(""); // Añadir un campo vacío que se convertirá en un tabulador extra
+          }
+          
+          valores.push(promedio);
+          
+          return valores
             .map((value) => `${value}`)
-            .join("\t")
-        )
+            .join("\t");
+        })
         .join("\n");
 
       const blob = new Blob([lines], { type: "text/plain;charset=utf-8" });
