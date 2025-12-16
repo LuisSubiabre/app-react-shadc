@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import Spinner from "@/components/Spinner";
 import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts";
 import { CursoApiResponseType } from "@/types";
@@ -23,6 +25,7 @@ const PageSIGE: React.FC = () => {
   const [downloadingCursoId, setDownloadingCursoId] = useState<number | null>(
     null
   );
+  const [excluirSinPromedio, setExcluirSinPromedio] = useState<boolean>(false);
 
   type Archivo4Item = {
     numero_fijo_1: number | string;
@@ -58,7 +61,28 @@ const PageSIGE: React.FC = () => {
         return;
       }
 
-      const lines = data
+      // Filtrar registros sin promedio si la opción está activada
+      const dataFiltrada = excluirSinPromedio
+        ? data.filter((item) => {
+            const promedio = item.promedio;
+            return (
+              promedio !== null &&
+              promedio !== undefined &&
+              promedio !== "" &&
+              String(promedio).trim() !== ""
+            );
+          })
+        : data;
+
+      if (excluirSinPromedio && dataFiltrada.length === 0) {
+        toast({
+          title: "Sin datos",
+          description: "No se encontraron registros con promedio para este curso.",
+        });
+        return;
+      }
+
+      const lines = dataFiltrada
         .map((item) => {
           const promedio = `${item.promedio ?? ""}`;
           const esConcepto = ["MB", "B", "S", "I"].includes(promedio.toUpperCase());
@@ -137,7 +161,24 @@ const PageSIGE: React.FC = () => {
         <Breadcrumbs />
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <h1 className="text-3xl font-semibold">SIGE</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-semibold">SIGE</h1>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="excluir-sin-promedio"
+              checked={excluirSinPromedio}
+              onCheckedChange={(checked) =>
+                setExcluirSinPromedio(checked as boolean)
+              }
+            />
+            <Label
+              htmlFor="excluir-sin-promedio"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Excluir registros sin promedio
+            </Label>
+          </div>
+        </div>
         <div className="rounded-lg border">
           <Table>
             <TableHeader>
