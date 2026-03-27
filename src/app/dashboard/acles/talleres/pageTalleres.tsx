@@ -30,6 +30,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   ChevronDown,
   BarChart3,
@@ -53,6 +55,8 @@ import {
   obtenerAsignaciones,
   eliminarAsignacion,
   asignarCurso,
+  configVisualizarTalleres,
+  configModVisualizarTalleres,
 } from "@/services/talleresService.ts";
 import { getFuncionarios } from "@/services/funcionariosService.ts";
 import { getCursos } from "@/services/cursosService.ts";
@@ -64,6 +68,63 @@ import { ModalAsistenciaPorMes } from "@/components/talleres/ModalAsistenciaPorM
 import { ModalAsistenciaDetalle } from "@/components/talleres/ModalAsistenciaDetalle";
 import { ModalPorcentajeAsistencia } from "@/components/talleres/ModalPorcentajeAsistencia";
 import ModalEstadisticasAsistencia from "@/components/talleres/ModalEstadisticasAsistencia";
+
+const convertirABooleano = (valor: unknown): boolean | null => {
+  if (typeof valor === "boolean") return valor;
+  if (typeof valor === "number") return valor === 1;
+  if (typeof valor === "string") {
+    const valorNormalizado = valor.trim().toLowerCase();
+    if (["true", "1", "si", "sí"].includes(valorNormalizado)) {
+      return true;
+    }
+    if (["false", "0", "no"].includes(valorNormalizado)) {
+      return false;
+    }
+  }
+  return null;
+};
+
+const extraerValorVisible = (respuesta: unknown): boolean | null => {
+  const valorDirecto = convertirABooleano(respuesta);
+  if (valorDirecto !== null) return valorDirecto;
+
+  if (!respuesta || typeof respuesta !== "object") return null;
+
+  const respuestaObj = respuesta as Record<string, unknown>;
+  const candidatos: unknown[] = [
+    respuestaObj.visible,
+    respuestaObj.estado,
+    respuestaObj.valor,
+  ];
+
+  if (respuestaObj.data && typeof respuestaObj.data === "object") {
+    const dataObj = respuestaObj.data as Record<string, unknown>;
+    candidatos.push(dataObj.visible, dataObj.estado, dataObj.valor);
+
+    if (Array.isArray(dataObj.talleres) && dataObj.talleres.length > 0) {
+      const primerTaller = dataObj.talleres[0];
+      if (primerTaller && typeof primerTaller === "object") {
+        const tallerObj = primerTaller as Record<string, unknown>;
+        candidatos.push(tallerObj.visible);
+      }
+    }
+  }
+
+  if (Array.isArray(respuestaObj.talleres) && respuestaObj.talleres.length > 0) {
+    const primerTaller = respuestaObj.talleres[0];
+    if (primerTaller && typeof primerTaller === "object") {
+      const tallerObj = primerTaller as Record<string, unknown>;
+      candidatos.push(tallerObj.visible);
+    }
+  }
+
+  for (const candidato of candidatos) {
+    const valor = convertirABooleano(candidato);
+    if (valor !== null) return valor;
+  }
+
+  return null;
+};
 
 const AcleTalleres: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -116,6 +177,11 @@ const AcleTalleres: React.FC = () => {
   const [dataCursos, setDataCursos] = useState<CursoApiResponseType[]>([]);
   const [loadingCursos, setLoadingCursos] = useState<boolean>(true);
   const [errorCursos, setErrorCursos] = useState<string | null>(null);
+  const [talleresVisibles, setTalleresVisibles] = useState<boolean>(false);
+  const [loadingConfigTalleres, setLoadingConfigTalleres] =
+    useState<boolean>(true);
+  const [updatingConfigTalleres, setUpdatingConfigTalleres] =
+    useState<boolean>(false);
 
   const ordenarTalleresPorNivel = (talleres: TallerType[]) => {
     const ordenNiveles = {
@@ -156,7 +222,7 @@ const AcleTalleres: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     getFuncionarios()
@@ -191,6 +257,53 @@ const AcleTalleres: React.FC = () => {
         setLoadingCursos(false);
       });
   }, []);
+
+  useEffect(() => {
+    configVisualizarTalleres()
+      .then((response) => {
+        const visible = extraerValorVisible(response);
+        setTalleresVisibles(visible ?? false);
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "No se pudo obtener la configuración de visibilidad.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setLoadingConfigTalleres(false);
+      });
+  }, [toast]);
+
+  const handleToggleTalleresVisibles = async (checked: boolean) => {
+    const valorAnterior = talleresVisibles;
+    setTalleresVisibles(checked);
+    setUpdatingConfigTalleres(true);
+
+    try {
+      const response = await configModVisualizarTalleres();
+      const visibleDesdeApi = extraerValorVisible(response);
+      const nuevoValor = visibleDesdeApi ?? checked;
+      setTalleresVisibles(nuevoValor);
+
+      toast({
+        title: "Configuración actualizada",
+        description: nuevoValor
+          ? "La visualización de talleres está habilitada."
+          : "La visualización de talleres está deshabilitada.",
+      });
+    } catch {
+      setTalleresVisibles(valorAnterior);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la configuración.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingConfigTalleres(false);
+    }
+  };
 
   const handleSaveNewFromButton = async (
     e: React.MouseEvent<HTMLButtonElement>
@@ -473,6 +586,21 @@ const AcleTalleres: React.FC = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+              <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+                <Label
+                  htmlFor="switch-visualizar-talleres"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Visualización de talleres
+                </Label>
+                <Switch
+                  id="switch-visualizar-talleres"
+                  checked={talleresVisibles}
+                  onCheckedChange={handleToggleTalleresVisibles}
+                  disabled={loadingConfigTalleres || updatingConfigTalleres}
+                />
+              </div>
             </div>
 
             {/* Menú de reportes */}

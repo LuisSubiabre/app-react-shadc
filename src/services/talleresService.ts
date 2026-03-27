@@ -142,4 +142,16 @@ export const obtenerTalleresDeEstudiante = async (estudiante_id: number) => {
     }
     throw error;
   }
+  
+};
+export const configVisualizarTalleres = async () => {
+  return api
+    .get(`/talleres/config/`)
+    .then((response) => response.data);
+};
+
+export const configModVisualizarTalleres = async () => {
+  return api
+    .put(`/talleres/config/1/visible`)
+    .then((response) => response.data);
 };
