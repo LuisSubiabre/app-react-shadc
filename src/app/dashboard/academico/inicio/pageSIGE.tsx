@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Spinner from "@/components/Spinner";
 import { useCursosFuncionarios } from "@/hooks/useCursosFuncionario.ts";
@@ -163,20 +163,20 @@ const PageSIGE: React.FC = () => {
       <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold">SIGE</h1>
-          <div className="flex items-center space-x-2">
-            <Checkbox
+          <div className="flex items-center space-x-3">
+            <Label
+              htmlFor="excluir-sin-promedio"
+              className="text-sm font-medium cursor-pointer"
+            >
+              Excluir registros sin promedio
+            </Label>
+            <Switch
               id="excluir-sin-promedio"
               checked={excluirSinPromedio}
               onCheckedChange={(checked) =>
                 setExcluirSinPromedio(checked as boolean)
               }
             />
-            <Label
-              htmlFor="excluir-sin-promedio"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              Excluir registros sin promedio
-            </Label>
           </div>
         </div>
         <div className="rounded-lg border">
