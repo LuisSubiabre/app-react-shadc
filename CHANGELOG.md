@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.4.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.3.1...v5.4.0) (2026-03-27)
+
+
+### Features
+
+* agregar opción para excluir registros sin promedio en PageSIGE ([e85b8e1](https://github.com/LuisSubiabre/app-react-shadc/commit/e85b8e19d0172b3fdb99569493080bbec4ac106c))
+* implement visibility toggle for talleres and update configuration services ([96176a1](https://github.com/LuisSubiabre/app-react-shadc/commit/96176a1badc3b5a6a45a9a9776b1277f6f09847e))
+* mejorar la generación de líneas en PageSIGE ([f1f576f](https://github.com/LuisSubiabre/app-react-shadc/commit/f1f576f69e22909907f85af58db81e056c692c5d))
+
 ### [5.3.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.3.0...v5.3.1) (2025-12-04)
 
 
