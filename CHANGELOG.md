@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.4.1](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.4.0...v5.4.1) (2026-04-07)
+
+
+### Features
+
+* add export functionality for ACLEs by course with PDF generation ([de5e5c4](https://github.com/LuisSubiabre/app-react-shadc/commit/de5e5c42083209e0215959e6a34c9778acc3ba46))
+* update year selection to include 2026 in asistencia components ([12b2963](https://github.com/LuisSubiabre/app-react-shadc/commit/12b2963ad9954d45c417f292fa971988b792f625))
+
 ## [5.4.0](https://github.com/LuisSubiabre/app-react-shadc/compare/v5.3.1...v5.4.0) (2026-03-27)
 
 
