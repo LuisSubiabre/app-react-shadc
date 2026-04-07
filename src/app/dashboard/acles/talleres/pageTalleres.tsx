@@ -39,6 +39,7 @@ import {
   Calendar,
   PieChart,
   Download,
+  FileDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -57,9 +58,19 @@ import {
   asignarCurso,
   configVisualizarTalleres,
   configModVisualizarTalleres,
+  getTalleresByCursoJefatura,
 } from "@/services/talleresService.ts";
 import { getFuncionarios } from "@/services/funcionariosService.ts";
 import { getCursos } from "@/services/cursosService.ts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { FiltrosTalleres } from "@/components/talleres/FiltrosTalleres";
 import { TablaTalleres } from "@/components/talleres/TablaTalleres";
 import { ModalCursos } from "@/components/talleres/ModalCursos";
@@ -127,6 +138,17 @@ const extraerValorVisible = (respuesta: unknown): boolean | null => {
 };
 
 const AcleTalleres: React.FC = () => {
+  interface TallerACLE {
+    nombre_estudiante: string;
+    nombre_taller: string;
+    horario: string;
+    ubicacion: string;
+  }
+
+  interface JsPDFWithAutoTable extends jsPDF {
+    autoTable: typeof autoTable;
+  }
+
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState<boolean>(false);
   const [isModalCursosOpen, setIsModalCursosOpen] = useState<boolean>(false);
@@ -182,6 +204,8 @@ const AcleTalleres: React.FC = () => {
     useState<boolean>(true);
   const [updatingConfigTalleres, setUpdatingConfigTalleres] =
     useState<boolean>(false);
+  const [cursoSeleccionadoExportacion, setCursoSeleccionadoExportacion] =
+    useState<string>("");
 
   const ordenarTalleresPorNivel = (talleres: TallerType[]) => {
     const ordenNiveles = {
@@ -555,6 +579,144 @@ const AcleTalleres: React.FC = () => {
     setCurrentTaller(null);
   };
 
+  const exportarACLEsPorCurso = async () => {
+    if (!cursoSeleccionadoExportacion) {
+      toast({
+        title: "Curso requerido",
+        description: "Selecciona un curso para exportar el listado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cursoId = Number(cursoSeleccionadoExportacion);
+    const curso = dataCursos.find((c) => c.id === cursoId);
+    const nombreCurso = curso?.nombre || `Curso ${cursoId}`;
+
+    try {
+      const response = await getTalleresByCursoJefatura(cursoId);
+      const talleres = (response?.talleres ||
+        response?.data?.talleres ||
+        response?.data) as TallerACLE[] | undefined;
+
+      if (!talleres || talleres.length === 0) {
+        toast({
+          title: "Sin datos",
+          description: "No hay estudiantes con ACLEs en el curso seleccionado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const doc = new jsPDF() as JsPDFWithAutoTable;
+
+      doc.setProperties({
+        title: `Listado ACLES - ${nombreCurso}`,
+        subject: "Listado de talleres ACLE",
+        author: "Sistema Liceo Experimental",
+        keywords: "ACLE, talleres, estudiantes",
+        creator: "Sistema Liceo Experimental",
+      });
+
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("LISTADO DE TALLERES ACLE", 14, 20);
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Curso: ${nombreCurso}`, 14, 30);
+
+      doc.setFontSize(10);
+      const fechaActual = new Date();
+      const fechaFormateada = fechaActual.toLocaleDateString("es-CL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const horaFormateada = fechaActual.toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      doc.text(`Fecha: ${fechaFormateada}`, 14, 38);
+      doc.text(`Hora: ${horaFormateada}`, 14, 44);
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total de estudiantes inscritos: ${talleres.length}`, 14, 54);
+
+      doc.setDrawColor(41, 128, 185);
+      doc.setLineWidth(0.5);
+      doc.line(14, 58, 196, 58);
+
+      const tableData = talleres.map((taller) => [
+        taller.nombre_estudiante,
+        taller.nombre_taller,
+        taller.horario,
+        taller.ubicacion,
+      ]);
+
+      autoTable(doc, {
+        startY: 65,
+        head: [["Estudiante", "Taller", "Horario", "Ubicación"]],
+        body: tableData,
+        theme: "grid",
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          halign: "center",
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        columnStyles: {
+          0: { cellWidth: 70 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 30 },
+        },
+        alternateRowStyles: {
+          fillColor: [240, 240, 240],
+        },
+        margin: { top: 65, left: 14, right: 14, bottom: 20 },
+      });
+
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("helvetica", "bold");
+        doc.text(
+          "Liceo Experimental Umag",
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 15,
+          { align: "center" }
+        );
+        doc.setFont("helvetica", "normal");
+        doc.text(
+          `Página ${i} de ${pageCount}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: "center" }
+        );
+      }
+
+      doc.save(`ACLEs_${nombreCurso.replace(/[^\w-]/g, "_")}.pdf`);
+    } catch (error: unknown) {
+      console.error("Error al exportar ACLEs:", error);
+      const descripcion =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "No se pudo exportar el listado de ACLEs.";
+      toast({
+        title: "Error",
+        description: descripcion,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <LoadingErrorHandler loading={loading} error={error}>
@@ -570,7 +732,7 @@ const AcleTalleres: React.FC = () => {
           {/* Barra de herramientas mejorada */}
           <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
             {/* Acciones principales */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -604,7 +766,35 @@ const AcleTalleres: React.FC = () => {
             </div>
 
             {/* Menú de reportes */}
-            <div className="flex gap-2">
+            <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full">
+                <Select
+                  value={cursoSeleccionadoExportacion}
+                  onValueChange={setCursoSeleccionadoExportacion}
+                >
+                  <SelectTrigger className="w-full sm:w-[220px]">
+                    <SelectValue placeholder="Seleccionar curso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dataCursos.map((curso) => (
+                      <SelectItem
+                        key={curso.id}
+                        value={String(curso.id)}
+                      >
+                        {curso.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={exportarACLEsPorCurso}
+                  disabled={!cursoSeleccionadoExportacion}
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Exportar Listado ACLES
+                </Button>
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
