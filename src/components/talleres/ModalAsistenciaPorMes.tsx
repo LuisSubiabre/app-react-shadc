@@ -61,6 +61,7 @@ const meses = [
 const años = [
   { value: "2024", label: "2024" },
   { value: "2025", label: "2025" },
+  { value: "2026", label: "2026" },
 ];
 
 export const ModalAsistenciaPorMes: React.FC<ModalAsistenciaPorMesProps> = ({
@@ -68,7 +69,7 @@ export const ModalAsistenciaPorMes: React.FC<ModalAsistenciaPorMesProps> = ({
   onClose,
 }) => {
   const [mesSeleccionado, setMesSeleccionado] = useState<string>("");
-  const [añoSeleccionado, setAñoSeleccionado] = useState<string>("2025");
+  const [añoSeleccionado, setAñoSeleccionado] = useState<string>("2026");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
